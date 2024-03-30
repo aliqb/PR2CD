@@ -10,7 +10,7 @@ class Requirement:
         self.posTagger = POSTagger(model='pos_tagger.model')
         self.parser = DependencyParser(tagger=POSTagger(model='pos_tagger.model'), lemmatizer=Lemmatizer())
         self.text = normalizer.normalize(text)
-        self.sentences = sentence_tokenizer.tokenize(self.text)
+        self.sentences = [sentence[:-1] for sentence in sentence_tokenizer.tokenize(self.text)]
         self.dependency_graphs = self.make_dependency_graphs()
 
     def make_dependency_graphs(self):
