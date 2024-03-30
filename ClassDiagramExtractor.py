@@ -22,8 +22,8 @@ class ClassDiagramExtractor:
                     rel = dg.nodes[address]['rel']
                 if rel.endswith('subj') or rel.endswith('obj') or rel.endswith('obl'):
 
-                    # name = self.find_seq_dependency_name(dg, node)
-                    name = self.find_ezafe_name(dg, node)
+                    name = self.find_seq_dependency_name(dg, node)
+                    # name = self.find_ezafe_name(dg, node)
                     if not self.node_exist(self.class_names, name):
                         self.class_names.append({'text':name, 'node':node})
 
@@ -32,14 +32,19 @@ class ClassDiagramExtractor:
         return len(filtered) > 0
 
     def find_seq_dependency_name(self,dg,node):
-        seq_dependencies = ['amod', 'nmod']
+        seq_dependencies = ['amod', 'nmod', 'flat']
         addresses = []
-        for dep in seq_dependencies:
-            if dep in node['deps']:
-                addresses += node['deps'][dep]
+        ezafe = node['tag'].endswith('EZ')
         name = node['lemma']
-        for address in addresses:
-            name += ' ' + dg.nodes[address]['word']
+        if ezafe:
+            for dep in seq_dependencies:
+                if dep in node['deps']:
+                    addresses += node['deps'][dep]
+            for address in addresses:
+                middle_ezafe = dg.nodes[address]['tag'].endswith('EZ')
+                name += ' ' + dg.nodes[address]['word']
+                if not middle_ezafe:
+                    break
         return name
 
     def find_ezafe_name(self, dg, node):
