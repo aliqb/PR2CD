@@ -1,2 +1,3 @@
 .idea
 universal_dependency_parser
+spacy_dependency_parser
