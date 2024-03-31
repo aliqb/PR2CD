@@ -21,11 +21,7 @@ class ClassDiagramExtractor:
                 if rel == 'conj':
                     address = node.head
                     rel = sentence.find_node_by_address(address).rel
-                if rel.endswith('subj') or rel.endswith('obj') or rel.endswith('obl'):
-                    # if self.find_seq_method == 'dep':
-                    #     name = sentence.find_seq_dependency_name(node)
-                    # else:
-                    #     name = sentence.find_ezafe_name(node)
+                if rel.endswith('subj') or rel.endswith('obj') or rel.startswith('obl'):
                     name = sentence.find_seq_name(node)
                     if not self.node_exist(self.class_names, name):
                         self.class_names.append({'text': name, 'node': node})

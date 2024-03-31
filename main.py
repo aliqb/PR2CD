@@ -1,9 +1,9 @@
 # Press the green button in the gutter to run the script.
 from hazm.dependency_parser import SpacyDependencyParser
-from hazm import POSTagger, Lemmatizer, DependencyParser
+from hazm import POSTagger, Lemmatizer, DependencyParser, word_tokenize
 from Requirement import Requirement
 from ClassDiagramExtractor import ClassDiagramExtractor
-from PNLP import hazm_extractor
+from PNLP import  HazmExtractor
 
 def printGraph(dg):
     for node in dg.nodes.values():
@@ -17,10 +17,8 @@ def printGraph(dg):
 
 
 if __name__ == '__main__':
-    # parser = DependencyParser(tagger=POSTagger(model='pos_tagger.model'), lemmatizer=Lemmatizer())
-    # dg = parser.parse(['من', 'به', 'مدرسه', 'رفته بودم', '.'])
-    # dg.tree().pprint()
-    # printGraph(dg)
+
+
     atm = 'سیستم باید از شبکه‌ی بانکی کامپیوتری پشتیبانی کند که شامل صندوق‌داران انسانی و دستگاه‌های خودپرداز است. ' \
           'شبکه‌ی بانکی کامپیوتری توسط اتحادیه‌ی بانک‌ها مورد استفاده قرار خواهد گرفت. ' \
           ' هر بانک یک رایانه فراهم می‌کند که حساب‌های بانکی را نگهداری می‌کند و تراکنش‌ها را بر روی حساب‌ها پردازش می‌کند. ' \
@@ -34,12 +32,27 @@ if __name__ == '__main__':
           'سیستم نیاز به ذخیره اطلاعات و تدابیر امنیتی مناسب دارد.' \
           'سیستم باید دسترسی همزمان به یک حساب را به درستی فراهم کند.' \
           'بانک‌ها نرم‌افزار مخصوص به بانک خود را تهیه خواهند کرد.'
-    requirement = Requirement(atm, hazm_extractor)
-    # for dg in requirement.dependency_graphs:
-    #     printGraph(dg)
+
+    lemmatizer = Lemmatizer()
+    tagger = POSTagger(model='pos_tagger.model')
+    parser = DependencyParser(tagger=tagger, lemmatizer=lemmatizer)
+    spacy_parser = SpacyDependencyParser(tagger=tagger, lemmatizer=lemmatizer,
+                                         model_file='./spacy_dependency_parser',
+                                         working_dir='./spacy_dependency_parser')
+    hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
+    requirement = Requirement(atm, hazm_extractor.extract)
+
     extractor = ClassDiagramExtractor(requirement)
     extractor.extract_class_names()
     for element in extractor.class_names:
         print(element['text'])
+    # tagger = POSTagger(model='pos_tagger.model')
+    # lemmatizer = Lemmatizer()
+    # spacy_parser = SpacyDependencyParser(tagger=tagger, lemmatizer=lemmatizer,
+    #                                      model_file='./spacy_dependency_parser',
+    #                                      working_dir='./spacy_dependency_parser')
+    # spacy_result = spacy_parser.parse_sents([word_tokenize('من به مدرسه رفته بودم.')])
+    # # ps = parser.parse_sents(sentences='من به مدرسته رفته بودم.')
+    # for dg in spacy_result:
+    #     printGraph(dg)
 
-    # spacy_parser = SpacyDependencyParser(tagger=POSTagger(model='pos_tagger.model'), lemmatizer=Lemmatizer())

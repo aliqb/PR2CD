@@ -1,2 +1,5 @@
 hazm
 nltk
+stanza
+spacy
+spacy-transformers

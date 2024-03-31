@@ -14,7 +14,9 @@ class NLPNode:
 
 
 class Sentence:
-    def __init__(self, text, nlp_nodes: List[NLPNode], find_seq_method: Literal['dep', 'ezafe'] = 'dep'):
+    def __init__(self, text, nlp_nodes: List[NLPNode], find_seq_method: Literal['dep', 'ezafe'] = 'dep',
+                 with_ezafe_tag: bool = False):
+        self.with_ezafe_tag = with_ezafe_tag
         self.text = text
         self.nlp_nodes = nlp_nodes
         self.find_seq_method = find_seq_method
@@ -28,6 +30,8 @@ class Sentence:
     def find_seq_name(self, node):
         if self.find_seq_method == 'dep':
             return self.find_seq_dependency_name(node)
+        if self.with_ezafe_tag:
+            raise Exception('with_ezafe_tag is false')
         return self.find_ezafe_name(node)
 
     def find_seq_dependency_name(self, node):
@@ -35,15 +39,17 @@ class Sentence:
         addresses = []
         ezafe = node.tag.endswith('EZ')
         name = node.lemma
-        if ezafe:
+        deps_with_main_tag = {dep.split(':')[0]: dep for dep in node.deps}
+        if ezafe or not self.with_ezafe_tag:
             for dep in seq_dependencies:
-                if dep in node.deps:
-                    addresses += node.deps[dep]
+
+                if dep in deps_with_main_tag:
+                    addresses += node.deps[deps_with_main_tag[dep]]
             for address in addresses:
                 next_node = self.find_node_by_address(address)
                 middle_ezafe = next_node.tag.endswith('EZ')
                 name += ' ' + next_node.text
-                if not middle_ezafe:
+                if not middle_ezafe and self.with_ezafe_tag:
                     break
         return name
 
@@ -62,26 +68,32 @@ class Sentence:
         return name
 
 
-def hazm_extractor(text: str):
-    normalizer = Normalizer()
-    sentence_tokenizer = SentenceTokenizer()
-    word_tokenizer = WordTokenizer()
-    lemmatizer = Lemmatizer()
-    parser = DependencyParser(tagger=POSTagger(model='pos_tagger.model'), lemmatizer=Lemmatizer())
-    text = normalizer.normalize(text)
-    raw_sentences = [sentence[:-1] for sentence in sentence_tokenizer.tokenize(text)]
-    sentences = []
-    for sentence in raw_sentences:
-        hazm_nodes = (parser.parse(word_tokenizer.tokenize(sentence))).nodes
-        nodes = []
-        for node in hazm_nodes.values():
-            tag = node['tag']
-            lemma = node['lemma']
-            if tag == 'VERB':
-                node['lemma'] = lemmatizer.lemmatize(lemma, 'V')
-            nodes.append(
-                NLPNode(address=node['address'], text=node['word'], tag=tag, rel=node['rel'], head=node['head'],
-                        deps=node['deps'], lemma=lemma))
-        sentences.append(Sentence(sentence, nodes))
+class HazmExtractor:
+    def __init__(self, parser, lemmatizer, with_ezafe_tag:bool=False):
+        self.with_ezafe_tag = with_ezafe_tag
+        self.lemmatizer = lemmatizer
+        self.parser = parser
 
-    return sentences
+
+    def extract(self, text: str):
+        normalizer = Normalizer()
+        sentence_tokenizer = SentenceTokenizer()
+        word_tokenizer = WordTokenizer()
+        # parser = DependencyParser(tagger=POSTagger(model='pos_tagger.model'), lemmatizer=lemmatizer)
+        text = normalizer.normalize(text)
+        raw_sentences = [sentence[:-1] for sentence in sentence_tokenizer.tokenize(text)]
+        sentences = []
+        for sentence in raw_sentences:
+            hazm_nodes = (self.parser.parse(word_tokenizer.tokenize(sentence))).nodes
+            nodes = []
+            for node in hazm_nodes.values():
+                tag = node['tag']
+                lemma = node['lemma']
+                if tag == 'VERB':
+                    node['lemma'] = self.lemmatizer.lemmatize(lemma, 'V')
+                nodes.append(
+                    NLPNode(address=node['address'], text=node['word'], tag=tag, rel=node['rel'], head=node['head'],
+                            deps=node['deps'], lemma=lemma))
+            sentences.append(Sentence(sentence, nodes,with_ezafe_tag=self.with_ezafe_tag))
+
+        return sentences
