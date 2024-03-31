@@ -3,7 +3,7 @@ from hazm.dependency_parser import SpacyDependencyParser
 from hazm import POSTagger, Lemmatizer, DependencyParser
 from Requirement import Requirement
 from ClassDiagramExtractor import ClassDiagramExtractor
-
+from PNLP import hazm_extractor
 
 def printGraph(dg):
     for node in dg.nodes.values():
@@ -34,12 +34,12 @@ if __name__ == '__main__':
           'سیستم نیاز به ذخیره اطلاعات و تدابیر امنیتی مناسب دارد.' \
           'سیستم باید دسترسی همزمان به یک حساب را به درستی فراهم کند.' \
           'بانک‌ها نرم‌افزار مخصوص به بانک خود را تهیه خواهند کرد.'
-    requirement = Requirement(atm)
+    requirement = Requirement(atm, hazm_extractor)
     # for dg in requirement.dependency_graphs:
     #     printGraph(dg)
     extractor = ClassDiagramExtractor(requirement)
     extractor.extract_class_names()
-    for node in extractor.class_names:
-        print(node['text'])
+    for element in extractor.class_names:
+        print(element['text'])
 
     # spacy_parser = SpacyDependencyParser(tagger=POSTagger(model='pos_tagger.model'), lemmatizer=Lemmatizer())

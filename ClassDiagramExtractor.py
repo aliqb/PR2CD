@@ -10,53 +10,28 @@ class ClassDiagramExtractor:
         # rules = {
         #     0:def
         # }
-        dependency_graphs = self.requirement.dependency_graphs
-        for dg in dependency_graphs:
-            for node in dg.nodes.values():
-                rel = node['rel']
-                tag = node['tag']
-                if node['address'] == 0 or not tag.startswith('NOUN'):
+        sentences = self.requirement.sentences
+        for sentence in sentences:
+            nodes = sentence.nlp_nodes
+            for node in nodes:
+                rel = node.rel
+                tag = node.tag
+                if node.address == 0 or not tag.startswith('NOUN'):
                     continue
                 if rel == 'conj':
-                    address = node['head']
-                    rel = dg.nodes[address]['rel']
+                    address = node.head
+                    rel = sentence.find_node_by_address(address).rel
                 if rel.endswith('subj') or rel.endswith('obj') or rel.endswith('obl'):
-
-                    name = self.find_seq_dependency_name(dg, node)
-                    # name = self.find_ezafe_name(dg, node)
+                    # if self.find_seq_method == 'dep':
+                    #     name = sentence.find_seq_dependency_name(node)
+                    # else:
+                    #     name = sentence.find_ezafe_name(node)
+                    name = sentence.find_seq_name(node)
                     if not self.node_exist(self.class_names, name):
-                        self.class_names.append({'text':name, 'node':node})
+                        self.class_names.append({'text': name, 'node': node})
 
     def node_exist(self, diagram_list, text):
-        filtered = [node for node in diagram_list if node['text'] == text]
+        filtered = [element for element in diagram_list if element['text'] == text]
         return len(filtered) > 0
 
-    def find_seq_dependency_name(self,dg,node):
-        seq_dependencies = ['amod', 'nmod', 'flat']
-        addresses = []
-        ezafe = node['tag'].endswith('EZ')
-        name = node['lemma']
-        if ezafe:
-            for dep in seq_dependencies:
-                if dep in node['deps']:
-                    addresses += node['deps'][dep]
-            for address in addresses:
-                middle_ezafe = dg.nodes[address]['tag'].endswith('EZ')
-                name += ' ' + dg.nodes[address]['word']
-                if not middle_ezafe:
-                    break
-        return name
 
-    def find_ezafe_name(self, dg, node):
-        ezafe = node['tag'].endswith('EZ')
-        # if name.endswith('ه') and ezafe:
-        #     name += "‌ی"
-        name = node['lemma']
-        address = node['address']
-        while ezafe:
-            next_address = address + 1
-            next_node = dg.nodes[next_address]
-            name += ' ' + next_node['word']
-            ezafe = next_node['tag'].endswith('EZ')
-            address = next_node['address']
-        return name
