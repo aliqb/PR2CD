@@ -33,16 +33,16 @@ if __name__ == '__main__':
           'سیستم باید دسترسی همزمان به یک حساب را به درستی فراهم کند.' \
           'بانک‌ها نرم‌افزار مخصوص به بانک خود را تهیه خواهند کرد.'
 
-    # lemmatizer = Lemmatizer()
-    # tagger = POSTagger(model='pos_tagger.model')
-    # parser = DependencyParser(tagger=tagger, lemmatizer=lemmatizer)
-    # spacy_parser = SpacyDependencyParser(tagger=tagger, lemmatizer=lemmatizer,
-    #                                      model_file='./spacy_dependency_parser',
-    #                                      working_dir='./spacy_dependency_parser')
-    # hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
+    lemmatizer = Lemmatizer()
+    tagger = POSTagger(model='pos_tagger.model')
+    parser = DependencyParser(tagger=tagger, lemmatizer=lemmatizer)
+    spacy_parser = SpacyDependencyParser(tagger=tagger, lemmatizer=lemmatizer,
+                                         model_file='./spacy_dependency_parser',
+                                         working_dir='./spacy_dependency_parser')
+    hazm_extractor = HazmExtractor(spacy_parser, lemmatizer)
     stanza_extractor = StanzaExtractor()
 
-    requirement = Requirement(atm, stanza_extractor.extract)
+    requirement = Requirement(atm, hazm_extractor.extract)
 
     extractor = ClassDiagramExtractor(requirement)
     extractor.extract_class_names()

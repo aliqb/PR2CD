@@ -34,7 +34,7 @@ class Sentence:
     def find_seq_name(self, node):
         if self.find_seq_method == 'dep':
             return self.find_seq_dependency_name(node)
-        if self.with_ezafe_tag:
+        if not self.with_ezafe_tag:
             raise Exception('with_ezafe_tag is false')
         return self.find_ezafe_name(node)
 
@@ -65,8 +65,8 @@ class Sentence:
                 dep_node = dep_nodes[index]
                 name += ' ' + dep_node.text
                 middle_ezafe = dep_node.tag.endswith('EZ')
-                must_break = middle_ezafe if self.with_ezafe_tag else (
-                            index != len(dep_nodes) - 1 and dep_node.address + 1 != dep_nodes[index + 1].address)
+                must_break = not middle_ezafe if self.with_ezafe_tag else (
+                        index != len(dep_nodes) - 1 and dep_node.address + 1 != dep_nodes[index + 1].address)
                 if must_break:
                     break
         return name
@@ -87,7 +87,9 @@ class Sentence:
 
 
 class HazmExtractor:
-    def __init__(self, parser, lemmatizer, with_ezafe_tag: bool = False):
+    def __init__(self, parser, lemmatizer, with_ezafe_tag: bool = False,
+                 find_seq_method: Literal['dep', 'ezafe'] = 'dep'):
+        self.find_seq_method = find_seq_method
         self.with_ezafe_tag = with_ezafe_tag
         self.lemmatizer = lemmatizer
         self.parser = parser
@@ -111,7 +113,8 @@ class HazmExtractor:
                 nodes.append(
                     NLPNode(address=node['address'], text=node['word'], tag=tag, rel=node['rel'], head=node['head'],
                             deps=node['deps'], lemma=lemma))
-            sentences.append(Sentence(sentence, nodes, with_ezafe_tag=self.with_ezafe_tag))
+            sentences.append(
+                Sentence(sentence, nodes, with_ezafe_tag=self.with_ezafe_tag, find_seq_method=self.find_seq_method))
 
         return sentences
 
