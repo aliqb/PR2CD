@@ -16,7 +16,7 @@ class ClassDiagramExtractor:
             for node in nodes:
                 rel = node.rel
                 tag = node.tag
-                if node.address == 0 or not tag.startswith('NOUN'):
+                if node.address == 0 or not (tag.startswith('NOUN') or tag.startswith('PROPN')):
                     continue
                 if rel == 'conj':
                     address = node.head
