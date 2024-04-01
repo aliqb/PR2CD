@@ -3,7 +3,7 @@ from hazm.dependency_parser import SpacyDependencyParser
 from hazm import POSTagger, Lemmatizer, DependencyParser, word_tokenize
 from Requirement import Requirement
 from ClassDiagramExtractor import ClassDiagramExtractor
-from PNLP import  HazmExtractor
+from PNLP import  HazmExtractor, StanzaExtractor
 
 def printGraph(dg):
     for node in dg.nodes.values():
@@ -33,22 +33,16 @@ if __name__ == '__main__':
           'سیستم باید دسترسی همزمان به یک حساب را به درستی فراهم کند.' \
           'بانک‌ها نرم‌افزار مخصوص به بانک خود را تهیه خواهند کرد.'
 
-    lemmatizer = Lemmatizer()
-    tagger = POSTagger(model='pos_tagger.model')
-    parser = DependencyParser(tagger=tagger, lemmatizer=lemmatizer)
-    spacy_parser = SpacyDependencyParser(tagger=tagger, lemmatizer=lemmatizer,
-                                         model_file='./spacy_dependency_parser',
-                                         working_dir='./spacy_dependency_parser')
-    hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
-    # sentences = hazm_extractor.extract('من کتاب ویکتور هوگو را خواندم. حسن غذای خوشمزه را پخت.')
-    # print(sentences)
-    # for sentence in sentences:
-    #     for node in sentence.nlp_nodes:
-    #         deps = sentence.find_dependent_nodes(node)
-    #         deps_texts = [dep.text for dep in deps]
-    #         print(node.text, deps_texts)
+    # lemmatizer = Lemmatizer()
+    # tagger = POSTagger(model='pos_tagger.model')
+    # parser = DependencyParser(tagger=tagger, lemmatizer=lemmatizer)
+    # spacy_parser = SpacyDependencyParser(tagger=tagger, lemmatizer=lemmatizer,
+    #                                      model_file='./spacy_dependency_parser',
+    #                                      working_dir='./spacy_dependency_parser')
+    # hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
+    stanza_extractor = StanzaExtractor()
 
-    requirement = Requirement(atm, hazm_extractor.extract)
+    requirement = Requirement(atm, stanza_extractor.extract)
 
     extractor = ClassDiagramExtractor(requirement)
     extractor.extract_class_names()

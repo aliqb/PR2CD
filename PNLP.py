@@ -1,5 +1,6 @@
 from typing import List, Literal
 from hazm import Normalizer, SentenceTokenizer, WordTokenizer, Lemmatizer, POSTagger, DependencyParser
+import stanza
 
 
 class NLPNode:
@@ -53,16 +54,20 @@ class Sentence:
         return all_nodes
 
     def find_seq_dependency_name(self, node):
-        ezafe = node.tag.endswith('EZ')
         name = node.lemma
-        if ezafe or not self.with_ezafe_tag:
-            dep_nodes = self.find_dependent_nodes(node)
-            dep_nodes.sort(key=lambda n: n.address)
-            for node in dep_nodes:
-                name += ' ' + node.text
-                middle_ezafe = node.tag.endswith('EZ')
+        dep_nodes = self.find_dependent_nodes(node)
+        dep_nodes.sort(key=lambda n: n.address)
+        is_seq_root = node.tag.endswith('EZ') if self.with_ezafe_tag else (
+                len(dep_nodes) and node.address + 1 == dep_nodes[0].address)
 
-                if not middle_ezafe and self.with_ezafe_tag:
+        if is_seq_root:
+            for index in range(len(dep_nodes)):
+                dep_node = dep_nodes[index]
+                name += ' ' + dep_node.text
+                middle_ezafe = dep_node.tag.endswith('EZ')
+                must_break = middle_ezafe if self.with_ezafe_tag else (
+                            index != len(dep_nodes) - 1 and dep_node.address + 1 != dep_nodes[index + 1].address)
+                if must_break:
                     break
         return name
 
@@ -109,3 +114,32 @@ class HazmExtractor:
             sentences.append(Sentence(sentence, nodes, with_ezafe_tag=self.with_ezafe_tag))
 
         return sentences
+
+
+class StanzaExtractor:
+    def __init__(self):
+        self.pipline = stanza.Pipeline(lang='fa', processors='tokenize,mwt,pos,lemma,depparse')
+
+    def extract(self, text):
+        doc = self.pipline(text)
+        return [Sentence(stanza_sentence.text, self.get_sentence_nodes(stanza_sentence)) for stanza_sentence in
+                doc.sentences]
+
+    def get_sentence_nodes(self, sentence):
+        nodes = []
+        for word in sentence.words:
+            nodes.append(
+                NLPNode(address=word.id, text=word.text, tag=word.pos, rel=word.deprel, head=word.head,
+                        deps=self.find_word_deps(sentence, word), lemma=word.lemma))
+        return nodes
+
+    def find_word_deps(self, sentence, word):
+        deps = {}
+        for head, rel, dep in sentence.dependencies:
+            if head.id == word.id:
+                if rel in deps:
+                    deps[rel].append(dep.id)
+                else:
+                    deps[rel] = [dep.id]
+
+        return deps
