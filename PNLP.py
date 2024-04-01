@@ -12,6 +12,9 @@ class NLPNode:
         self.text = text
         self.address = address
 
+    def __str__(self):
+        return self.text
+
 
 class Sentence:
     def __init__(self, text, nlp_nodes: List[NLPNode], find_seq_method: Literal['dep', 'ezafe'] = 'dep',
@@ -34,21 +37,31 @@ class Sentence:
             raise Exception('with_ezafe_tag is false')
         return self.find_ezafe_name(node)
 
-    def find_seq_dependency_name(self, node):
+    def find_dependent_nodes(self, node):
         seq_dependencies = ['amod', 'nmod', 'flat']
-        addresses = []
+        # addresses = []
+        nodes = []
+        deps_with_main_tag = {dep.split(':')[0]: dep for dep in node.deps}
+        for dep in seq_dependencies:
+
+            if dep in deps_with_main_tag:
+                addresses = node.deps[deps_with_main_tag[dep]]
+                nodes += [self.find_node_by_address(address) for address in addresses]
+        all_nodes = nodes.copy()
+        for node in nodes:
+            all_nodes += self.find_dependent_nodes(node)
+        return all_nodes
+
+    def find_seq_dependency_name(self, node):
         ezafe = node.tag.endswith('EZ')
         name = node.lemma
-        deps_with_main_tag = {dep.split(':')[0]: dep for dep in node.deps}
         if ezafe or not self.with_ezafe_tag:
-            for dep in seq_dependencies:
+            dep_nodes = self.find_dependent_nodes(node)
+            dep_nodes.sort(key=lambda n: n.address)
+            for node in dep_nodes:
+                name += ' ' + node.text
+                middle_ezafe = node.tag.endswith('EZ')
 
-                if dep in deps_with_main_tag:
-                    addresses += node.deps[deps_with_main_tag[dep]]
-            for address in addresses:
-                next_node = self.find_node_by_address(address)
-                middle_ezafe = next_node.tag.endswith('EZ')
-                name += ' ' + next_node.text
                 if not middle_ezafe and self.with_ezafe_tag:
                     break
         return name
@@ -69,11 +82,10 @@ class Sentence:
 
 
 class HazmExtractor:
-    def __init__(self, parser, lemmatizer, with_ezafe_tag:bool=False):
+    def __init__(self, parser, lemmatizer, with_ezafe_tag: bool = False):
         self.with_ezafe_tag = with_ezafe_tag
         self.lemmatizer = lemmatizer
         self.parser = parser
-
 
     def extract(self, text: str):
         normalizer = Normalizer()
@@ -94,6 +106,6 @@ class HazmExtractor:
                 nodes.append(
                     NLPNode(address=node['address'], text=node['word'], tag=tag, rel=node['rel'], head=node['head'],
                             deps=node['deps'], lemma=lemma))
-            sentences.append(Sentence(sentence, nodes,with_ezafe_tag=self.with_ezafe_tag))
+            sentences.append(Sentence(sentence, nodes, with_ezafe_tag=self.with_ezafe_tag))
 
         return sentences

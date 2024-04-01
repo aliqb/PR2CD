@@ -40,19 +40,18 @@ if __name__ == '__main__':
                                          model_file='./spacy_dependency_parser',
                                          working_dir='./spacy_dependency_parser')
     hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
+    # sentences = hazm_extractor.extract('من کتاب ویکتور هوگو را خواندم. حسن غذای خوشمزه را پخت.')
+    # print(sentences)
+    # for sentence in sentences:
+    #     for node in sentence.nlp_nodes:
+    #         deps = sentence.find_dependent_nodes(node)
+    #         deps_texts = [dep.text for dep in deps]
+    #         print(node.text, deps_texts)
+
     requirement = Requirement(atm, hazm_extractor.extract)
 
     extractor = ClassDiagramExtractor(requirement)
     extractor.extract_class_names()
     for element in extractor.class_names:
         print(element['text'])
-    # tagger = POSTagger(model='pos_tagger.model')
-    # lemmatizer = Lemmatizer()
-    # spacy_parser = SpacyDependencyParser(tagger=tagger, lemmatizer=lemmatizer,
-    #                                      model_file='./spacy_dependency_parser',
-    #                                      working_dir='./spacy_dependency_parser')
-    # spacy_result = spacy_parser.parse_sents([word_tokenize('من به مدرسه رفته بودم.')])
-    # # ps = parser.parse_sents(sentences='من به مدرسته رفته بودم.')
-    # for dg in spacy_result:
-    #     printGraph(dg)
 
