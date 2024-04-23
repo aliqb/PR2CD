@@ -55,7 +55,7 @@ class Sentence:
 
     def find_seq_dependency_name(self, node):
         name = node.lemma
-        dep_nodes = self.find_dependent_nodes(node)
+        dep_nodes = [node for node in self.find_dependent_nodes(node) if node.tag != 'PRON']
         dep_nodes.sort(key=lambda n: n.address)
         is_seq_root = node.tag.endswith('EZ') if self.with_ezafe_tag else (
                 len(dep_nodes) and node.address + 1 == dep_nodes[0].address)

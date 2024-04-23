@@ -39,7 +39,7 @@ if __name__ == '__main__':
     spacy_parser = SpacyDependencyParser(tagger=tagger, lemmatizer=lemmatizer,
                                          model_file='./spacy_dependency_parser',
                                          working_dir='./spacy_dependency_parser')
-    hazm_extractor = HazmExtractor(spacy_parser, lemmatizer)
+    hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
     stanza_extractor = StanzaExtractor()
 
     requirement = Requirement(atm, hazm_extractor.extract)
