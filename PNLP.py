@@ -14,7 +14,7 @@ class NLPNode:
         self.address = address
 
     def __str__(self):
-        return self.text
+        return f"{self.address}, {self.text}, rel:{self.rel}, head:{self.head}, tag:{self.tag}"
 
 
 class Sentence:
@@ -22,7 +22,7 @@ class Sentence:
                  with_ezafe_tag: bool = False):
         self.with_ezafe_tag = with_ezafe_tag
         self.text = text
-        self.nlp_nodes = nlp_nodes
+        self.nlp_nodes = sorted(nlp_nodes, key=lambda x: x.address)
         self.find_seq_method = find_seq_method
 
     def find_node_by_address(self, address):

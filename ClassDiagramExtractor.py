@@ -21,13 +21,15 @@ class ClassDiagramExtractor:
                 if rel == 'conj':
                     address = node.head
                     rel = sentence.find_node_by_address(address).rel
-                if rel.endswith('subj') or rel.endswith('obj') or rel.startswith('obl'):
+                if 'subj' in rel or rel.endswith('obj'):
                     name = sentence.find_seq_name(node)
-                    if not self.node_exist(self.class_names, name):
+                    same_class = self.find_class_by_name(self.class_names, name)
+                    if same_class is None:
                         self.class_names.append({'text': name, 'node': node})
+                    else:
+                        if same_class['node'].rel != 'subj' and rel == 'subj':
+                            same_class['node'] = node
 
-    def node_exist(self, diagram_list, text):
+    def find_class_by_name(self, diagram_list, text):
         filtered = [element for element in diagram_list if element['text'] == text]
-        return len(filtered) > 0
-
-
+        return filtered[0] if len(filtered) > 0 else None
