@@ -3,3 +3,4 @@ nltk
 stanza
 spacy
 spacy-transformers
+django
