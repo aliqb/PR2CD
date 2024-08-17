@@ -1,0 +1,9 @@
+<div>
+    <p>کلاس‌ها:</p>
+    <ul>
+    {% for item in classes %}
+    <li>{{ item }}</li>
+    {% endfor %}
+</ul>
+</div>
+<a href="{% url 'UI:index' %}">بازگشت</a>

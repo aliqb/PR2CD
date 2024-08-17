@@ -1,1 +1,11 @@
-<p>TEST</p>
+<form action="{% url 'UI:submit' %}" method="post">
+    {% csrf_token %}
+    {% if error %}<p>{{ error }}</p>{% endif %}
+    <div>
+        <label for="req">متن نیازمندی را وارد کنید</label>
+        <textarea name="req" id="req"></textarea>
+    </div>
+    <div>
+        <input type="submit" value="ارسال">
+    </div>
+</form>
