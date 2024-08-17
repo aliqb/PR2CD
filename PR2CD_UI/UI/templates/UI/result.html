@@ -1,9 +1,17 @@
-<div>
-    <p>کلاس‌ها:</p>
-    <ul>
-    {% for item in classes %}
-    <li>{{ item }}</li>
-    {% endfor %}
-</ul>
+{% extends "base.html" %}
+{% block content %}
+<div class="full-window d-flex centering flex-col">
+
+    <div class="result-container">
+        <div class="result-section-container">
+            <p class="result-title">کلاس‌ها:</p>
+            <ul class="result-list">
+                {% for item in classes %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <a href="{% url 'UI:index' %}" class="btn">بازگشت</a>
 </div>
-<a href="{% url 'UI:index' %}">بازگشت</a>
+{% endblock %}

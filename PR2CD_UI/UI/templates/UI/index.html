@@ -1,11 +1,16 @@
-<form action="{% url 'UI:submit' %}" method="post">
-    {% csrf_token %}
-    {% if error %}<p>{{ error }}</p>{% endif %}
-    <div>
-        <label for="req">متن نیازمندی را وارد کنید</label>
-        <textarea name="req" id="req"></textarea>
-    </div>
-    <div>
-        <input type="submit" value="ارسال">
-    </div>
-</form>
+{% extends "base.html" %}
+{% block content %}
+<div class="full-window d-flex">
+    <form action="{% url 'UI:submit' %}" method="post" class="m-auto d-flex flex-col centering">
+        {% csrf_token %}
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+        <div class="d-flex flex-col">
+            <label for="req" class="main-prompt">متن نیازمندی را وارد کنید</label>
+            <textarea name="req" id="req" class="req-input" rows="20"></textarea>
+        </div>
+        <div>
+            <input type="submit" value="ارسال" class="btn">
+        </div>
+    </form>
+</div>
+{% endblock %}

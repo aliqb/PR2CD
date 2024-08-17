@@ -6,7 +6,7 @@ app_name = "UI"
 
 urlpatterns = [
     path('', views.index, name='index'),
-    path('/submit', views.submit_req, name="submit"),
-    path('/result', views.result_view, name="result"),
+    path('submit', views.submit_req, name="submit"),
+    path('result', views.result_view, name="result"),
 
 ]
