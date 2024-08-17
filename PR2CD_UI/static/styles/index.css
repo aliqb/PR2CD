@@ -1,39 +1,44 @@
-*{
+@import "../fonts/IranYekan/IranYekan.css";
+
+* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: IRANYekan;
+
 }
-body{
+
+body {
     background-color: #f4f4f4;
-
+    font-family: IRANYekan;
 }
 
-a{
+a {
     text-decoration: none;
 }
 
-ul{
+ul {
     list-style-position: inside;
 }
 
-.full-window{
+.full-window {
     width: 100vw;
     height: 100vh;
 }
 
-.d-flex{
+.d-flex {
     display: flex;
 }
 
-.flex-col{
+.flex-col {
     flex-direction: column;
 }
 
-.m-auto{
+.m-auto {
     margin: auto;
 }
 
-.centering{
+.centering {
     justify-content: center;
     align-items: center;
 }
@@ -49,56 +54,56 @@ ul{
     transition: background-color 0.3s ease; /* Smooth transition for hover */
 }
 
- .btn:hover {
+.btn:hover {
     background-color: #0056b3; /* Darker shade on hover */
 }
 
- .btn:disabled {
+.btn:disabled {
     background-color: #6c757d; /* Disabled button color */
     cursor: not-allowed; /* Disabled cursor */
     opacity: 0.65; /* Slightly faded appearance */
 }
 
- .btn:focus {
+.btn:focus {
     outline: none; /* Remove default focus outline */
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); /* Add a custom focus outline */
 }
 
- .main-prompt{
-     padding:0.5rem 0;
-     font-size: 1.8rem;
-     display: block;
-     text-align: center;
- }
+.main-prompt {
+    padding: 0.5rem 0;
+    font-size: 1.8rem;
+    display: block;
+    text-align: center;
+}
 
- .req-input{
-     margin-bottom: 1rem;
-     width: 800px;
-     padding: 1rem;
- }
+.req-input {
+    margin-bottom: 1rem;
+    width: 800px;
+    padding: 1rem;
+}
 
- .error{
-     color: red;
- }
+.error {
+    color: red;
+}
 
- .result-container{
-     margin-bottom: 1rem;
-     display: flex;
- }
+.result-container {
+    margin-bottom: 1rem;
+    display: flex;
+}
 
- .result-section-container{
-     border: 2px solid #888787;
-     border-radius: 4px;
-     padding: 0.5rem 2rem;
+.result-section-container {
+    border: 2px solid #888787;
+    border-radius: 4px;
+    padding: 0.5rem 2rem;
 
- }
+}
 
- .result-title{
-     font-weight: bold;
-     font-size: 1.2rem;
-     margin-bottom: 0.5rem;
- }
+.result-title {
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
 
- .result-list{
-     padding-right: 0.5rem;
- }
+.result-list {
+    padding-right: 0.5rem;
+}
