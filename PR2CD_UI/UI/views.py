@@ -3,7 +3,6 @@ import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
@@ -18,7 +17,12 @@ from hazm import POSTagger, Lemmatizer, DependencyParser, word_tokenize
 # Create your views here.
 
 def index(request):
-    return render(request, 'UI/index.html')
+    req = ''
+    old_req = request.session.get('req')
+    if old_req is not None:
+        req = old_req
+    print('reg:',request.session.get('req'))
+    return render(request, 'UI/index.html', {'req': req})
 
 
 def submit_req(request):
@@ -32,7 +36,7 @@ def submit_req(request):
     BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
     model_path = os.path.join(BASE_DIR, 'pos_tagger.model')
     # Path to the model file
-    spacy_parser_path = os.path.join(BASE_DIR,'spacy_dependency_parser')
+    spacy_parser_path = os.path.join(BASE_DIR, 'spacy_dependency_parser')
     lemmatizer = Lemmatizer()
     tagger = POSTagger(model=model_path)
     spacy_parser = SpacyDependencyParser(tagger=tagger, lemmatizer=lemmatizer,
@@ -45,12 +49,12 @@ def submit_req(request):
     for element in extractor.class_names:
         print(element['text'], element['node'].rel)
     request.session['result'] = {
-        'classes':[element['text'] for element in extractor.class_names]
+        'classes': [element['text'] for element in extractor.class_names]
     }
+    request.session['req'] = requirement.text
     return HttpResponseRedirect(reverse('UI:result'))
-
 
 
 def result_view(request):
     result = request.session.get('result')
-    return render(request,'UI/result.html',result)
+    return render(request, 'UI/result.html', result)

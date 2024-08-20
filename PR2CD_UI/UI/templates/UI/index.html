@@ -6,7 +6,7 @@
         {% if error %}<p class="error">{{ error }}</p>{% endif %}
         <div class="d-flex flex-col">
             <label for="req" class="main-prompt">متن نیازمندی را وارد کنید</label>
-            <textarea name="req" id="req" class="req-input" rows="20"></textarea>
+            <textarea name="req" id="req" class="req-input" rows="20">{{ req }}</textarea>
         </div>
         <div>
             <input type="submit" value="ارسال" class="btn">

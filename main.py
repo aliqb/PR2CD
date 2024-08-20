@@ -96,10 +96,10 @@ if __name__ == '__main__':
     hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
     # stanza_extractor = StanzaExtractor()
 
-    atm_requirement = Requirement(atm, hazm_extractor.extract)
-
-    atm_extractor = ClassDiagramExtractor(atm_requirement)
-    print_for_debug(atm_extractor)
+    # atm_requirement = Requirement(atm, hazm_extractor.extract)
+    #
+    # atm_extractor = ClassDiagramExtractor(atm_requirement)
+    # print_for_debug(atm_extractor)
 
     # course_req = Requirement(course_enroll, hazm_extractor.extract)
     # course_extractor = ClassDiagramExtractor(course_req)
@@ -117,3 +117,8 @@ if __name__ == '__main__':
     # rental_car_req = Requirement(rental_car, hazm_extractor.extract)
     # rental_car_extractor = ClassDiagramExtractor(rental_car_req)
     # print_for_debug(rental_car_extractor)
+
+    test = 'فروشندگان، حقوق ثابت و میزان فروش انجام شده و درصد کمیسیون دارند.'
+    test_req = Requirement(test, hazm_extractor.extract)
+    test_extractor = ClassDiagramExtractor(test_req)
+    print_for_debug(test_extractor)
