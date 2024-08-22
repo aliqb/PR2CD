@@ -125,6 +125,7 @@ if __name__ == '__main__':
     #                                        ]))
     standard_diagram = ClassDiagram(['بانک',
                                      'رایانه',
+                                     'موز'
                                      ])
     evaluator = ExtractorEvaluator(test_extractor.diagram, standard_diagram)
     print(evaluator.evaluate_classes())

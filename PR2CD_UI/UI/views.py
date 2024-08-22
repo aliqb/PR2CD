@@ -59,5 +59,18 @@ def result_view(request):
     result = request.session.get('result')
     return render(request, 'UI/result.html', {'result': result})
 
-
+def evaluation_view(request):
+    result = request.session.get('result')
+    print(request.method)
+    if request.method == 'POST':
+        result_diagram = ClassDiagram(result['classes'])
+        standard_classes_string = request.POST['standard_classes']
+        standard_classes = standard_classes_string.split('-')
+        standard_diagram = ClassDiagram(standard_classes)
+        evaluator = ExtractorEvaluator(result_diagram, standard_diagram)
+        class_result = evaluator.evaluate_classes()
+        print(class_result)
+        return render(request,'UI/evaluation.html',{'classes':class_result})
+    else:
+        return HttpResponseRedirect(reverse('UI:result'))
 

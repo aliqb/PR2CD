@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="full-window d-flex centering flex-col">
+
+    <div class="result-container">
+        <div class="result-section-container">
+            <p class="result-title">کلاس‌ها:</p>
+            <div class="result-list">
+                <p>Recall = {{ classes.recall }}</p>
+                <p>Precision = {{ classes.precision }}</p>
+                <p>over-specification = {{ classes.over_specification }}</p>
+
+            </div>
+        </div>
+    </div>
+    <a href="{% url 'UI:result' %}" class="btn outline">بازگشت</a>
+</div>
+{% endblock %}

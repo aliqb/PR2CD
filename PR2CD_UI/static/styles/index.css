@@ -21,6 +21,10 @@ ul {
     list-style-position: inside;
 }
 
+input{
+    padding: 5px 10px;
+}
+
 .full-window {
     width: 100vw;
     height: 100vh;
@@ -69,6 +73,36 @@ ul {
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); /* Add a custom focus outline */
 }
 
+
+.btn.outline {
+    background-color: transparent; /* Transparent background */
+    color: #007BFF; /* Primary text color */
+    padding: 10px 20px; /* Spacing */
+    border: 2px solid #007BFF; /* Border with primary color */
+    border-radius: 5px; /* Rounded corners */
+    font-size: 16px; /* Font size */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition for hover */
+}
+
+.btn.outline:hover {
+    background-color: #007BFF; /* Background changes to primary color on hover */
+    color: #fff; /* Text color changes to white on hover */
+}
+
+.btn.outline:disabled {
+    border-color: #6c757d; /* Disabled border color */
+    color: #6c757d; /* Disabled text color */
+    cursor: not-allowed; /* Disabled cursor */
+    opacity: 0.65; /* Slightly faded appearance */
+}
+
+.btn.outline:focus {
+    outline: none; /* Remove default focus outline */
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); /* Add a custom focus outline */
+}
+
+
 .main-prompt {
     padding: 0.5rem 0;
     font-size: 1.8rem;
@@ -106,4 +140,26 @@ ul {
 
 .result-list {
     padding-right: 0.5rem;
+}
+
+.evaluation-container{
+    margin: 2rem;
+}
+
+.evaluation-prompt{
+    font-size: 1.2rem;
+    margin-bottom: 0.8rem;
+    text-align: center;
+}
+
+.evaluation-item{
+    margin-bottom: 1rem;
+}
+
+.evaluation-label{
+    margin-left: 0.3rem;
+}
+
+.evaluation-input{
+    width: 800px;
 }

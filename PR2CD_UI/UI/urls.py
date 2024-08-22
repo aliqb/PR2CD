@@ -8,5 +8,6 @@ urlpatterns = [
     path('', views.index, name='index'),
     path('submit', views.submit_req, name="submit"),
     path('result', views.result_view, name="result"),
+    path('evluation', views.evaluation_view, name="evaluation")
 
 ]
