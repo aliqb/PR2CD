@@ -9,7 +9,7 @@ from django.urls import reverse
 
 from PNLP import HazmExtractor
 from Requirement import Requirement
-from ClassDiagramExtractor import ClassDiagramExtractor
+from ClassDiagramExtractor import ClassDiagramExtractor, ClassDiagram, ExtractorEvaluator
 from hazm.dependency_parser import SpacyDependencyParser
 from hazm import POSTagger, Lemmatizer, DependencyParser, word_tokenize
 
@@ -21,7 +21,7 @@ def index(request):
     old_req = request.session.get('req')
     if old_req is not None:
         req = old_req
-    print('reg:',request.session.get('req'))
+    print('reg:', request.session.get('req'))
     return render(request, 'UI/index.html', {'req': req})
 
 
@@ -46,10 +46,10 @@ def submit_req(request):
     requirement = Requirement(req_text, hazm_extractor.extract)
     extractor = ClassDiagramExtractor(requirement)
     extractor.extract_class_names()
-    for element in extractor.class_names:
-        print(element['text'], element['node'].rel)
+    for element in extractor.diagram.classes:
+        print(element.text, element.node.rel)
     request.session['result'] = {
-        'classes': [element['text'] for element in extractor.class_names]
+        'classes': [element.text for element in extractor.diagram.classes]
     }
     request.session['req'] = requirement.text
     return HttpResponseRedirect(reverse('UI:result'))
@@ -57,4 +57,7 @@ def submit_req(request):
 
 def result_view(request):
     result = request.session.get('result')
-    return render(request, 'UI/result.html', result)
+    return render(request, 'UI/result.html', {'result': result})
+
+
+
