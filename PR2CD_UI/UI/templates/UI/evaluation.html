@@ -6,9 +6,15 @@
         <div class="result-section-container">
             <p class="result-title">کلاس‌ها:</p>
             <div class="result-list">
-                <p>Recall = {{ classes.recall }}</p>
-                <p>Precision = {{ classes.precision }}</p>
-                <p>over-specification = {{ classes.over_specification }}</p>
+                <p>Recall = {{ classes.recall |floatformat:2 }}</p>
+                <p>Precision = {{ classes.precision |floatformat:2 }}</p>
+                <p>over-specification = {{ classes.over_specification |floatformat:2 }}</p>
+                <hr>
+                <p>n_correct = {{ classes.n_correct }}</p>
+                <p>n_incorrect = {{ classes.n_incorrect }}</p>
+                <p>n_missing = {{ classes.n_missing }}</p>
+                <p>n_key = {{ classes.n_key }}</p>
+
 
             </div>
         </div>

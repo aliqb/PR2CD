@@ -25,9 +25,16 @@ input{
     padding: 5px 10px;
 }
 
-.full-window {
+.content {
     width: 100vw;
     height: 100vh;
+    padding: 1rem 0;
+    overflow-x: hidden;
+}
+
+.full-window{
+    width: 100%;
+    min-height: 100%;
 }
 
 .d-flex {

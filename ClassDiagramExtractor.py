@@ -67,6 +67,8 @@ class ExtractorEvaluator:
         intersection = list(standard_set & solution_set)
         n_correct = len(intersection)
         extras = list(solution_set - standard_set)
+        missing = list(standard_set - solution_set)
+        n_missing = len(missing)
         n_incorrect = len(extras)
         n_key = len(key_elements)
         recall = n_correct / n_key
@@ -75,7 +77,11 @@ class ExtractorEvaluator:
         return {
             'recall': recall,
             'precision': precision,
-            'over_specification': over_specification
+            'over_specification': over_specification,
+            'n_key': n_key,
+            'n_correct': n_correct,
+            'n_incorrect': n_incorrect,
+            'n_missing': n_missing
         }
 
     def evaluate_classes(self):

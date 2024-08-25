@@ -12,6 +12,7 @@ from Requirement import Requirement
 from ClassDiagramExtractor import ClassDiagramExtractor, ClassDiagram, ExtractorEvaluator
 from hazm.dependency_parser import SpacyDependencyParser
 from hazm import POSTagger, Lemmatizer, DependencyParser, word_tokenize
+import re
 
 
 # Create your views here.
@@ -65,7 +66,8 @@ def evaluation_view(request):
     if request.method == 'POST':
         result_diagram = ClassDiagram(result['classes'])
         standard_classes_string = request.POST['standard_classes']
-        standard_classes = standard_classes_string.split('-')
+        standard_classes = [key.strip() for key in re.split(r'[\-–]',standard_classes_string)]
+        print(standard_classes)
         standard_diagram = ClassDiagram(standard_classes)
         evaluator = ExtractorEvaluator(result_diagram, standard_diagram)
         class_result = evaluator.evaluate_classes()
