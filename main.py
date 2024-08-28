@@ -19,8 +19,13 @@ def printGraph(dg):
 
 def print_for_debug(extractor):
     extractor.extract_class_names()
+    extractor.extract_attributes()
     for element in extractor.diagram.classes:
         print(element.text, element.node.rel)
+        print('attrs:')
+        for attr in element.attributes:
+            print(attr.text, attr.node.rel)
+        print('---------------------------')
 
 
 if __name__ == '__main__':
@@ -116,16 +121,18 @@ if __name__ == '__main__':
     # rental_car_extractor = ClassDiagramExtractor(rental_car_req)
     # print_for_debug(rental_car_extractor)
 
-    test = 'اعضا به عضو عادی و عضو دانشجو دسته بندی می شوند.'
+    # test = 'هر پرسنل دارای اطلاعاتی مانند نام، سن و جنسیت است.'
+    test = 'کاربر وارد سیستم می‌شود. کاربر با نام و سن تعریف می‌گردد.'
+
     test_req = Requirement(test, hazm_extractor.extract)
     test_extractor = ClassDiagramExtractor(test_req)
     print_for_debug(test_extractor)
     # print(test_extractor.evaluate_classes(['بانک',
     #                                        'رایانه',
     #                                        ]))
-    standard_diagram = ClassDiagram(['بانک',
-                                     'رایانه',
-                                     'موز'
-                                     ])
-    evaluator = ExtractorEvaluator(test_extractor.diagram, standard_diagram)
-    print(evaluator.evaluate_classes())
+    # standard_diagram = ClassDiagram(['بانک',
+    #                                  'رایانه',
+    #                                  'موز'
+    #                                  ])
+    # evaluator = ExtractorEvaluator(test_extractor.diagram, standard_diagram)
+    # print(evaluator.evaluate_classes())

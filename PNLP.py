@@ -25,6 +25,76 @@ class Sentence:
         self.nlp_nodes = sorted(nlp_nodes, key=lambda x: x.address)
         self.find_seq_method = find_seq_method
 
+    def find_root(self):
+        for node in self.nlp_nodes:
+            if node.rel == 'ROOT':
+                return node
+
+    def find_conjuncts(self, node):
+        conj_addresses = node.deps.get('conj', [])
+        return [self.find_node_by_address(address) for address in conj_addresses]
+
+    def is_esnadi(self):
+        return any(node.rel == 'cop' for node in self.nlp_nodes)
+
+    def is_hastan_masdar(self):
+        root = self.find_root()
+        return root.tag == 'VERB' and 'هست' in root.lemma
+
+
+
+    def find_objects(self):
+        sentence_objects = [node for node in self.nlp_nodes if node.rel is not None and node.rel.endswith('obj')]
+        objects_conjs = []
+        for obj in sentence_objects:
+            objects_conjs += self.find_conjuncts(obj)
+        return sentence_objects + objects_conjs
+
+    def find_obliques(self, oblique_type=None):
+        rel = 'obl'
+        if oblique_type is not None:
+            rel += f":{oblique_type}"
+        sentence_objects = [node for node in self.nlp_nodes if node.rel is not None and node.rel.startswith(rel)]
+        oblique_conjs = []
+        for obl in sentence_objects:
+            oblique_conjs += self.find_conjuncts(obl)
+        return sentence_objects + oblique_conjs
+
+    def find_compounds(self, compound_type=None):
+        rel = 'compound'
+        if compound_type is not None:
+            rel += f":{compound_type}"
+        sentence_compound = [node for node in self.nlp_nodes if node.rel is not None and node.rel.startswith(rel)]
+        conjs = []
+        for conj in sentence_compound:
+            conjs += self.find_conjuncts(conj)
+        return sentence_compound + conjs
+
+    def find_noun_modifiers(self, node):
+        noun_modifiers_addresses = node.deps['nmod']
+        noun_modifiers = []
+        if noun_modifiers_addresses is not None:
+            for address in noun_modifiers_addresses:
+                node = self.find_node_by_address(address)
+                noun_modifiers.append(node)
+                noun_modifiers += self.find_conjuncts(node)
+        return noun_modifiers
+
+    def find_subjects(self):
+        sentence_objects = [node for node in self.nlp_nodes if node.rel is not None and 'subj' in node.rel]
+        subject_conjs = []
+        for subj in sentence_objects:
+            subject_conjs += self.find_conjuncts(subj)
+
+        return sentence_objects + subject_conjs
+
+
+    def find_xcomps(self):
+        xcomps = [node for node in self.nlp_nodes if node.rel is not None and node.rel == 'xcomp']
+        conjs = []
+        for xcomp in xcomps:
+            conjs += self.find_conjuncts(xcomp)
+
     def find_node_by_address(self, address):
         filtered = [node for node in self.nlp_nodes if node.address == address]
         if len(filtered) > 0:
@@ -112,7 +182,7 @@ class HazmExtractor:
                     node['lemma'] = self.lemmatizer.lemmatize(lemma, 'V')
                 nodes.append(
                     NLPNode(address=node['address'], text=node['word'], tag=tag, rel=node['rel'], head=node['head'],
-                            deps=node['deps'], lemma=lemma))
+                            deps=node['deps'], lemma=node['lemma']))
             sentences.append(
                 Sentence(sentence, nodes, with_ezafe_tag=self.with_ezafe_tag, find_seq_method=self.find_seq_method))
 
