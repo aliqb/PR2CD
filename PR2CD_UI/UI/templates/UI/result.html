@@ -3,17 +3,31 @@
 <div class="full-window d-flex centering flex-col">
 
     <div class="result-container">
+        {% for item in result.classes %}
         <div class="result-section-container">
-            <p class="result-title">کلاس‌ها:</p>
+            <p class="result-title">{{item.text}}</p>
             <ul class="result-list">
-                {% for item in result.classes %}
-                <li>{{ item }}</li>
+                {% for attr in item.attributes %}
+                <li>{{ item.text }}</li>
+
                 {% endfor %}
             </ul>
         </div>
+        {% endfor %}
+        <!--        <div class="result-section-container">-->
+        <!--            <p class="result-title">کلاس‌ها:</p>-->
+        <!--            <ul class="result-list">-->
+        <!--                {% for item in result.classes %}-->
+        <!--                <li>{{ item.text }}</li>-->
+        <!--                    {% for attr in item.attributes %}-->
+        <!--                    <p>{{ attr }}</p>-->
+        <!--                    {% endfor %}-->
+        <!--                {% endfor %}-->
+        <!--            </ul>-->
+        <!--        </div>-->
     </div>
     <div class="evaluation-container">
-        <p class="evaluation-prompt" >برای ارزیابی موارد درست را وارد کنید: (با - جدا کنید)</p>
+        <p class="evaluation-prompt">برای ارزیابی موارد درست را وارد کنید: (با - جدا کنید)</p>
         <form method="post" action="{% url 'UI:evaluation' %}">
             {% csrf_token %}
 

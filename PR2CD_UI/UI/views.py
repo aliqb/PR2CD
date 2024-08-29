@@ -47,10 +47,16 @@ def submit_req(request):
     requirement = Requirement(req_text, hazm_extractor.extract)
     extractor = ClassDiagramExtractor(requirement)
     extractor.extract_class_names()
+    extractor.extract_attributes()
     for element in extractor.diagram.classes:
         print(element.text, element.node.rel)
+        print('attrs:')
+        for attr in element.attributes:
+            print(attr.text, attr.node.rel)
+        print('---------------------------')
     request.session['result'] = {
-        'classes': [element.text for element in extractor.diagram.classes]
+        'classes': [{'text': element.text, 'attributes': [attr.text for attr in element.attributes]} for element in
+                    extractor.diagram.classes]
     }
     request.session['req'] = requirement.text
     return HttpResponseRedirect(reverse('UI:result'))
@@ -58,7 +64,9 @@ def submit_req(request):
 
 def result_view(request):
     result = request.session.get('result')
+    print(result)
     return render(request, 'UI/result.html', {'result': result})
+
 
 def evaluation_view(request):
     result = request.session.get('result')
@@ -66,13 +74,12 @@ def evaluation_view(request):
     if request.method == 'POST':
         result_diagram = ClassDiagram(result['classes'])
         standard_classes_string = request.POST['standard_classes']
-        standard_classes = [key.strip() for key in re.split(r'[\-–]',standard_classes_string)]
+        standard_classes = [key.strip() for key in re.split(r'[\-–]', standard_classes_string)]
         print(standard_classes)
         standard_diagram = ClassDiagram(standard_classes)
         evaluator = ExtractorEvaluator(result_diagram, standard_diagram)
         class_result = evaluator.evaluate_classes()
         print(class_result)
-        return render(request,'UI/evaluation.html',{'classes':class_result})
+        return render(request, 'UI/evaluation.html', {'classes': class_result})
     else:
         return HttpResponseRedirect(reverse('UI:result'))
-
