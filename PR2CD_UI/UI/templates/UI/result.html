@@ -27,21 +27,27 @@
         <!--        </div>-->
     </div>
     <div class="evaluation-container">
-        <p class="evaluation-prompt">برای ارزیابی موارد درست را وارد کنید: </p>
+        <p class="evaluation-prompt">برای ارزیابی موارد درست را وارد کنید یا فایل JSON بازگذاری کنید: </p>
+        <form>
+            <div class="d-flex centering evaluation-file-group">
+                <label for="design-file" class="btn outline file-label">بارگذاری فایل</label>
+                <input id="design-file" type="file" class="d-none" accept="application/json">
+            </div>
+        </form>
         <form method="post" action="{% url 'UI:evaluation' %}">
             {% csrf_token %}
             <div id="classes-container">
-<!--                <div class="evaluation-class-item">-->
-<!--                    <div class="evaluation-form-control">-->
-<!--                        <label for="standard_classes" class="evaluation-label">نام کلاس:</label>-->
-<!--                        <input id="standard_classes" name="standard_classes" class="evaluation-input">-->
-<!--                    </div>-->
-<!--                    <div class="evaluation-form-control">-->
-<!--                        <label for="standard_attribute" class="evaluation-label">ویژگی‌ها:</label>-->
-<!--                        <input id="standard_attribute" name="standard_classes" class="attribute-input">-->
-<!--                    </div>-->
-<!--                    <button type="button" class="btn plus-btn">+</button>-->
-<!--                </div>-->
+                <!--                <div class="evaluation-class-item">-->
+                <!--                    <div class="evaluation-form-control">-->
+                <!--                        <label for="standard_classes" class="evaluation-label">نام کلاس:</label>-->
+                <!--                        <input id="standard_classes" name="standard_classes" class="evaluation-input">-->
+                <!--                    </div>-->
+                <!--                    <div class="evaluation-form-control">-->
+                <!--                        <label for="standard_attribute" class="evaluation-label">ویژگی‌ها:</label>-->
+                <!--                        <input id="standard_attribute" name="standard_classes" class="attribute-input">-->
+                <!--                    </div>-->
+                <!--                    <button type="button" class="btn plus-btn">+</button>-->
+                <!--                </div>-->
             </div>
 
 
@@ -55,10 +61,12 @@
 <script>
     // const plusBtn = document.querySelector('.plus-btn')
     const classesContainer = document.querySelector('#classes-container')
+    const fileInput = document.querySelector('#design-file')
     addClassItem()
-    function addClassItem(event) {
+
+    function addClassItem(className, attributesArr) {
         console.log('gggggggggggg')
-        const  newDiv = document.createElement("div");
+        const newDiv = document.createElement("div");
         newDiv.className = "evaluation-class-item";
 
         // Create the class input
@@ -67,9 +75,12 @@
         const classLabel = document.createElement("label");
         classLabel.innerHTML = "نام کلاس:";
         classLabel.className = "evaluation-label";
-        const  classInput = document.createElement("input");
+        const classInput = document.createElement("input");
         classInput.name = "standard_classes";
         classInput.className = "evaluation-input";
+        if (className){
+            classInput.value = className
+        }
 
         classDiv.appendChild(classLabel);
         classDiv.appendChild(classInput);
@@ -84,6 +95,9 @@
         attrInput.name = "standard_attributes";
         attrInput.className = "attribute-input";
         attrInput.placeholder = 'کلمات را با - از هم جدا کنید.'
+        if(attributesArr){
+            attrInput.value = attributesArr.join(' - ')
+        }
 
         attrDiv.appendChild(attrLabel);
         attrDiv.appendChild(attrInput);
@@ -97,16 +111,37 @@
         plusBtn.type = "button";
         plusBtn.className = "btn plus-btn";
         plusBtn.innerHTML = "+";
-        plusBtn.addEventListener('click',addClassItem)
+        plusBtn.addEventListener('click', event => {
+            event.target.style.visibility = 'hidden'
+
+            addClassItem('', [])
+        })
 
         newDiv.appendChild(plusBtn);
-
-        // Append the new div to the container
-        if(event){
-                    event.target.style.visibility = 'hidden'
-        }
         classesContainer.appendChild(newDiv);
     }
+
+    function onInputFile(event) {
+        classesContainer.innerHTML = ''
+        const file = event.target.files[0]; // Get the first selected file
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                try {
+                    const classElements = JSON.parse(e.target.result); // Parse the JSON file content
+                    console.log(classElements)
+                    classElements.forEach(element=>{
+                        addClassItem(element.text, element.attributes )
+                    })
+                } catch (error) {
+                    alert("Error parsing JSON file: " + error.message);
+                }
+            }
+            reader.readAsText(file, "UTF-8"); // Read the file as text
+        }
+    }
+
+    fileInput.addEventListener('change',onInputFile)
 
     // plusBtn.addEventListener('click', addClassItem)
 </script>

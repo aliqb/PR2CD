@@ -41,6 +41,10 @@ input{
     display: flex;
 }
 
+.d-none{
+    display: none;
+}
+
 .flex-col {
     flex-direction: column;
 }
@@ -117,6 +121,14 @@ input{
     text-align: center;
 }
 
+.file-label{
+    padding: 0px 10px !important;
+    margin-bottom: 8px;
+    display: inline-block;
+}
+
+
+
 .req-input {
     margin-bottom: 1rem;
     width: 800px;
@@ -160,7 +172,7 @@ input{
 
 .evaluation-prompt{
     font-size: 1.2rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     text-align: center;
 }
 
@@ -191,4 +203,8 @@ input{
     height: 40px;
     padding: 0;
     font-size: 1.5rem;
+}
+
+.evaluation-file-group{
+    margin-bottom: 0.5rem;
 }

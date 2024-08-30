@@ -6,6 +6,10 @@
         {% if error %}<p class="error">{{ error }}</p>{% endif %}
         <div class="d-flex flex-col">
             <label for="req" class="main-prompt">متن نیازمندی را وارد کنید</label>
+            <div>
+                <label for="requirement-file" class="btn outline file-label">بارگذاری فایل</label>
+                <input id="requirement-file" type="file" class="d-none" accept="text/plain">
+            </div>
             <textarea name="req" id="req" class="req-input" rows="20">{{ req }}</textarea>
         </div>
         <div>
@@ -13,4 +17,19 @@
         </div>
     </form>
 </div>
+<script>
+    const inputFile = document.querySelector("#requirement-file")
+    const textArea = document.querySelector("#req")
+    function onInputFile(event){
+         const file = event.target.files[0]; // Get the first selected file
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                textArea.value = e.target.result; // Populate the textarea with the file content
+            }
+            reader.readAsText(file, "UTF-8"); // Read the file as text
+        }
+    }
+    inputFile.addEventListener('input',onInputFile)
+</script>
 {% endblock %}
