@@ -13,7 +13,8 @@ class ClassElement(DesignElement):
         self.attributes = []
 
     def add_attribute(self, text, node=None):
-        self.attributes.append(DesignElement(text, node))
+        if not  any(attr.text == text for attr in self.attributes):
+            self.attributes.append(DesignElement(text, node))
 
 
 class ClassDiagram:
@@ -114,7 +115,10 @@ class ClassDiagramExtractor:
         for node in nodes:
             if node.rel == 'nmod':
                 head_node = sentence.find_node_by_address(node.head)
-                class_element = self.find_class_by_node_text(node.text)
+                if 'NOUN' not in head_node.tag:
+                    return
+                node_name = sentence.find_seq_name(node)
+                class_element = self.find_class_by_name(node_name)#############
 
                 if class_element is not None:
                     if head_node.lemma in self.attr_terms:
@@ -123,8 +127,8 @@ class ClassDiagramExtractor:
                             self.add_attr_esnadi_roots(sentence, class_element)
                         # if sentence.is_hastan_masdar():
                         #     self.add_attr_hastan_xcomp(sentence, node, class_element)
-                        # return
-                    class_element.add_attribute(head_node.text, head_node)
+                        return
+                    class_element.add_attribute(head_node.lemma, head_node)
 
     def extract_attr_verb_particle_rule(self, sentence):
         compounds = sentence.find_compounds()

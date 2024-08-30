@@ -41,10 +41,9 @@ class Sentence:
         root = self.find_root()
         return root.tag == 'VERB' and 'هست' in root.lemma
 
-
-
     def find_objects(self):
-        sentence_objects = [node for node in self.nlp_nodes if node.rel is not None and node.rel.endswith('obj')]
+        root = self.find_root()
+        sentence_objects = [node for node in self.nlp_nodes if node.rel is not None and node.rel.endswith('obj') and node.head == root.address]
         objects_conjs = []
         for obj in sentence_objects:
             objects_conjs += self.find_conjuncts(obj)
@@ -81,13 +80,14 @@ class Sentence:
         return noun_modifiers
 
     def find_subjects(self):
-        sentence_objects = [node for node in self.nlp_nodes if node.rel is not None and 'subj' in node.rel]
+        root = self.find_root()
+        sentence_objects = [node for node in self.nlp_nodes if
+                            node.rel is not None and 'subj' in node.rel and node.head == root.address]
         subject_conjs = []
         for subj in sentence_objects:
             subject_conjs += self.find_conjuncts(subj)
 
         return sentence_objects + subject_conjs
-
 
     def find_xcomps(self):
         xcomps = [node for node in self.nlp_nodes if node.rel is not None and node.rel == 'xcomp']

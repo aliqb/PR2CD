@@ -122,8 +122,7 @@ if __name__ == '__main__':
     # print_for_debug(rental_car_extractor)
 
     # test = 'هر پرسنل دارای اطلاعاتی مانند نام، سن و جنسیت است.'
-    test = 'کاربر وارد سیستم می‌شود. کاربر با نام و سن تعریف می‌گردد.'
-
+    test = 'بانک‌ها نرم‌افزار مخصوص به بانک خود را تهیه خواهند کرد.'
     test_req = Requirement(test, hazm_extractor.extract)
     test_extractor = ClassDiagramExtractor(test_req)
     print_for_debug(test_extractor)
