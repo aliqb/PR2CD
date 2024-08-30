@@ -8,12 +8,19 @@ class DesignElement:
 
 
 class ClassElement(DesignElement):
-    def __init__(self, text, node=None):
+    def __init__(self, text, node=None, attributes=None):
         super().__init__(text, node)
         self.attributes = []
+        if attributes is None:
+            return
+        for element in attributes:
+            if isinstance(element, str):
+                self.add_attribute(element)
+            else:
+                self.attributes(element.text, element.node)
 
     def add_attribute(self, text, node=None):
-        if not  any(attr.text == text for attr in self.attributes):
+        if not any(attr.text == text for attr in self.attributes):
             self.attributes.append(DesignElement(text, node))
 
 
@@ -24,12 +31,16 @@ class ClassDiagram:
             return
         for element in classes:
             if isinstance(element, str):
-                self.add_class(element)
+                self.add_class(ClassElement(element))
+            elif isinstance(element, dict):
+                attributes = element.get('attributes',[])
+                class_element = ClassElement(element['text'],None, attributes)
+                self.add_class(class_element)
             else:
-                self.add_class(element.text, element.node)
+                self.add_class(element)
 
-    def add_class(self, text, node=None):
-        self.classes.append(ClassElement(text, node))
+    def add_class(self, class_element):
+        self.classes.append(class_element)
 
 
 class ClassDiagramExtractor:
@@ -38,7 +49,6 @@ class ClassDiagramExtractor:
         self.diagram = ClassDiagram()
         self.attr_terms = ['اطلاعات', 'فیلد', 'ویژگی', 'اطلاعاتی']
         self.attr_verb_particles = ['تعریف', 'تعیین', 'متمایز', 'مشخص']
-
 
     def extract_class_names(self):
         # rules = {
@@ -59,7 +69,7 @@ class ClassDiagramExtractor:
                     name = sentence.find_seq_name(node)
                     same_class = self.find_class_by_name(name)
                     if same_class is None:
-                        self.diagram.add_class(name, node)
+                        self.diagram.add_class(ClassElement(name, node))
                     else:
                         if same_class.node.rel != 'subj' and rel == 'subj':
                             same_class.node = node
@@ -118,7 +128,7 @@ class ClassDiagramExtractor:
                 if 'NOUN' not in head_node.tag:
                     return
                 node_name = sentence.find_seq_name(node)
-                class_element = self.find_class_by_name(node_name)#############
+                class_element = self.find_class_by_name(node_name)  #############
 
                 if class_element is not None:
                     if head_node.lemma in self.attr_terms:
@@ -143,9 +153,7 @@ class ClassDiagramExtractor:
                 for element in class_elements:
                     element.add_attribute(name, obl)
 
-
-
-    def add_attr_hastan_xcomp(self, sentence,node, class_element ):
+    def add_attr_hastan_xcomp(self, sentence, node, class_element):
         xcomps = sentence.find_xcomps()
         for xcomp in xcomps:
             if xcomp.text != node.text:
@@ -172,16 +180,16 @@ class ExtractorEvaluator:
         self.resul_diagram = result_diagram
         self.standard_diagram = standard_diagram
 
-    def evaluate_metrics(self, key_elements, result_elements):
-        standard_set = set([element.text for element in key_elements])
-        solution_set = set([element.text for element in result_elements])
+    def evaluate_metrics(self, key_texts, result_texts):
+        standard_set = set(key_texts)
+        solution_set = set(result_texts)
         intersection = list(standard_set & solution_set)
         n_correct = len(intersection)
         extras = list(solution_set - standard_set)
         missing = list(standard_set - solution_set)
         n_missing = len(missing)
         n_incorrect = len(extras)
-        n_key = len(key_elements)
+        n_key = len(key_texts)
         recall = n_correct / n_key
         precision = n_correct / (n_correct + n_incorrect)
         over_specification = n_incorrect / n_key
@@ -196,4 +204,18 @@ class ExtractorEvaluator:
         }
 
     def evaluate_classes(self):
-        return self.evaluate_metrics(self.standard_diagram.classes, self.resul_diagram.classes)
+        return self.evaluate_metrics([element.text for element in self.standard_diagram.classes],
+                                     [element.text for element in self.resul_diagram.classes])
+
+    def evaluate_attributes(self):
+        standard_attribute_texts = self.get_attributes_texts(self.standard_diagram)
+        result_attribute_text = self.get_attributes_texts(self.resul_diagram)
+        return self.evaluate_metrics(standard_attribute_texts, result_attribute_text)
+
+    def get_attributes_texts(self, diagram):
+        attribute_texts = []
+        for element in diagram.classes:
+            texts = [f"{element.text},{attr.text}" for attr in element.attributes]
+            attribute_texts += texts
+
+        return attribute_texts

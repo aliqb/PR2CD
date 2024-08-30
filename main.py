@@ -122,16 +122,15 @@ if __name__ == '__main__':
     # print_for_debug(rental_car_extractor)
 
     # test = 'هر پرسنل دارای اطلاعاتی مانند نام، سن و جنسیت است.'
-    test = 'بانک‌ها نرم‌افزار مخصوص به بانک خود را تهیه خواهند کرد.'
+    test = 'کاربر وارد می‌شود. کاربر نام و سن دارد. ماشین راه می‌رومد. ماشین دارای ترمز است.'
     test_req = Requirement(test, hazm_extractor.extract)
     test_extractor = ClassDiagramExtractor(test_req)
     print_for_debug(test_extractor)
-    # print(test_extractor.evaluate_classes(['بانک',
-    #                                        'رایانه',
-    #                                        ]))
-    # standard_diagram = ClassDiagram(['بانک',
-    #                                  'رایانه',
-    #                                  'موز'
-    #                                  ])
-    # evaluator = ExtractorEvaluator(test_extractor.diagram, standard_diagram)
-    # print(evaluator.evaluate_classes())
+    #
+    standard_diagram = ClassDiagram([{'text': 'کاربر', 'attributes': ['نام','جنسیت']},
+                                     {'text': 'ماشین', 'attributes': ['ترمز']},
+                                     {'text': 'موز', 'attributes':[]}
+                                     ])
+    evaluator = ExtractorEvaluator(test_extractor.diagram, standard_diagram)
+    print(evaluator.evaluate_classes())
+    print(evaluator.evaluate_attributes())
