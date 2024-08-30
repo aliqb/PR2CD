@@ -133,6 +133,7 @@ input{
     flex-wrap: wrap;
     gap: 1rem;
     justify-content: center;
+    width: 100%;
 }
 
 .result-section-container {
@@ -159,12 +160,18 @@ input{
 
 .evaluation-prompt{
     font-size: 1.2rem;
-    margin-bottom: 0.8rem;
+    margin-bottom: 1rem;
     text-align: center;
 }
 
-.evaluation-item{
+.evaluation-class-item{
+    display: flex;
+    justify-content: space-between;
+}
+
+.evaluation-form-control{
     margin-bottom: 1rem;
+    margin-left: 1.5rem;
 }
 
 .evaluation-label{
@@ -172,5 +179,16 @@ input{
 }
 
 .evaluation-input{
-    width: 800px;
+    /*width: 800px;*/
+}
+
+.attribute-input{
+    width: 400px;
+}
+
+.plus-btn{
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    font-size: 1.5rem;
 }

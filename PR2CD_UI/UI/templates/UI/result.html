@@ -27,19 +27,87 @@
         <!--        </div>-->
     </div>
     <div class="evaluation-container">
-        <p class="evaluation-prompt">برای ارزیابی موارد درست را وارد کنید: (با - جدا کنید)</p>
+        <p class="evaluation-prompt">برای ارزیابی موارد درست را وارد کنید: </p>
         <form method="post" action="{% url 'UI:evaluation' %}">
             {% csrf_token %}
-
-            <div class="evaluation-item">
-                <label for="standard_classes" class="evaluation-label">کلاس‌ها:</label>
-                <input id="standard_classes" name="standard_classes" class="evaluation-input">
+            <div id="classes-container">
+<!--                <div class="evaluation-class-item">-->
+<!--                    <div class="evaluation-form-control">-->
+<!--                        <label for="standard_classes" class="evaluation-label">نام کلاس:</label>-->
+<!--                        <input id="standard_classes" name="standard_classes" class="evaluation-input">-->
+<!--                    </div>-->
+<!--                    <div class="evaluation-form-control">-->
+<!--                        <label for="standard_attribute" class="evaluation-label">ویژگی‌ها:</label>-->
+<!--                        <input id="standard_attribute" name="standard_classes" class="attribute-input">-->
+<!--                    </div>-->
+<!--                    <button type="button" class="btn plus-btn">+</button>-->
+<!--                </div>-->
             </div>
+
+
             <div class="d-flex centering">
-                <input type="submit" value="ارزیابی" class="btn">
+                <input type="submit" value="ارزیابی" class="btn ">
             </div>
         </form>
     </div>
     <a href="{% url 'UI:index' %}" class="btn outline">بازگشت</a>
 </div>
+<script>
+    // const plusBtn = document.querySelector('.plus-btn')
+    const classesContainer = document.querySelector('#classes-container')
+    addClassItem()
+    function addClassItem(event) {
+        console.log('gggggggggggg')
+        const  newDiv = document.createElement("div");
+        newDiv.className = "evaluation-class-item";
+
+        // Create the class input
+        const classDiv = document.createElement("div");
+        classDiv.className = "evaluation-form-control";
+        const classLabel = document.createElement("label");
+        classLabel.innerHTML = "نام کلاس:";
+        classLabel.className = "evaluation-label";
+        const  classInput = document.createElement("input");
+        classInput.name = "standard_classes";
+        classInput.className = "evaluation-input";
+
+        classDiv.appendChild(classLabel);
+        classDiv.appendChild(classInput);
+
+        // Create the attributes input
+        const attrDiv = document.createElement("div");
+        attrDiv.className = "evaluation-form-control";
+        const attrLabel = document.createElement("label");
+        attrLabel.innerHTML = "ویژگی‌ها:";
+        attrLabel.className = "evaluation-label";
+        const attrInput = document.createElement("input");
+        attrInput.name = "standard_attributes";
+        attrInput.className = "attribute-input";
+        attrInput.placeholder = 'کلمات را با - از هم جدا کنید.'
+
+        attrDiv.appendChild(attrLabel);
+        attrDiv.appendChild(attrInput);
+
+        // Add the inputs to the new div
+        newDiv.appendChild(classDiv);
+        newDiv.appendChild(attrDiv);
+
+        // Create the plus button
+        const plusBtn = document.createElement("button");
+        plusBtn.type = "button";
+        plusBtn.className = "btn plus-btn";
+        plusBtn.innerHTML = "+";
+        plusBtn.addEventListener('click',addClassItem)
+
+        newDiv.appendChild(plusBtn);
+
+        // Append the new div to the container
+        if(event){
+                    event.target.style.visibility = 'hidden'
+        }
+        classesContainer.appendChild(newDiv);
+    }
+
+    // plusBtn.addEventListener('click', addClassItem)
+</script>
 {% endblock %}

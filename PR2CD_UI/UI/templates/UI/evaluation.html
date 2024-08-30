@@ -18,6 +18,21 @@
 
             </div>
         </div>
+           <div class="result-section-container">
+            <p class="result-title">ویژگی‌‌ها:</p>
+            <div class="result-list">
+                <p>Recall = {{ attributes.recall |floatformat:2 }}</p>
+                <p>Precision = {{ attributes.precision |floatformat:2 }}</p>
+                <p>over-specification = {{ attributes.over_specification |floatformat:2 }}</p>
+                <hr>
+                <p>n_correct = {{ attributes.n_correct }}</p>
+                <p>n_incorrect = {{ attributes.n_incorrect }}</p>
+                <p>n_missing = {{ attributes.n_missing }}</p>
+                <p>n_key = {{ attributes.n_key }}</p>
+
+
+            </div>
+        </div>
     </div>
     <a href="{% url 'UI:result' %}" class="btn outline">بازگشت</a>
 </div>

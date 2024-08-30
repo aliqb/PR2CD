@@ -72,14 +72,27 @@ def evaluation_view(request):
     result = request.session.get('result')
     print(request.method)
     if request.method == 'POST':
-        result_diagram = ClassDiagram(result['classes'])
-        standard_classes_string = request.POST['standard_classes']
-        standard_classes = [key.strip() for key in re.split(r'[\-–]', standard_classes_string)]
-        print(standard_classes)
+        # Get lists of all submitted standard_classes and standard_attributes
+        form_standard_classes = request.POST.getlist('standard_classes')
+        form_standard_attributes = request.POST.getlist('standard_attributes')
+
+        # Example: Processing the data
+        for class_name, attributes in zip(form_standard_classes, form_standard_attributes):
+            print(f"Class: {class_name}, Attributes: {attributes}")
+
+        result_diagram = ClassDiagram([item for item in result['classes']])
+        standard_classes = [{'text': class_name.strip(),
+                             'attributes': [key.strip() for key in re.split(r'[\-–]', attributes) if key != '']} for
+                            class_name, attributes in zip(form_standard_classes, form_standard_attributes) if class_name !='']
+        # standard_classes = [key.strip() for key in re.split(r'[\-–]', standard_classes_string)]
+        print(repr(standard_classes))
+
+        # print(standard_classes)
         standard_diagram = ClassDiagram(standard_classes)
         evaluator = ExtractorEvaluator(result_diagram, standard_diagram)
         class_result = evaluator.evaluate_classes()
-        print(class_result)
-        return render(request, 'UI/evaluation.html', {'classes': class_result})
+        attribute_result = evaluator.evaluate_attributes()
+        # print(class_result)
+        return render(request, 'UI/evaluation.html', {'classes': class_result, 'attributes': attribute_result})
     else:
         return HttpResponseRedirect(reverse('UI:result'))
