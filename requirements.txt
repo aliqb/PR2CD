@@ -1,4 +1,4 @@
-hazm
+git+https://github.com/aliqb/hazm.git@development#egg=hazm
 nltk
 stanza
 spacy
