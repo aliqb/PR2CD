@@ -1,0 +1,210 @@
+@import "../fonts/IranYekan/IranYekan.css";
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: IRANYekan;
+
+}
+
+body {
+    background-color: #f4f4f4;
+    font-family: IRANYekan;
+}
+
+a {
+    text-decoration: none;
+}
+
+ul {
+    list-style-position: inside;
+}
+
+input{
+    padding: 5px 10px;
+}
+
+.content {
+    width: 100vw;
+    height: 100vh;
+    padding: 1rem 0;
+    overflow-x: hidden;
+}
+
+.full-window{
+    width: 100%;
+    min-height: 100%;
+}
+
+.d-flex {
+    display: flex;
+}
+
+.d-none{
+    display: none;
+}
+
+.flex-col {
+    flex-direction: column;
+}
+
+.m-auto {
+    margin: auto;
+}
+
+.centering {
+    justify-content: center;
+    align-items: center;
+}
+
+.btn {
+    background-color: #007BFF; /* Primary color */
+    color: #fff; /* White text */
+    padding: 10px 20px; /* Spacing */
+    border: none; /* Remove default border */
+    border-radius: 5px; /* Rounded corners */
+    font-size: 16px; /* Font size */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s ease; /* Smooth transition for hover */
+}
+
+.btn:hover {
+    background-color: #0056b3; /* Darker shade on hover */
+}
+
+.btn:disabled {
+    background-color: #6c757d; /* Disabled button color */
+    cursor: not-allowed; /* Disabled cursor */
+    opacity: 0.65; /* Slightly faded appearance */
+}
+
+.btn:focus {
+    outline: none; /* Remove default focus outline */
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); /* Add a custom focus outline */
+}
+
+
+.btn.outline {
+    background-color: transparent; /* Transparent background */
+    color: #007BFF; /* Primary text color */
+    padding: 10px 20px; /* Spacing */
+    border: 2px solid #007BFF; /* Border with primary color */
+    border-radius: 5px; /* Rounded corners */
+    font-size: 16px; /* Font size */
+    cursor: pointer; /* Pointer cursor on hover */
+    transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition for hover */
+}
+
+.btn.outline:hover {
+    background-color: #007BFF; /* Background changes to primary color on hover */
+    color: #fff; /* Text color changes to white on hover */
+}
+
+.btn.outline:disabled {
+    border-color: #6c757d; /* Disabled border color */
+    color: #6c757d; /* Disabled text color */
+    cursor: not-allowed; /* Disabled cursor */
+    opacity: 0.65; /* Slightly faded appearance */
+}
+
+.btn.outline:focus {
+    outline: none; /* Remove default focus outline */
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25); /* Add a custom focus outline */
+}
+
+
+.main-prompt {
+    padding: 0.5rem 0;
+    font-size: 1.8rem;
+    display: block;
+    text-align: center;
+}
+
+.file-label{
+    padding: 0px 10px !important;
+    margin-bottom: 8px;
+    display: inline-block;
+}
+
+
+
+.req-input {
+    margin-bottom: 1rem;
+    width: 800px;
+    padding: 1rem;
+}
+
+.error {
+    color: red;
+}
+
+.result-container {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    width: 100%;
+}
+
+.result-section-container {
+    border: 2px solid #888787;
+    border-radius: 4px;
+    padding: 0.5rem 2rem;
+    width: 20%;
+
+}
+
+.result-title {
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.result-list {
+    padding-right: 0.5rem;
+}
+
+.evaluation-container{
+    margin: 2rem;
+}
+
+.evaluation-prompt{
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.evaluation-class-item{
+    display: flex;
+    justify-content: space-between;
+}
+
+.evaluation-form-control{
+    margin-bottom: 1rem;
+    margin-left: 1.5rem;
+}
+
+.evaluation-label{
+    margin-left: 0.3rem;
+}
+
+.evaluation-input{
+    /*width: 800px;*/
+}
+
+.attribute-input{
+    width: 400px;
+}
+
+.plus-btn{
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    font-size: 1.5rem;
+}
+
+.evaluation-file-group{
+    margin-bottom: 0.5rem;
+}
