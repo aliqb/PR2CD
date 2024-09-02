@@ -133,8 +133,15 @@ class ClassDiagramExtractor:
                 head_node = sentence.find_node_by_address(node.head)
                 if 'NOUN' not in head_node.tag:
                     return
+                nearest_head = head_node
+                while head_node.rel == 'nmod':
+                    prev_head = sentence.find_node_by_address(head_node.head)
+                    if 'NOUN' not in prev_head.tag or 'سیستم' in prev_head.text:######
+                        break
+                    head_node = prev_head
+
                 node_names = sentence.find_seq_names(node)
-                class_elements = [self.find_class_by_name(node_name) for node_name in node_names ] #############
+                class_elements = [self.find_class_by_name(node_name) for node_name in node_names]  #############
                 for class_element in class_elements:
                     if class_element is not None:
                         if head_node.lemma in self.attr_terms:
@@ -144,7 +151,17 @@ class ClassDiagramExtractor:
                             # if sentence.is_hastan_masdar():
                             #     self.add_attr_hastan_xcomp(sentence, node, class_element)
                             return
-                        class_element.add_attribute(head_node.lemma, head_node)
+                        if head_node.address == nearest_head.address:
+                            class_element.add_attribute(nearest_head.lemma, head_node)
+                        else:
+                            names = sentence.find_seq_names(head_node)
+                            names = [name for name in names if nearest_head.text in name]
+                            if len(names) > 0:
+                                for name in names:
+                                    modifier_name = name.replace(node.text, '')
+                                    class_element.add_attribute(modifier_name.strip(), head_node)
+                            else:
+                                class_element.add_attribute(nearest_head.lemma, head_node)
 
     def extract_attr_verb_particle_rule(self, sentence):
         compounds = sentence.find_compounds()
