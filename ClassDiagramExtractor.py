@@ -66,7 +66,7 @@ class ClassDiagramExtractor:
                     address = node.head
                     rel = sentence.find_node_by_address(address).rel
                 if 'subj' in rel or rel.endswith('obj'):
-                    names = sentence.find_seq_name(node)
+                    names = sentence.find_seq_names(node)
                     for name in names:
                         same_class = self.find_class_by_name(name)
                         if same_class is None:
@@ -86,7 +86,7 @@ class ClassDiagramExtractor:
     def extract_attr_have_rule(self, sentence):
         root = sentence.find_root()
         subjects = sentence.find_subjects()
-        subject_names = [name for subject in subjects for name in sentence.find_seq_name(subject)]
+        subject_names = [name for subject in subjects for name in sentence.find_seq_names(subject)]
         class_elements = [element for element in self.diagram.classes if element.text in subject_names]
         if root.lemma == 'داشت#دار':
             self.extract_attr_have_verb_rule(sentence, class_elements)
@@ -100,7 +100,7 @@ class ClassDiagramExtractor:
             if obj.lemma in self.attr_terms:
                 self.add_attr_terms_modifiers(sentence, obj, class_elements)
                 continue
-            names = sentence.find_seq_name(obj)
+            names = sentence.find_seq_names(obj)
             for name in names:
                 for element in class_elements:
                     element.add_attribute(name, obj)
@@ -111,7 +111,7 @@ class ClassDiagramExtractor:
             if obl.lemma in self.attr_terms:
                 self.add_attr_terms_modifiers(sentence, obl, class_elements)
                 continue
-            names = sentence.find_seq_name(obl)
+            names = sentence.find_seq_names(obl)
             for name in names:
                 for element in class_elements:
                     element.add_attribute(name, obl)
@@ -119,7 +119,7 @@ class ClassDiagramExtractor:
     def add_attr_terms_modifiers(self, sentence, node, class_elements):
         noun_modifiers = sentence.find_noun_modifiers(node)
         for noun in noun_modifiers:
-            names = sentence.find_seq_name(noun)
+            names = sentence.find_seq_names(noun)
             for element in class_elements:
                 for name in names:
                     if name != element.text:
@@ -132,7 +132,7 @@ class ClassDiagramExtractor:
                 head_node = sentence.find_node_by_address(node.head)
                 if 'NOUN' not in head_node.tag:
                     return
-                node_names = sentence.find_seq_name(node)
+                node_names = sentence.find_seq_names(node)
                 class_elements = [self.find_class_by_name(node_name) for node_name in node_names ] #############
                 for class_element in class_elements:
                     if class_element is not None:
@@ -150,11 +150,11 @@ class ClassDiagramExtractor:
         attr_compounds = list(set([node.text for node in compounds]) & set(self.attr_verb_particles))
         if len(attr_compounds) > 0:
             subjects = sentence.find_subjects()
-            subject_names = [name for subject in subjects for name in sentence.find_seq_name(subject)]
+            subject_names = [name for subject in subjects for name in sentence.find_seq_names(subject)]
             class_elements = [element for element in self.diagram.classes if element.text in subject_names]
             sentence_obliques = sentence.find_obliques()
             for obl in sentence_obliques:
-                names = sentence.find_seq_name(obl)
+                names = sentence.find_seq_names(obl)
                 for name in names:
                     for element in class_elements:
                         element.add_attribute(name, obl)
@@ -188,13 +188,13 @@ class ClassDiagramExtractor:
             obl_address = node.deps.get('obl:arg', None)
             if obl_address is not None:
                 obl = sentence.find_node_by_address(obl_address[0])
-                names = sentence.find_seq_name(obl)
+                names = sentence.find_seq_names(obl)
                 class_elements = [self.find_class_by_name(name) for name in names]
                 for class_element in class_elements:
                     if class_element is not None:
                         modifiers = sentence.find_noun_modifiers(obl)
                         for modifier in modifiers:
-                            attr_names = sentence.find_seq_name(modifier)
+                            attr_names = sentence.find_seq_names(modifier)
                             for attr_name in attr_names:
                                 class_element.add_attribute(attr_name, modifier)
 

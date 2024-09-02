@@ -106,12 +106,12 @@ class Sentence:
     def find_node_by_text(self, text):
         return [node for node in self.nlp_nodes if node.text == text]
 
-    def find_seq_name(self, node):
+    def find_seq_names(self, node):
         if self.find_seq_method == 'dep':
-            return self.find_seq_dependency_name(node)
+            return self.find_seq_dependency_names(node)
         if not self.with_ezafe_tag:
             raise Exception('with_ezafe_tag is false')
-        return self.find_ezafe_name(node)
+        return self.find_ezafe_names(node)
 
     def find_dependent_nodes(self, node):
         seq_dependencies = ['amod', 'nmod', 'flat']
@@ -128,7 +128,7 @@ class Sentence:
             all_nodes += self.find_dependent_nodes(node)
         return all_nodes
 
-    def find_seq_dependency_name(self, node):
+    def find_seq_dependency_names(self, node):
         name = node.lemma
         names = []
         dep_nodes = [node for node in self.find_dependent_nodes(node) if node.tag != 'PRON']
@@ -138,7 +138,6 @@ class Sentence:
 
         if is_seq_root and len(dep_nodes) > 0:
             dep_node = dep_nodes[0]
-            index = -1
             old_name = name
             for index in range(len(dep_nodes)):
                 dep_node = dep_nodes[index]
@@ -149,41 +148,38 @@ class Sentence:
                         dep_node.address + 1 != dep_nodes[index + 1].address)
                 if must_break:
                     break
-            # last_node = dep_nodes[index + 1]
-            # old_name = name
             names.append(name)
             conjuncts = self.find_conjuncts(dep_node)
             for conjunct in conjuncts:
-                conjunct_names = self.find_seq_dependency_name(conjunct)
+                conjunct_names = self.find_seq_dependency_names(conjunct)
                 for conjunct_name in conjunct_names:
                     names.append(old_name + " " + conjunct_name)
-            # if dep_node is not None and ((dep_node.tag.endswith('EZ') and self.with_ezafe_tag) or (
-            #         dep_node.address + 1 == dep_nodes[index + 1].address)):
-            #     last_node = dep_nodes[index + 1]
-            #     old_name = name
-            #     name += ' ' + last_node.text
-            #     names.append(name)
-            #     conjuncts = self.find_conjuncts(last_node)
-            #     for conjunct in conjuncts:
-            #         names.append(old_name + " " + conjunct.text)
-            # else:
-            #     names.append(name)
         else:
             names.append(name)
         return names
 
-    def find_ezafe_name(self, node):
+    def find_ezafe_names(self, node):
         ezafe = node.tag.endswith('EZ')
         # if name.endswith('ه') and ezafe:
         #     name += "‌ی"
         name = node.lemma
+        old_name = name
+        names = []
         address = node.address
+        next_node = None
         while ezafe:
             next_address = address + 1
             next_node = self.find_node_by_address(next_address)
+            old_name = name
             name += ' ' + next_node.text
             ezafe = next_node.tag.endswith('EZ')
             address = next_node.address
+        names.append(name)
+        conjuncts = self.find_conjuncts(next_node)
+        for conjunct in conjuncts:
+            conjunct_names = self.find_seq_dependency_names(conjunct)
+            for conjunct_name in conjunct_names:
+                names.append(old_name + " " + conjunct_name)
         return [name]
 
 
