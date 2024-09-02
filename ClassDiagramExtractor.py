@@ -185,6 +185,8 @@ class ClassDiagramExtractor:
 
     def add_attr_esnadi_roots(self, sentence, class_element):
         root = sentence.find_root()
+        if root.lemma.startswith('دارا'):
+            return
         conjuncts = sentence.find_conjuncts(root)
         conjuncts = [root] + conjuncts
         for conjunct in conjuncts:

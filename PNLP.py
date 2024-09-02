@@ -2,6 +2,7 @@ from typing import List, Literal
 from hazm import Normalizer, SentenceTokenizer, WordTokenizer, Lemmatizer, POSTagger, DependencyParser
 import stanza
 import re
+from hazm.utils import words_list
 
 
 class NLPNode:
@@ -16,6 +17,25 @@ class NLPNode:
 
     def __str__(self):
         return f"{self.address}, {self.text}, rel:{self.rel}, head:{self.head}, tag:{self.tag}"
+
+    def find_in_word_list(self):
+        lines = words_list()
+        for line in lines:
+            if line[0] == self.lemma:
+                return line
+        if self.lemma.endswith('ی'):
+            root = self.lemma[:-1]
+            for line in lines:
+                if line[0] == root:
+                    return line
+        return None
+
+    def is_pure_adj(self):
+        word_list_line = self.find_in_word_list()
+        try:
+            return word_list_line is not None and 'AJ' in word_list_line[2]
+        except TypeError:
+            return False
 
 
 class Sentence:
@@ -119,10 +139,10 @@ class Sentence:
         nodes = []
         deps_with_main_tag = {dep.split(':')[0]: dep for dep in node.deps}
         for dep in seq_dependencies:
-
             if dep in deps_with_main_tag:
                 addresses = node.deps[deps_with_main_tag[dep]]
-                nodes += [self.find_node_by_address(address) for address in addresses]
+                dep_nodes = [self.find_node_by_address(address) for address in addresses]
+                nodes += dep_nodes
         all_nodes = nodes.copy()
         for node in nodes:
             all_nodes += self.find_dependent_nodes(node)
@@ -141,11 +161,13 @@ class Sentence:
             old_name = name
             for index in range(len(dep_nodes)):
                 dep_node = dep_nodes[index]
-                old_name = name
-                name += ' ' + dep_node.text
+
                 middle_ezafe = dep_node.tag.endswith('EZ')
                 must_break = not middle_ezafe if self.with_ezafe_tag else (
                         dep_node.address + 1 != dep_nodes[index + 1].address)
+                if dep_node.rel != 'amod' or not dep_node.is_pure_adj():
+                    old_name = name
+                    name += ' ' + dep_node.text
                 if must_break:
                     break
             names.append(name)
