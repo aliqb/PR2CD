@@ -123,7 +123,8 @@ class ClassDiagramExtractor:
             for element in class_elements:
                 for name in names:
                     if name != element.text:
-                        element.add_attribute(name, noun)
+                        name = name.replace('مورد', '')
+                        element.add_attribute(name.strip(), noun)
 
     def extract_attr_noun_noun_rule(self, sentence):
         nodes = sentence.nlp_nodes
