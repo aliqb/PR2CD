@@ -214,10 +214,10 @@ class ExtractorEvaluator:
             'recall': recall,
             'precision': precision,
             'over_specification': over_specification,
-            'n_key': n_key,
             'n_correct': n_correct,
             'n_incorrect': n_incorrect,
-            'n_missing': n_missing
+            'n_missing': n_missing,
+            'n_key': n_key
         }
 
     def evaluate_classes(self):

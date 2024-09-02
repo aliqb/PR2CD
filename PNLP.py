@@ -135,15 +135,20 @@ class Sentence:
         is_seq_root = node.tag.endswith('EZ') if self.with_ezafe_tag else (
                 len(dep_nodes) and node.address + 1 == dep_nodes[0].address)
 
-        if is_seq_root:
-            for index in range(len(dep_nodes)):
+        if is_seq_root and len(dep_nodes) > 0:
+            dep_node = dep_nodes[0]
+            index = -1
+            for index in range(len(dep_nodes) - 1):
                 dep_node = dep_nodes[index]
                 name += ' ' + dep_node.text
                 middle_ezafe = dep_node.tag.endswith('EZ')
                 must_break = not middle_ezafe if self.with_ezafe_tag else (
-                        index != len(dep_nodes) - 1 and dep_node.address + 1 != dep_nodes[index + 1].address)
+                        dep_node.address + 1 != dep_nodes[index + 1].address)
                 if must_break:
                     break
+            if dep_node is not None and ((dep_node.tag.endswith('EZ') and self.with_ezafe_tag) or (
+                    dep_node.address + 1 != dep_nodes[index + 1].address)):
+                name += ' ' + dep_nodes[index + 1].text
         return name
 
     def find_ezafe_name(self, node):
