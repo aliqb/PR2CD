@@ -1,6 +1,7 @@
 from typing import List, Literal
 from hazm import Normalizer, SentenceTokenizer, WordTokenizer, Lemmatizer, POSTagger, DependencyParser
 import stanza
+import re
 
 
 class NLPNode:
@@ -43,7 +44,8 @@ class Sentence:
 
     def find_objects(self):
         root = self.find_root()
-        sentence_objects = [node for node in self.nlp_nodes if node.rel is not None and node.rel.endswith('obj') and node.head == root.address]
+        sentence_objects = [node for node in self.nlp_nodes if
+                            node.rel is not None and node.rel.endswith('obj') and node.head == root.address]
         objects_conjs = []
         for obj in sentence_objects:
             objects_conjs += self.find_conjuncts(obj)
@@ -100,6 +102,9 @@ class Sentence:
         if len(filtered) > 0:
             return filtered[0]
         return None
+
+    def find_node_by_text(self, text):
+        return [node for node in self.nlp_nodes if node.text == text]
 
     def find_seq_name(self, node):
         if self.find_seq_method == 'dep':
@@ -164,13 +169,28 @@ class HazmExtractor:
         self.lemmatizer = lemmatizer
         self.parser = parser
 
-    def extract(self, text: str):
+    def replace_words(self, text, words_to_replace, replacement_word):
+        pattern = r'\b(' + '|'.join(map(re.escape, words_to_replace)) + r')\b'
+        return re.sub(pattern, replacement_word, text)
+
+    def text_preprocess(self, text):
         normalizer = Normalizer()
+        text = normalizer.normalize(text)
+        example_terms = [
+            "نظیر",
+            "همانند",
+            "هم‌مانند",
+            "از قبیل",
+            "مثل"
+        ]
+        text = self.replace_words(text, example_terms, 'مانند')
+        return text
+
+    def extract(self, text: str):
         sentence_tokenizer = SentenceTokenizer()
         word_tokenizer = WordTokenizer()
-        # parser = DependencyParser(tagger=POSTagger(model='pos_tagger.model'), lemmatizer=lemmatizer)
-        text = normalizer.normalize(text)
-        raw_sentences = [sentence[:-1] for sentence in sentence_tokenizer.tokenize(text)]
+        final_text = self.text_preprocess(text)
+        raw_sentences = [sentence[:-1] for sentence in sentence_tokenizer.tokenize(final_text)]
         sentences = []
         for sentence in raw_sentences:
             hazm_nodes = (self.parser.parse(word_tokenizer.tokenize(sentence))).nodes
