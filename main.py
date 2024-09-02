@@ -80,7 +80,7 @@ if __name__ == '__main__':
     hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
     # stanza_extractor = StanzaExtractor()
     for file in file_names:
-        extract_and_evaluate_from_file(file, hazm_extractor, False)
+        extract_and_evaluate_from_file(file, hazm_extractor, True)
     # text = "میوه‌های هر فرد از قبیل موز و خیار است."
     # test_req = Requirement(text, hazm_extractor.extract)
     # test_extractor = ClassDiagramExtractor(test_req)
@@ -92,3 +92,4 @@ if __name__ == '__main__':
     # evaluator = ExtractorEvaluator(test_extractor.diagram, standard_diagram)
     # print(evaluator.evaluate_classes())
     # print(evaluator.evaluate_attributes())
+

@@ -130,6 +130,7 @@ class Sentence:
 
     def find_seq_dependency_name(self, node):
         name = node.lemma
+        names = []
         dep_nodes = [node for node in self.find_dependent_nodes(node) if node.tag != 'PRON']
         dep_nodes.sort(key=lambda n: n.address)
         is_seq_root = node.tag.endswith('EZ') if self.with_ezafe_tag else (
@@ -138,18 +139,38 @@ class Sentence:
         if is_seq_root and len(dep_nodes) > 0:
             dep_node = dep_nodes[0]
             index = -1
-            for index in range(len(dep_nodes) - 1):
+            old_name = name
+            for index in range(len(dep_nodes)):
                 dep_node = dep_nodes[index]
+                old_name = name
                 name += ' ' + dep_node.text
                 middle_ezafe = dep_node.tag.endswith('EZ')
                 must_break = not middle_ezafe if self.with_ezafe_tag else (
                         dep_node.address + 1 != dep_nodes[index + 1].address)
                 if must_break:
                     break
-            if dep_node is not None and ((dep_node.tag.endswith('EZ') and self.with_ezafe_tag) or (
-                    dep_node.address + 1 != dep_nodes[index + 1].address)):
-                name += ' ' + dep_nodes[index + 1].text
-        return name
+            # last_node = dep_nodes[index + 1]
+            # old_name = name
+            names.append(name)
+            conjuncts = self.find_conjuncts(dep_node)
+            for conjunct in conjuncts:
+                conjunct_names = self.find_seq_dependency_name(conjunct)
+                for conjunct_name in conjunct_names:
+                    names.append(old_name + " " + conjunct_name)
+            # if dep_node is not None and ((dep_node.tag.endswith('EZ') and self.with_ezafe_tag) or (
+            #         dep_node.address + 1 == dep_nodes[index + 1].address)):
+            #     last_node = dep_nodes[index + 1]
+            #     old_name = name
+            #     name += ' ' + last_node.text
+            #     names.append(name)
+            #     conjuncts = self.find_conjuncts(last_node)
+            #     for conjunct in conjuncts:
+            #         names.append(old_name + " " + conjunct.text)
+            # else:
+            #     names.append(name)
+        else:
+            names.append(name)
+        return names
 
     def find_ezafe_name(self, node):
         ezafe = node.tag.endswith('EZ')
@@ -163,7 +184,7 @@ class Sentence:
             name += ' ' + next_node.text
             ezafe = next_node.tag.endswith('EZ')
             address = next_node.address
-        return name
+        return [name]
 
 
 class HazmExtractor:
