@@ -33,8 +33,8 @@ class ClassDiagram:
             if isinstance(element, str):
                 self.add_class(ClassElement(element))
             elif isinstance(element, dict):
-                attributes = element.get('attributes',[])
-                class_element = ClassElement(element['text'],None, attributes)
+                attributes = element.get('attributes', [])
+                class_element = ClassElement(element['text'], None, attributes)
                 self.add_class(class_element)
             else:
                 self.add_class(element)
@@ -80,6 +80,7 @@ class ClassDiagramExtractor:
             self.extract_attr_have_rule(sentence)
             self.extract_attr_noun_noun_rule(sentence)
             self.extract_attr_verb_particle_rule(sentence)
+            self.attr_term_related_to_rule(sentence)
 
     def extract_attr_have_rule(self, sentence):
         root = sentence.find_root()
@@ -173,6 +174,22 @@ class ClassDiagramExtractor:
     def find_class_by_node_text(self, text):
         filtered = [element for element in self.diagram.classes if element.node.text == text]
         return filtered[0] if len(filtered) > 0 else None
+
+    def attr_term_related_to_rule(self, sentence):
+        related_term_nodes = sentence.find_node_by_text('مربوط') + sentence.find_node_by_text('مرتبط')
+        related_term_nodes = [node for node in related_term_nodes if
+                              node.rel == 'amod' and sentence.find_node_by_address(node.head).lemma in self.attr_terms]
+        for node in related_term_nodes:
+            obl_address = node.deps.get('obl:arg', None)
+            if obl_address is not None:
+                obl = sentence.find_node_by_address(obl_address[0])
+                name = sentence.find_seq_name(obl)
+                class_element = self.find_class_by_name(name)
+                if class_element is not None:
+                    modifiers = sentence.find_noun_modifiers(obl)
+                    for modifier in modifiers:
+                        attr_name = sentence.find_seq_name(modifier)
+                        class_element.add_attribute(attr_name, modifier)
 
 
 class ExtractorEvaluator:
