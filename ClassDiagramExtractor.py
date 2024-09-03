@@ -135,7 +135,9 @@ class ClassDiagramExtractor:
             if node.rel == 'nmod':
                 head_node = sentence.find_node_by_address(node.head)
                 if 'NOUN' not in head_node.tag:
-                    return
+                    continue
+                if not sentence.are_together(head_node, node, True):
+                    continue
                 nearest_head = head_node
                 while head_node.rel == 'nmod':
                     prev_head = sentence.find_node_by_address(head_node.head)
@@ -238,7 +240,7 @@ class ExtractorEvaluator:
         n_incorrect = len(extras)
         n_key = len(key_texts)
         recall = n_correct / n_key
-        precision = n_correct / (n_correct + n_incorrect)
+        precision = n_correct / (n_correct + n_incorrect) if n_incorrect + n_correct >0 else 0
         over_specification = n_incorrect / n_key
         return {
             'recall': recall,

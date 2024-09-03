@@ -55,6 +55,14 @@ class Sentence:
         conj_addresses = node.deps.get('conj', [])
         return [self.find_node_by_address(address) for address in conj_addresses]
 
+    def are_together(self, node1, node2, ignore_determiners=False):
+        if node1.address + 1 == node2.address:
+            return True
+        if ignore_determiners:
+            middle_nodes = [self.find_node_by_address(index) for index in range(node1.address+1, node2.address)]
+            return all(node.tag == 'DET' for node in middle_nodes)
+        return False
+
     def is_esnadi(self):
         return any(node.rel == 'cop' for node in self.nlp_nodes)
 
@@ -153,8 +161,8 @@ class Sentence:
         names = []
         dep_nodes = [node for node in self.find_dependent_nodes(node) if node.tag != 'PRON']
         dep_nodes.sort(key=lambda n: n.address)
-        is_seq_root = node.tag.endswith('EZ') if self.with_ezafe_tag else (
-                len(dep_nodes) and node.address + 1 == dep_nodes[0].address)
+        is_seq_root = node.tag.endswith('EZ') and (
+                len(dep_nodes) and self.are_together(node, dep_nodes[0]))
 
         if is_seq_root and len(dep_nodes) > 0:
             dep_node = dep_nodes[0]
@@ -164,7 +172,7 @@ class Sentence:
 
                 middle_ezafe = dep_node.tag.endswith('EZ')
                 must_break = not middle_ezafe if self.with_ezafe_tag else (
-                        dep_node.address + 1 != dep_nodes[index + 1].address)
+                    self.are_together(dep_node, dep_node[index + 1]))
                 if dep_node.rel != 'amod' or not dep_node.is_pure_adj():
                     old_name = name
                     name += ' ' + dep_node.text

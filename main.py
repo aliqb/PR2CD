@@ -79,8 +79,8 @@ if __name__ == '__main__':
     ]
     hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
     # stanza_extractor = StanzaExtractor()
-    for file in file_names[0:1]:
-        extract_and_evaluate_from_file(file, hazm_extractor, True)
+    for file in file_names:
+        extract_and_evaluate_from_file(file, hazm_extractor, False)
     # text = "هر کارمند اطلاعاتی راجع به بخش، نام، تاریخ تولد و شماره بیمه اجتماعی دارد."
     # test_req = Requirement(text, hazm_extractor.extract)
     # test_extractor = ClassDiagramExtractor(test_req)
