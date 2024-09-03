@@ -6,6 +6,9 @@ class DesignElement:
         self.text = text
         self.node = node
 
+    def __str__(self):
+        return self.text
+
 
 class ClassElement(DesignElement):
     def __init__(self, text, node=None, attributes=None):
