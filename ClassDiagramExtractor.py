@@ -10,6 +10,14 @@ class DesignElement:
         return self.text
 
 
+class RelationBase:
+    def __init__(self, source, relation, target, sentence):
+        self.source = source
+        self.relation = relation
+        self.target = target
+        self.sentence = sentence
+
+
 class ClassElement(DesignElement):
     def __init__(self, text, node=None, attributes=None):
         super().__init__(text, node)
@@ -30,6 +38,7 @@ class ClassElement(DesignElement):
 class ClassDiagram:
     def __init__(self, classes=None):
         self.classes = []
+        self.base_relations = []
         if classes is None:
             return
         for element in classes:
@@ -44,6 +53,9 @@ class ClassDiagram:
 
     def add_class(self, class_element):
         self.classes.append(class_element)
+
+    def add_base_relation(self, relations):
+        self.base_relations.append(relations)
 
 
 class ClassDiagramExtractor:
@@ -85,6 +97,39 @@ class ClassDiagramExtractor:
             self.extract_attr_noun_noun_rule(sentence)
             self.extract_attr_verb_particle_rule(sentence)
             self.attr_term_related_to_rule(sentence)
+
+    def extract_relations(self):
+        self.extract_relation_bases()
+
+    def extract_relation_bases(self):
+        sentences = self.requirement.sentences
+        for sentence in sentences:
+            verbs = sentence.find_with_tag('VERB')
+            for verb in verbs:
+                self.find_relation_base_from_verb(sentence, verb)
+
+    def find_relation_base_from_verb(self, sentence, verb):
+        if verb.lemma != 'داشت#دار':
+            infinitive = sentence.find_full_infinitive(verb)
+            infinitive_node = DesignElement(infinitive, verb)
+            subjects = sentence.find_subjects(verb)
+            if len(subjects) == 0:
+                if verb.rel == 'conj':
+                    head_verb = sentence.find_node_by_address(verb.head)
+                    subjects = sentence.find_subjects(head_verb)
+            subject_names = [name for subject in subjects for name in sentence.find_seq_names(subject)]
+            objects = sentence.find_objects(verb)
+            object_names = [name for obj in objects for name in sentence.find_seq_names(obj)]
+            subject_classes = [element for element in self.diagram.classes if element.text in subject_names]
+            object_classes = [element for element in self.diagram.classes if element.text in object_names]
+            if len(object_classes) == 0:
+                for subject_class in subject_classes:
+                    self.diagram.add_base_relation(RelationBase(subject_class, infinitive_node, None, sentence))
+            else:
+                for subject_class in subject_classes:
+                    for object_class in object_classes:
+                        self.diagram.add_base_relation(
+                            RelationBase(subject_class, infinitive_node, object_class, sentence))
 
     def extract_attr_have_rule(self, sentence):
         root = sentence.find_root()
@@ -141,7 +186,7 @@ class ClassDiagramExtractor:
                 nearest_head = head_node
                 while head_node.rel == 'nmod':
                     prev_head = sentence.find_node_by_address(head_node.head)
-                    if 'NOUN' not in prev_head.tag or 'سیستم' in prev_head.text:######
+                    if 'NOUN' not in prev_head.tag or 'سیستم' in prev_head.text:  ######
                         break
                     head_node = prev_head
 
@@ -240,7 +285,7 @@ class ExtractorEvaluator:
         n_incorrect = len(extras)
         n_key = len(key_texts)
         recall = n_correct / n_key
-        precision = n_correct / (n_correct + n_incorrect) if n_incorrect + n_correct >0 else 0
+        precision = n_correct / (n_correct + n_incorrect) if n_incorrect + n_correct > 0 else 0
         over_specification = n_incorrect / n_key
         return {
             'recall': recall,

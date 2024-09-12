@@ -20,17 +20,22 @@ def printGraph(dg):
 
 def print_for_debug(extractor):
 
-    for element in extractor.diagram.classes:
-        print(element.text, element.node.rel)
-        print('attrs:')
-        for attr in element.attributes:
-            print(attr.text, attr.node.rel)
-        print('---------------------------')
+    # for element in extractor.diagram.classes:
+    #     print(element.text, element.node.rel)
+    #     print('attrs:')
+    #     for attr in element.attributes:
+    #         print(attr.text, attr.node.rel)
+    #     print('---------------------------')
+    print('\n\nRelations:')
+    for relation in extractor.diagram.base_relations:
+        print(relation.sentence.text)
+        print(f"{relation.source.text},{relation.relation.text},{relation.target.text if relation.target else 'None'}")
+        print('----------------')
 
 
 def extract_and_evaluate_from_file(name, extractor, print_elements):
     try:
-        with open(f'./dataset/requirements/{name}.txt', 'r', encoding='utf-8') as file:
+        with open(f'./dataset/refined-requirements/{name}.txt', 'r', encoding='utf-8') as file:
             text = file.read()
         with open(f'./dataset/design-elements/{name}.json', 'r', encoding='utf-8') as json_file:
             elements = json.load(json_file)
@@ -40,14 +45,15 @@ def extract_and_evaluate_from_file(name, extractor, print_elements):
         test_extractor = ClassDiagramExtractor(test_req)
         test_extractor.extract_class_names()
         test_extractor.extract_attributes()
+        test_extractor.extract_relations()
         print(name)
         if print_elements:
             print_for_debug(test_extractor)
 
-        standard_diagram = ClassDiagram(elements)
-        evaluator = ExtractorEvaluator(test_extractor.diagram, standard_diagram)
-        print(evaluator.evaluate_classes())
-        print(evaluator.evaluate_attributes())
+        # standard_diagram = ClassDiagram(elements)
+        # evaluator = ExtractorEvaluator(test_extractor.diagram, standard_diagram)
+        # print(evaluator.evaluate_classes())
+        # print(evaluator.evaluate_attributes())
         print("//////////////////////////////////////////////////////")
     except FileNotFoundError:
         print("File not Found")
@@ -57,6 +63,8 @@ def extract_and_evaluate_from_file(name, extractor, print_elements):
 
 if __name__ == '__main__':
     lemmatizer = Lemmatizer()
+    # print(lemmatizer.lemmatize('می دهد','VERB'))
+
     tagger = POSTagger(model='pos_tagger.model')
     parser = DependencyParser(tagger=tagger, lemmatizer=lemmatizer)
     spacy_parser = SpacyDependencyParser(tagger=tagger, lemmatizer=lemmatizer,
@@ -80,7 +88,7 @@ if __name__ == '__main__':
     hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
     # stanza_extractor = StanzaExtractor()
     for file in file_names:
-        extract_and_evaluate_from_file(file, hazm_extractor, False)
+        extract_and_evaluate_from_file(file, hazm_extractor, True)
     # text = "هر کارمند اطلاعاتی راجع به بخش، نام، تاریخ تولد و شماره بیمه اجتماعی دارد."
     # test_req = Requirement(text, hazm_extractor.extract)
     # test_extractor = ClassDiagramExtractor(test_req)

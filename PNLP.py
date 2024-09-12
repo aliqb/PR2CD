@@ -51,6 +51,9 @@ class Sentence:
             if node.rel == 'ROOT':
                 return node
 
+    def find_with_tag(self, tag):
+        return [node for node in self.nlp_nodes if node.tag == tag]
+
     def find_conjuncts(self, node):
         conj_addresses = node.deps.get('conj', [])
         return [self.find_node_by_address(address) for address in conj_addresses]
@@ -59,7 +62,7 @@ class Sentence:
         if node1.address + 1 == node2.address:
             return True
         if ignore_determiners:
-            middle_nodes = [self.find_node_by_address(index) for index in range(node1.address+1, node2.address)]
+            middle_nodes = [self.find_node_by_address(index) for index in range(node1.address + 1, node2.address)]
             return all(node.tag == 'DET' for node in middle_nodes)
         return False
 
@@ -70,8 +73,10 @@ class Sentence:
         root = self.find_root()
         return root.tag == 'VERB' and 'هست' in root.lemma
 
-    def find_objects(self):
+    def find_objects(self, verb=None):
         root = self.find_root()
+        if verb is not None:
+            root = verb
         sentence_objects = [node for node in self.nlp_nodes if
                             node.rel is not None and node.rel.endswith('obj') and node.head == root.address]
         objects_conjs = []
@@ -109,8 +114,10 @@ class Sentence:
                 noun_modifiers += self.find_conjuncts(node)
         return noun_modifiers
 
-    def find_subjects(self):
+    def find_subjects(self, verb=None):
         root = self.find_root()
+        if verb is not None:
+            root = verb
         sentence_objects = [node for node in self.nlp_nodes if
                             node.rel is not None and 'subj' in node.rel and node.head == root.address]
         subject_conjs = []
@@ -212,6 +219,21 @@ class Sentence:
                 names.append(old_name + " " + conjunct_name)
         return [name]
 
+    def find_full_infinitive(self, node):
+        if node.tag != 'VERB':
+            return ''
+        past_root = node.lemma.split('#')[0]
+        infinitive = past_root + 'ن'
+        compounds = []
+        for dep in node.deps:
+            if 'compound' in dep:
+                addresses = node.deps[dep]
+                compounds += [self.find_node_by_address(address) for address in addresses]
+        compounds = sorted(compounds, key=lambda x: x.address)
+        for compound in compounds:
+            infinitive = compound.text + " " + infinitive
+        return infinitive
+
 
 class HazmExtractor:
     def __init__(self, parser, lemmatizer, with_ezafe_tag: bool = False,
@@ -251,7 +273,8 @@ class HazmExtractor:
                 tag = node['tag']
                 lemma = node['lemma']
                 if tag == 'VERB':
-                    node['lemma'] = self.lemmatizer.lemmatize(lemma, 'V')
+                    spaced_replaced = re.sub(r"‌", " ", lemma)
+                    node['lemma'] = self.lemmatizer.lemmatize(spaced_replaced, 'VERB')
                 nodes.append(
                     NLPNode(address=node['address'], text=node['word'], tag=tag, rel=node['rel'], head=node['head'],
                             deps=node['deps'], lemma=node['lemma']))
