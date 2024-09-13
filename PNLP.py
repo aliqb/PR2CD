@@ -224,15 +224,30 @@ class Sentence:
             return ''
         past_root = node.lemma.split('#')[0]
         infinitive = past_root + 'ن'
-        compounds = []
+        infinitives = []
+        # compounds = []
+        compound = ''
+        xcomp = ''
         for dep in node.deps:
             if 'compound' in dep:
-                addresses = node.deps[dep]
-                compounds += [self.find_node_by_address(address) for address in addresses]
-        compounds = sorted(compounds, key=lambda x: x.address)
-        for compound in compounds:
-            infinitive = compound.text + " " + infinitive
-        return infinitive
+                address = node.deps[dep][0]
+                compound = self.find_node_by_address(address)
+            if 'xcomp' in dep and infinitive in ['کردن','شدن']:
+                address = node.deps[dep][0]
+                xcomp = self.find_node_by_address(address)
+        if compound != '':
+            infinitives.append(compound.text + " " + infinitive)
+            conjs = self.find_conjuncts(compound)
+            for conj in conjs:
+                infinitives.append(conj.text + " " + infinitive)
+        if xcomp != '':
+            infinitives.append(xcomp.text + " " + infinitive)
+            conjs = self.find_conjuncts(xcomp)
+            for conj in conjs:
+                infinitives.append(conj.text + " " + infinitive)
+        if len(infinitives) > 0:
+            return infinitives
+        return [infinitive]
 
 
 class HazmExtractor:

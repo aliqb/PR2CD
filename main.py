@@ -29,7 +29,7 @@ def print_for_debug(extractor):
     print('\n\nRelations:')
     for relation in extractor.diagram.base_relations:
         print(relation.sentence.text)
-        print(f"{relation.source.text},{relation.relation.text},{relation.target.text if relation.target else 'None'}")
+        print(f"{relation.source.text},{relation.relation_title.text},{relation.target.text if relation.target else 'None'}")
         print('----------------')
 
 
