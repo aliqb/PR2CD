@@ -117,9 +117,15 @@ class ClassDiagramExtractor:
         for sentence in sentences:
             verbs = sentence.find_with_tag('VERB')
             for verb in verbs:
-                self.find_relation_base_from_verb(sentence, verb)
+                if verb.rel == 'cop':
+                    self.find_relation_base_from_esnadi_verbs(sentence)
 
-    def find_relation_base_from_verb(self, sentence, verb):
+                elif 'هست' in verb.lemma:
+                    self.find_relation_base_from_hastan(sentence, verb)
+                else:
+                    self.find_relation_base_from_normal_verb(sentence, verb)
+
+    def find_relation_base_from_normal_verb(self, sentence, verb):
         if verb.lemma != 'داشت#دار':
             infinitives = sentence.find_full_infinitive(verb)
             infinitive_nodes = [DesignElement(infinitive, verb) for infinitive in infinitives if
@@ -150,6 +156,31 @@ class ClassDiagramExtractor:
                         for infinitive_node in infinitive_nodes:
                             self.diagram.add_base_relation(
                                 RelationBase(subject_class, infinitive_node, object_class, sentence))
+
+    def find_relation_base_from_esnadi_verbs(self, sentence):
+        root = sentence.find_root()
+        subjects = sentence.find_subjects(root)
+        subject_names = [name for subject in subjects for name in sentence.find_seq_names(subject)]
+        subject_classes = [element for element in self.diagram.classes if element.text in subject_names]
+        roots = [root] + sentence.find_conjuncts(root)
+        roots_names = [name for root in roots for name in sentence.find_seq_names(root)]
+        root_classes = [element for element in self.diagram.classes if element.text in roots_names]
+        for subject_class in subject_classes:
+            for root_class in root_classes:
+                self.diagram.add_base_relation(
+                    RelationBase(subject_class, DesignElement('ESNADI'), root_class, sentence))
+
+    def find_relation_base_from_hastan(self, sentence, verb):
+        subjects = sentence.find_subjects(verb)
+        subject_names = [name for subject in subjects for name in sentence.find_seq_names(subject)]
+        subject_classes = [element for element in self.diagram.classes if element.text in subject_names]
+        xcomps = sentence.find_xcomps(verb)
+        roots_names = [name for xcomp in xcomps for name in sentence.find_seq_names(xcomp)]
+        xcomp_classes = [element for element in self.diagram.classes if element.text in roots_names]
+        for subject_class in subject_classes:
+            for xcomp_class in xcomp_classes:
+                self.diagram.add_base_relation(
+                    RelationBase(subject_class, DesignElement('ESNADI'), xcomp_class, sentence))
 
     def extract_attr_have_rule(self, sentence):
         root = sentence.find_root()

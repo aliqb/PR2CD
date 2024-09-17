@@ -126,11 +126,12 @@ class Sentence:
 
         return sentence_objects + subject_conjs
 
-    def find_xcomps(self):
-        xcomps = [node for node in self.nlp_nodes if node.rel is not None and node.rel == 'xcomp']
+    def find_xcomps(self,verb):
+        xcomps = [node for node in self.nlp_nodes if node.rel is not None and node.rel == 'xcomp' and node.head == verb.address]
         conjs = []
         for xcomp in xcomps:
             conjs += self.find_conjuncts(xcomp)
+        return  xcomps + conjs
 
     def find_node_by_address(self, address):
         filtered = [node for node in self.nlp_nodes if node.address == address]
@@ -222,7 +223,10 @@ class Sentence:
     def find_full_infinitive(self, node):
         if node.tag != 'VERB':
             return ''
-        past_root = node.lemma.split('#')[0]
+        roots = node.lemma.split('#')
+        past_root = roots[0]
+        if past_root == '':
+            return []
         infinitive = past_root + 'ن'
         infinitives = []
         # compounds = []
@@ -232,7 +236,7 @@ class Sentence:
             if 'compound' in dep:
                 address = node.deps[dep][0]
                 compound = self.find_node_by_address(address)
-            if 'xcomp' in dep and infinitive in ['کردن','شدن']:
+            if 'xcomp' in dep and infinitive in ['کردن', 'شدن']:
                 address = node.deps[dep][0]
                 xcomp = self.find_node_by_address(address)
         if compound != '':
