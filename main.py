@@ -20,17 +20,20 @@ def printGraph(dg):
 
 def print_for_debug(extractor):
 
-    # for element in extractor.diagram.classes:
-    #     print(element.text, element.node.rel)
-    #     print('attrs:')
-    #     for attr in element.attributes:
-    #         print(attr.text, attr.node.rel)
-    #     print('---------------------------')
-    print('\n\nRelations:')
-    for relation in extractor.diagram.base_relations:
-        print(relation.sentence.text)
-        print(f"{relation.source.text},{relation.relation_title.text},{relation.target.text if relation.target else 'None'}")
-        print('----------------')
+    for element in extractor.diagram.classes:
+        print(element.text, element.node.rel, element.count)
+        print('attrs:')
+        for attr in element.attributes:
+            print(attr.text, attr.node.rel)
+        print('operations:')
+        for operation in element.operations:
+            print(operation.text)
+        print('---------------------------')
+    # print('\n\nRelations:')
+    # for relation in extractor.diagram.base_relations:
+    #     print(relation.sentence.text)
+    #     print(f"{relation.source.text},{relation.relation_title.text},{relation.target.text if relation.target else 'None'}")
+    #     print('----------------')
 
 
 def extract_and_evaluate_from_file(name, extractor, print_elements):
@@ -46,6 +49,7 @@ def extract_and_evaluate_from_file(name, extractor, print_elements):
         test_extractor.extract_class_names()
         test_extractor.extract_attributes()
         test_extractor.extract_relations()
+        test_extractor.extract_operations()
         print(name)
         if print_elements:
             print_for_debug(test_extractor)
@@ -89,7 +93,7 @@ if __name__ == '__main__':
     # stanza_extractor = StanzaExtractor()
     for file in file_names:
         extract_and_evaluate_from_file(file, hazm_extractor, True)
-    # text = "هر کارمند اطلاعاتی راجع به بخش، نام، تاریخ تولد و شماره بیمه اجتماعی دارد."
+    # text = "سه نوع بسته عضویت مختلف در مرکز تناسب اندام موجود است."
     # test_req = Requirement(text, hazm_extractor.extract)
     # test_extractor = ClassDiagramExtractor(test_req)
     # test_extractor.extract_class_names()

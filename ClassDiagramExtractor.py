@@ -24,20 +24,45 @@ class RelationBase:
 
 
 class ClassElement(DesignElement):
-    def __init__(self, text, node=None, attributes=None):
+    def __init__(self, text, node=None, attributes=None, operations=None):
         super().__init__(text, node)
         self.attributes = []
+        self.operations = []
+        self._count = 0
         if attributes is None:
             return
         for element in attributes:
             if isinstance(element, str):
                 self.add_attribute(element)
             else:
-                self.attributes(element.text, element.node)
+                self.add_attribute(element.text, element.node)
+
+        for element in operations:
+            if isinstance(element, str):
+                self.add_attribute(element)
+            else:
+                self.add_operation(element.text, element.node)
 
     def add_attribute(self, text, node=None):
         if not any(attr.text == text for attr in self.attributes):
             self.attributes.append(DesignElement(text, node))
+
+    def add_operation(self, text, node=None):
+        if not any(attr.text == text for attr in self.operations):
+            self.operations.append(DesignElement(text, node))
+
+    def is_weak(self):
+        if self.node is None:
+            return True
+        return 'subj' not in self.node.text
+
+    @property
+    def count(self):
+        return self._count
+
+    @count.setter
+    def count(self, new_count):
+        self._count = new_count
 
 
 class ClassDiagram:
@@ -100,6 +125,12 @@ class ClassDiagramExtractor:
                         else:
                             if same_class.node.rel != 'subj' and rel == 'subj':
                                 same_class.node = node
+        self.count_classes()
+
+    def count_classes(self):
+        for element in self.diagram.classes:
+            count = self.requirement.text.count(element.text)
+            element.count = count
 
     def extract_attributes(self):
         sentences = self.requirement.sentences
@@ -111,6 +142,19 @@ class ClassDiagramExtractor:
 
     def extract_relations(self):
         self.extract_relation_bases()
+
+    def extract_operations(self):
+        relations = [relation for relation in self.diagram.base_relations if
+                     relation.relation_title.text != 'ESNADI']
+        for relation in relations:
+            target = relation.target
+            source = relation.source
+            title = relation.relation_title
+            if target is None:
+                source.add_operation(title.text, title.node)
+                continue
+            if target.is_weak():
+                source.add_operation(f"{title.text} {target.text}", title.node)
 
     def extract_relation_bases(self):
         sentences = self.requirement.sentences
