@@ -20,20 +20,20 @@ def printGraph(dg):
 
 def print_for_debug(extractor):
 
-    for element in extractor.diagram.classes:
-        print(element.text, element.node.rel, element.count)
-        print('attrs:')
-        for attr in element.attributes:
-            print(attr.text, attr.node.rel)
-        print('operations:')
-        for operation in element.operations:
-            print(operation.text)
-        print('---------------------------')
-    # print('\n\nRelations:')
-    # for relation in extractor.diagram.base_relations:
-    #     print(relation.sentence.text)
-    #     print(f"{relation.source.text},{relation.relation_title.text},{relation.target.text if relation.target else 'None'}")
-    #     print('----------------')
+    # for element in extractor.diagram.classes:
+    #     print(element.text, element.node.rel, element.count)
+    #     print('attrs:')
+    #     for attr in element.attributes:
+    #         print(attr.text, attr.node.rel)
+    #     print('operations:')
+    #     for operation in element.operations:
+    #         print(operation.text)
+    #     print('---------------------------')
+    print('\n\nRelations:')
+    for relation in extractor.diagram.base_relations:
+        print(relation.sentence.text)
+        print(f"{relation.source.text},{relation.relation_title.text},{relation.target.text if relation.target else 'None'} {relation.target_node.text if relation.target_node else 'None'}")
+        print('----------------')
 
 
 def extract_and_evaluate_from_file(name, extractor, print_elements):

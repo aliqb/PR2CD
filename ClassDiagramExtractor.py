@@ -16,11 +16,32 @@ class DesignElement:
 
 
 class RelationBase:
-    def __init__(self, source, relation_title, target, sentence):
+    def __init__(self, source, relation_title, target, sentence, target_node=None):
         self.source = source
         self.relation_title = relation_title
         self.target = target
         self.sentence = sentence
+        self.target_node = target_node
+        if target is not None:
+            self.target_node = self.target.node
+
+    def __eq__(self, other):
+        if self.source != other.source or self.relation_title != other.relation_title:
+            return False
+        if self.target == other.target:
+            # If both 'target' and 'target_node' are None
+            if self.target is None and self.target_node is None and other.target_node is None:
+                return True
+
+            # If 'target' is None but 'target_node' is not None, compare 'target_node.text'
+            if self.target is None:
+                if self.target_node is None or other.target_node is None:
+                    return False  # One of the target_nodes is None while the other isn't
+                return self.target_node.text == other.target_node.text
+
+            # If 'target' is not None, return True since the 'target' comparison passed
+            return True
+        return False
 
 
 class ClassElement(DesignElement):
@@ -89,9 +110,7 @@ class ClassDiagram:
             self.base_relations.append(relation)
 
     def base_relation_exist(self, input_relation):
-        return any(
-            input_relation.source == relation.source and input_relation.relation_title == relation.relation_title and input_relation.target == relation.target
-            for relation in self.base_relations)
+        return any(input_relation == relation for relation in self.base_relations)
 
 
 class ClassDiagramExtractor:
@@ -172,8 +191,8 @@ class ClassDiagramExtractor:
     def find_relation_base_from_normal_verb(self, sentence, verb):
         if verb.lemma != 'داشت#دار':
             infinitives = sentence.find_full_infinitive(verb)
-            infinitive_nodes = [DesignElement(infinitive, verb) for infinitive in infinitives if
-                                infinitive not in ['توانستن', 'خواستن']]
+            infinitive_elements = [DesignElement(infinitive, verb) for infinitive in infinitives if
+                                   infinitive not in ['توانستن', 'خواستن']]
             subjects = sentence.find_subjects(verb)
             temp_verb = verb
             while len(subjects) == 0:
@@ -185,46 +204,38 @@ class ClassDiagramExtractor:
                         break
                 else:
                     break
-            subject_names = [name for subject in subjects for name in sentence.find_seq_names(subject)]
             objects = sentence.find_objects(verb)
-            object_names = [name for obj in objects for name in sentence.find_seq_names(obj)]
-            subject_classes = [element for element in self.diagram.classes if element.text in subject_names]
-            object_classes = [element for element in self.diagram.classes if element.text in object_names]
-            if len(object_classes) == 0:
-                for subject_class in subject_classes:
-                    for infinitive_node in infinitive_nodes:
-                        self.diagram.add_base_relation(RelationBase(subject_class, infinitive_node, None, sentence))
-            else:
-                for subject_class in subject_classes:
-                    for object_class in object_classes:
-                        for infinitive_node in infinitive_nodes:
-                            self.diagram.add_base_relation(
-                                RelationBase(subject_class, infinitive_node, object_class, sentence))
+            self.add_relation_triples(subjects, infinitive_elements, objects, sentence)
 
     def find_relation_base_from_esnadi_verbs(self, sentence):
         root = sentence.find_root()
         subjects = sentence.find_subjects(root)
-        subject_names = [name for subject in subjects for name in sentence.find_seq_names(subject)]
-        subject_classes = [element for element in self.diagram.classes if element.text in subject_names]
         roots = [root] + sentence.find_conjuncts(root)
-        roots_names = [name for root in roots for name in sentence.find_seq_names(root)]
-        root_classes = [element for element in self.diagram.classes if element.text in roots_names]
-        for subject_class in subject_classes:
-            for root_class in root_classes:
-                self.diagram.add_base_relation(
-                    RelationBase(subject_class, DesignElement('ESNADI'), root_class, sentence))
+        self.add_relation_triples(subjects, [DesignElement('ESNADI')], roots, sentence)
 
     def find_relation_base_from_hastan(self, sentence, verb):
         subjects = sentence.find_subjects(verb)
-        subject_names = [name for subject in subjects for name in sentence.find_seq_names(subject)]
-        subject_classes = [element for element in self.diagram.classes if element.text in subject_names]
         xcomps = sentence.find_xcomps(verb)
-        roots_names = [name for xcomp in xcomps for name in sentence.find_seq_names(xcomp)]
-        xcomp_classes = [element for element in self.diagram.classes if element.text in roots_names]
-        for subject_class in subject_classes:
-            for xcomp_class in xcomp_classes:
-                self.diagram.add_base_relation(
-                    RelationBase(subject_class, DesignElement('ESNADI'), xcomp_class, sentence))
+        self.add_relation_triples(subjects, [DesignElement('ESNADI')], xcomps, sentence)
+
+    def add_relation_triples(self, source_nodes, infinitive_elements, target_nodes, sentence):
+        source_names = [name for source in source_nodes for name in sentence.find_seq_names(source)]
+        source_classes = [element for element in self.diagram.classes if element.text in source_names]
+        # target_names = [name for target in target_nodes for name in sentence.find_seq_names(target)]
+        # target_classes = [element for element in self.diagram.classes if element.text in target_names]
+        if len(target_nodes) == 0:
+            for subject_class in source_classes:
+                for infinitive_node in infinitive_elements:
+                    self.diagram.add_base_relation(RelationBase(subject_class, infinitive_node, None, sentence))
+        else:
+            for subject_class in source_classes:
+                for node in target_nodes:
+                    names = sentence.find_seq_names(node)
+                    for name in names:
+                        target_class = self.find_class_by_name(name)
+                        for infinitive_node in infinitive_elements:
+                            self.diagram.add_base_relation(
+                                RelationBase(subject_class, infinitive_node, target_class, sentence, node))
 
     def extract_attr_have_rule(self, sentence):
         root = sentence.find_root()
