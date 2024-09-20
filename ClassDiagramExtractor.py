@@ -132,9 +132,15 @@ class ClassDiagramExtractor:
         self.count_classes()
 
     def extract_subject_object_class_name(self, sentence):
-        subjects = sentence.find_subjects()
-        sentence_objects = sentence.find_objects()
-        nodes = subjects + sentence_objects
+        subjects = [node for node in sentence.nlp_nodes if node.is_subject()]
+        sentence_objects = [node for node in sentence.nlp_nodes if node.is_obj()]
+        all_subjects = subjects.copy()
+        all_objects = sentence_objects.copy()
+        for subject in subjects:
+            all_subjects += sentence.find_conjuncts(subject)
+        for obj in sentence_objects:
+            all_objects += sentence.find_conjuncts(obj)
+        nodes = all_subjects + all_objects
         for node in nodes:
             rel = node.rel
             tag = node.tag
