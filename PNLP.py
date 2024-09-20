@@ -37,6 +37,9 @@ class NLPNode:
         except TypeError:
             return False
 
+    def is_subject(self):
+        return 'subj' in self.rel
+
 
 class Sentence:
     def __init__(self, text, nlp_nodes: List[NLPNode], find_seq_method: Literal['dep', 'ezafe'] = 'dep',
@@ -126,12 +129,13 @@ class Sentence:
 
         return sentence_objects + subject_conjs
 
-    def find_xcomps(self,verb):
-        xcomps = [node for node in self.nlp_nodes if node.rel is not None and node.rel == 'xcomp' and node.head == verb.address]
+    def find_xcomps(self, verb):
+        xcomps = [node for node in self.nlp_nodes if
+                  node.rel is not None and node.rel == 'xcomp' and node.head == verb.address]
         conjs = []
         for xcomp in xcomps:
             conjs += self.find_conjuncts(xcomp)
-        return  xcomps + conjs
+        return xcomps + conjs
 
     def find_node_by_address(self, address):
         filtered = [node for node in self.nlp_nodes if node.address == address]

@@ -75,7 +75,7 @@ class ClassElement(DesignElement):
     def is_weak(self):
         if self.node is None:
             return True
-        return 'subj' not in self.node.text
+        return not self.node.is_subject()
 
     @property
     def count(self):
@@ -126,25 +126,48 @@ class ClassDiagramExtractor:
         # }
         sentences = self.requirement.sentences
         for sentence in sentences:
-            nodes = sentence.nlp_nodes
-            for node in nodes:
-                rel = node.rel
-                tag = node.tag
-                if node.address == 0 or not (tag.startswith('NOUN') or tag.startswith('PROPN')):
-                    continue
-                if rel == 'conj':
-                    address = node.head
-                    rel = sentence.find_node_by_address(address).rel
-                if 'subj' in rel or rel.endswith('obj'):
-                    names = sentence.find_seq_names(node)
-                    for name in names:
-                        same_class = self.find_class_by_name(name)
-                        if same_class is None:
-                            self.diagram.add_class(ClassElement(name, node))
-                        else:
-                            if same_class.node.rel != 'subj' and rel == 'subj':
-                                same_class.node = node
+            self.extract_subject_object_class_name(sentence)
+            if sentence.is_esnadi():
+                self.extract_esnadi_class_names(sentence)
         self.count_classes()
+
+    def extract_subject_object_class_name(self, sentence):
+        subjects = sentence.find_subjects()
+        sentence_objects = sentence.find_objects()
+        nodes = subjects + sentence_objects
+        for node in nodes:
+            rel = node.rel
+            tag = node.tag
+            if not (tag.startswith('NOUN') or tag.startswith('PROPN')):
+                continue
+            names = sentence.find_seq_names(node)
+            for name in names:
+                same_class = self.find_class_by_name(name)
+                if same_class is None:
+                    self.diagram.add_class(ClassElement(name, node))
+                else:
+                    if not same_class.node.is_subject() and node.is_subject():
+                        same_class.node = node
+
+    def extract_esnadi_class_names(self, sentence):
+        # subjects = sentence.find_subjects()
+        # if len(subjects) == 0:
+        #     return
+        # subject = subjects[0]
+        # name = sentence.find_seq_names(subject)[0]
+        # if self.find_class_by_name(name) is None:
+        #     return
+        root = sentence.find_root()
+        roots = [root] + sentence.find_conjuncts(root)
+        for node in roots:
+            tag = node.tag
+            if not (tag.startswith('NOUN') or tag.startswith('PROPN')):
+                continue
+            names = sentence.find_seq_names(node)
+            for name in names:
+                same_class = self.find_class_by_name(name)
+                if same_class is None:
+                    self.diagram.add_class(ClassElement(name, node))
 
     def count_classes(self):
         for element in self.diagram.classes:
