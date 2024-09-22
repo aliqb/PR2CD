@@ -129,6 +129,8 @@ class ClassDiagramExtractor:
             self.extract_subject_object_class_name(sentence)
             if sentence.is_esnadi():
                 self.extract_esnadi_class_names(sentence)
+            if sentence.is_hastan_masdar():
+                self.extract_hastan_class_names(sentence)
         self.count_classes()
 
     def extract_subject_object_class_name(self, sentence):
@@ -142,7 +144,6 @@ class ClassDiagramExtractor:
             all_objects += sentence.find_conjuncts(obj)
         nodes = all_subjects + all_objects
         for node in nodes:
-            rel = node.rel
             tag = node.tag
             if not (tag.startswith('NOUN') or tag.startswith('PROPN')):
                 continue
@@ -156,16 +157,22 @@ class ClassDiagramExtractor:
                         same_class.node = node
 
     def extract_esnadi_class_names(self, sentence):
-        # subjects = sentence.find_subjects()
-        # if len(subjects) == 0:
-        #     return
-        # subject = subjects[0]
-        # name = sentence.find_seq_names(subject)[0]
-        # if self.find_class_by_name(name) is None:
-        #     return
         root = sentence.find_root()
         roots = [root] + sentence.find_conjuncts(root)
         for node in roots:
+            tag = node.tag
+            if not (tag.startswith('NOUN') or tag.startswith('PROPN')):
+                continue
+            names = sentence.find_seq_names(node)
+            for name in names:
+                same_class = self.find_class_by_name(name)
+                if same_class is None:
+                    self.diagram.add_class(ClassElement(name, node))
+
+    def extract_hastan_class_names(self, sentence):
+        root = sentence.find_root()
+        xcomps = sentence.find_xcomps(root)
+        for node in xcomps:
             tag = node.tag
             if not (tag.startswith('NOUN') or tag.startswith('PROPN')):
                 continue
