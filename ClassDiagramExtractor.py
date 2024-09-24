@@ -402,6 +402,12 @@ class ClassDiagramExtractor:
         child = relation.target
         if child is not None:
             self.diagram.add_aggregation(child, parent, relation.sentence)
+        else:
+            target_node = relation.target_node
+            names = relation.sentence.find_seq_names(target_node)
+            for name in names:
+                attr_name = re.sub(rf'\b{re.escape(parent.text)}\b', '', name).strip()
+                parent.add_attribute(attr_name, target_node)
 
     def extract_attr_have_rule(self, sentence):
         root = sentence.find_root()
@@ -480,7 +486,7 @@ class ClassDiagramExtractor:
                             names = [name for name in names if nearest_head.text in name]
                             if len(names) > 0:
                                 for name in names:
-                                    modifier_name = name.replace(node.text, '')
+                                    modifier_name = re.sub(rf'\b{re.escape(node.text)}\b', '', name).strip()
                                     class_element.add_attribute(modifier_name.strip(), head_node)
                             else:
                                 class_element.add_attribute(nearest_head.lemma, head_node)
