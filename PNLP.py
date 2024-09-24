@@ -153,9 +153,9 @@ class Sentence:
     def find_node_by_text(self, text):
         return [node for node in self.nlp_nodes if node.text == text]
 
-    def find_seq_names(self, node):
+    def find_seq_names(self, node, skip_adj=True):
         if self.find_seq_method == 'dep':
-            return self.find_seq_dependency_names(node)
+            return self.find_seq_dependency_names(node, skip_adj)
         if not self.with_ezafe_tag:
             raise Exception('with_ezafe_tag is false')
         return self.find_ezafe_names(node)
@@ -175,7 +175,7 @@ class Sentence:
             all_nodes += self.find_dependent_nodes(node)
         return all_nodes
 
-    def find_seq_dependency_names(self, node):
+    def find_seq_dependency_names(self, node, skip_adj=True):
         name = node.lemma
         names = []
         dep_nodes = [node for node in self.find_dependent_nodes(node) if node.tag != 'PRON']
@@ -192,7 +192,7 @@ class Sentence:
                 middle_ezafe = dep_node.tag.endswith('EZ')
                 must_break = not middle_ezafe if self.with_ezafe_tag else (
                     self.are_together(dep_node, dep_node[index + 1]))
-                if dep_node.rel != 'amod' or not dep_node.is_pure_adj():
+                if not skip_adj or dep_node.rel != 'amod' or not dep_node.is_pure_adj():
                     old_name = name
                     name += ' ' + dep_node.text
                 if must_break:

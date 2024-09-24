@@ -1,4 +1,5 @@
 from Requirement import Requirement
+import re
 
 
 class DesignElement:
@@ -37,7 +38,7 @@ class RelationBase:
             if self.target is None:
                 if self.target_node is None or other.target_node is None:
                     return False  # One of the target_nodes is None while the other isn't
-                return self.target_node.text == other.target_node.text
+                return self.target_node.text == other.target_node.text and self.target_node.address == other.target_node.address
 
             # If 'target' is not None, return True since the 'target' comparison passed
             return True
@@ -90,6 +91,7 @@ class ClassDiagram:
     def __init__(self, classes=None):
         self.classes = []
         self.base_relations = []
+        self.relations = []
         if classes is None:
             return
         for element in classes:
@@ -112,6 +114,14 @@ class ClassDiagram:
     def base_relation_exist(self, input_relation):
         return any(input_relation == relation for relation in self.base_relations)
 
+    def relation_exist(self, input_relation):
+        return any(input_relation == relation for relation in self.relations)
+
+    def add_generalization(self, child, father, sentence):
+        relation = RelationBase(child, DesignElement('GENERALIZATION'), father, sentence)
+        if not self.relation_exist(relation):
+            self.relations.append(relation)
+
 
 class ClassDiagramExtractor:
     def __init__(self, requirement: Requirement):
@@ -119,6 +129,24 @@ class ClassDiagramExtractor:
         self.diagram = ClassDiagram()
         self.attr_terms = ['اطلاعات', 'فیلد', 'ویژگی', 'اطلاعاتی']
         self.attr_verb_particles = ['تعریف', 'تعیین', 'متمایز', 'مشخص']
+        self.category_words = [
+            'دسته',
+            'گروه',
+            'طبقه',
+            'نوع',
+            'انواع'
+        ]
+        self.categorizing_words = [
+            'دسته‌بندی',
+            'تفکیک',
+            'تقسیم',
+            'تفکیک',
+            'بخش‌بندی'
+        ]
+        self.complex_categorizing_words = [
+            'قرار گرفتن',
+            'جای گرفتن'
+        ]
 
     def extract_class_names(self):
         # rules = {
@@ -197,6 +225,7 @@ class ClassDiagramExtractor:
 
     def extract_relations(self):
         self.extract_relation_bases()
+        self.extract_generalizations()
 
     def extract_operations(self):
         relations = [relation for relation in self.diagram.base_relations if
@@ -223,6 +252,8 @@ class ClassDiagramExtractor:
                     self.find_relation_base_from_hastan(sentence, verb)
                 else:
                     self.find_relation_base_from_normal_verb(sentence, verb)
+            if ':' in sentence.text:
+                self.find_list_relation(sentence)
 
     def find_relation_base_from_normal_verb(self, sentence, verb):
         if verb.lemma != 'داشت#دار':
@@ -254,11 +285,26 @@ class ClassDiagramExtractor:
         xcomps = sentence.find_xcomps(verb)
         self.add_relation_triples(subjects, [DesignElement('ESNADI')], xcomps, sentence)
 
+    def find_list_relation(self, sentence):
+        if "«" in sentence.text or "»" in sentence.text:
+            return
+
+        colon_nodes = sentence.find_node_by_text(':')
+        if len(colon_nodes) == 0:
+            return
+        colon_node = colon_nodes[0]
+        after_colon_nodes = [node for node in sentence.nlp_nodes if node.address > colon_node.address]
+        if any(node.tag == 'VERB' for node in after_colon_nodes):
+            return
+        if not any(node.text in {'،', 'و', ','} for node in after_colon_nodes):
+            return
+        main_nodes = [node for node in after_colon_nodes if node.rel not in ['nmod', 'amod', 'punct', 'cc']]
+        subjects = sentence.find_subjects()
+        self.add_relation_triples(subjects, [DesignElement('LIST')], main_nodes, sentence)
+
     def add_relation_triples(self, source_nodes, infinitive_elements, target_nodes, sentence):
         source_names = [name for source in source_nodes for name in sentence.find_seq_names(source)]
         source_classes = [element for element in self.diagram.classes if element.text in source_names]
-        # target_names = [name for target in target_nodes for name in sentence.find_seq_names(target)]
-        # target_classes = [element for element in self.diagram.classes if element.text in target_names]
         if len(target_nodes) == 0:
             for subject_class in source_classes:
                 for infinitive_node in infinitive_elements:
@@ -272,6 +318,57 @@ class ClassDiagramExtractor:
                         for infinitive_node in infinitive_elements:
                             self.diagram.add_base_relation(
                                 RelationBase(subject_class, infinitive_node, target_class, sentence, node))
+
+    def extract_generalizations(self):
+        for relation in self.diagram.base_relations:
+            if relation.relation_title.text == 'ESNADI':
+                self.extract_generalizations_from_esnadi(relation)
+            if relation.relation_title.text == 'LIST':
+                self.extract_generalization_from_list(relation)
+            if any(term in relation.relation_title.text for term in self.categorizing_words):
+                self.extract_generalization_categorization(relation)
+            if any(term == relation.relation_title.text for term in self.complex_categorizing_words) and any(
+                    term in relation.sentence.text for term in self.category_words):
+                self.extract_generalization_categorization(relation)
+
+    def extract_generalizations_from_esnadi(self, relation):
+        base_source = relation.source
+        base_target = relation.target
+        sentence = relation.sentence
+        if base_target is not None:
+            self.diagram.add_generalization(base_target, base_source, sentence)
+
+    def extract_generalization_from_list(self, relation):
+        father = relation.source
+        child = relation.target
+        if child is None:
+            node = relation.target_node
+            names = relation.sentence.find_seq_names(node, False)
+            for name in names:
+                child = ClassElement(name, node)
+                self.diagram.add_class(child)
+                self.diagram.add_generalization(child, father, relation.sentence)
+        else:
+            self.diagram.add_generalization(child, father, relation.sentence)
+
+    def extract_generalization_categorization(self, relation):
+        obls = [node for node in relation.sentence.find_obliques() if node.head == relation.relation_title.node.address]
+        xcomps = relation.sentence.find_xcomps(relation.relation_title.node)
+        nodes = obls + xcomps
+        main_nodes = []
+        for node in nodes:
+            if node.lemma in self.category_words + self.categorizing_words:
+                main_nodes += relation.sentence.find_noun_modifiers(node)
+            else:
+                main_nodes.append(node)
+        for node in main_nodes:
+            names = relation.sentence.find_seq_names(node, False)
+            for name in names:
+                class_element = self.find_class_by_name(name)
+                if class_element is None:
+                    class_element = ClassElement(name, node)
+                    self.diagram.add_class(class_element)
+                self.diagram.add_generalization(class_element, relation.source, relation.sentence)
 
     def extract_attr_have_rule(self, sentence):
         root = sentence.find_root()
