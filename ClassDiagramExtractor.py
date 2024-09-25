@@ -154,6 +154,7 @@ class ClassDiagramExtractor:
         ]
         self.contain_word = 'شامل'
 
+    # classes
     def extract_class_names(self):
         # rules = {
         #     0:def
@@ -216,11 +217,7 @@ class ClassDiagramExtractor:
                 if same_class is None:
                     self.diagram.add_class(ClassElement(name, node))
 
-    def count_classes(self):
-        for element in self.diagram.classes:
-            count = self.requirement.text.count(element.text)
-            element.count = count
-
+    # attributes
     def extract_attributes(self):
         sentences = self.requirement.sentences
         for sentence in sentences:
@@ -228,186 +225,6 @@ class ClassDiagramExtractor:
             self.extract_attr_noun_noun_rule(sentence)
             self.extract_attr_verb_particle_rule(sentence)
             self.attr_term_related_to_rule(sentence)
-
-    def extract_relations(self):
-        self.extract_relation_bases()
-        self.extract_generalizations()
-        self.extract_aggregations()
-
-    def extract_operations(self):
-        relations = [relation for relation in self.diagram.base_relations if
-                     relation.relation_title.text not in ['ESNADI', 'LIST', 'CONTAIN']]
-        for relation in relations:
-            target = relation.target
-            source = relation.source
-            title = relation.relation_title
-            if target is None:
-                source.add_operation(title.text, title.node)
-                continue
-            if target.is_weak():
-                source.add_operation(f"{title.text} {target.text}", title.node)
-
-    def extract_relation_bases(self):
-        sentences = self.requirement.sentences
-        for sentence in sentences:
-            verbs = sentence.find_with_tag('VERB')
-            for verb in verbs:
-                if verb.rel == 'cop':
-                    self.find_relation_base_from_esnadi_verbs(sentence)
-
-                elif 'هست' in verb.lemma:
-                    self.find_relation_base_from_hastan(sentence, verb)
-                else:
-                    self.find_relation_base_from_normal_verb(sentence, verb)
-            if ':' in sentence.text:
-                self.find_list_relation_base(sentence)
-            if self.contain_word in sentence.text:
-                self.find_contain_relation_base(sentence)
-
-    def find_relation_base_from_normal_verb(self, sentence, verb):
-        if verb.lemma != 'داشت#دار':
-            infinitives = sentence.find_full_infinitive(verb)
-            infinitive_elements = [DesignElement(infinitive, verb) for infinitive in infinitives if
-                                   infinitive not in ['توانستن', 'خواستن']]
-            subjects = sentence.find_subjects(verb)
-            temp_verb = verb
-            while len(subjects) == 0:
-                if temp_verb.rel in ['conj', 'xcomp', 'ccomp']:  # probably advcl and acl should be added
-                    temp_verb = sentence.find_node_by_address(temp_verb.head)
-                    if temp_verb.tag == 'VERB':
-                        subjects = sentence.find_subjects(temp_verb)
-                    else:
-                        break
-                else:
-                    break
-            objects = sentence.find_objects(verb)
-            self.add_relation_triples(subjects, infinitive_elements, objects, sentence)
-
-    def find_relation_base_from_esnadi_verbs(self, sentence):
-        root = sentence.find_root()
-        subjects = sentence.find_subjects(root)
-        roots = [root] + sentence.find_conjuncts(root)
-        self.add_relation_triples(subjects, [DesignElement('ESNADI')], roots, sentence)
-
-    def find_relation_base_from_hastan(self, sentence, verb):
-        subjects = sentence.find_subjects(verb)
-        xcomps = sentence.find_xcomps(verb)
-        self.add_relation_triples(subjects, [DesignElement('ESNADI')], xcomps, sentence)
-
-    def find_list_relation_base(self, sentence):
-        if "«" in sentence.text or "»" in sentence.text:
-            return
-
-        colon_nodes = sentence.find_node_by_text(':')
-        if len(colon_nodes) == 0:
-            return
-        colon_node = colon_nodes[0]
-        after_colon_nodes = [node for node in sentence.nlp_nodes if node.address > colon_node.address]
-        if any(node.tag == 'VERB' for node in after_colon_nodes):
-            return
-        if not any(node.text in {'،', 'و', ','} for node in after_colon_nodes):
-            return
-        main_nodes = [node for node in after_colon_nodes if node.rel not in ['nmod', 'amod', 'punct', 'cc']]
-        subjects = sentence.find_subjects()
-        self.add_relation_triples(subjects, [DesignElement('LIST')], main_nodes, sentence)
-
-    def find_contain_relation_base(self, sentence):
-        contain_word_nodes = sentence.find_node_by_text(self.contain_word)
-        if len(contain_word_nodes) == 0:
-            return
-        contain_word_node = contain_word_nodes[0]
-        next_address = contain_word_node.address + 1
-        obl_addresses = contain_word_node.deps.get('obl:arg', None)
-        obl_node = sentence.find_node_by_address(
-            obl_addresses[0]) if obl_addresses is not None else sentence.find_node_by_address(next_address)
-        subjects = sentence.find_subjects()
-        nodes = [obl_node] + sentence.find_conjuncts(obl_node)
-        self.add_relation_triples(subjects, [DesignElement('CONTAIN')], nodes, sentence)
-
-    def add_relation_triples(self, source_nodes, infinitive_elements, target_nodes, sentence):
-        source_names = [name for source in source_nodes for name in sentence.find_seq_names(source)]
-        source_classes = [element for element in self.diagram.classes if element.text in source_names]
-        if len(target_nodes) == 0:
-            for subject_class in source_classes:
-                for infinitive_node in infinitive_elements:
-                    self.diagram.add_base_relation(RelationBase(subject_class, infinitive_node, None, sentence))
-        else:
-            for subject_class in source_classes:
-                for node in target_nodes:
-                    names = sentence.find_seq_names(node)
-                    for name in names:
-                        target_class = self.find_class_by_name(name)
-                        for infinitive_node in infinitive_elements:
-                            self.diagram.add_base_relation(
-                                RelationBase(subject_class, infinitive_node, target_class, sentence, node))
-
-    def extract_generalizations(self):
-        for relation in self.diagram.base_relations:
-            if relation.relation_title.text == 'ESNADI':
-                self.extract_generalizations_from_esnadi(relation)
-            if relation.relation_title.text == 'LIST':
-                self.extract_generalization_from_list(relation)
-            if any(term in relation.relation_title.text for term in self.categorizing_words):
-                self.extract_generalization_categorization(relation)
-            if any(term == relation.relation_title.text for term in self.complex_categorizing_words) and any(
-                    term in relation.sentence.text for term in self.category_words):
-                self.extract_generalization_categorization(relation)
-
-    def extract_generalizations_from_esnadi(self, relation):
-        base_source = relation.source
-        base_target = relation.target
-        sentence = relation.sentence
-        if base_target is not None:
-            self.diagram.add_generalization(base_target, base_source, sentence)
-
-    def extract_generalization_from_list(self, relation):
-        parent = relation.source
-        child = relation.target
-        if child is None:
-            node = relation.target_node
-            names = relation.sentence.find_seq_names(node, False)
-            for name in names:
-                child = ClassElement(name, node)
-                self.diagram.add_class(child)
-                self.diagram.add_generalization(child, parent, relation.sentence)
-        else:
-            self.diagram.add_generalization(child, parent, relation.sentence)
-
-    def extract_generalization_categorization(self, relation):
-        obls = [node for node in relation.sentence.find_obliques() if node.head == relation.relation_title.node.address]
-        xcomps = relation.sentence.find_xcomps(relation.relation_title.node)
-        nodes = obls + xcomps
-        main_nodes = []
-        for node in nodes:
-            if node.lemma in self.category_words + self.categorizing_words:
-                main_nodes += relation.sentence.find_noun_modifiers(node)
-            else:
-                main_nodes.append(node)
-        for node in main_nodes:
-            names = relation.sentence.find_seq_names(node, False)
-            for name in names:
-                class_element = self.find_class_by_name(name)
-                if class_element is None:
-                    class_element = ClassElement(name, node)
-                    self.diagram.add_class(class_element)
-                self.diagram.add_generalization(class_element, relation.source, relation.sentence)
-
-    def extract_aggregations(self):
-        for relation in self.diagram.base_relations:
-            if relation.relation_title.text == 'CONTAIN':
-                self.extract_aggregations_from_contain_relation(relation)
-
-    def extract_aggregations_from_contain_relation(self, relation):
-        parent = relation.source
-        child = relation.target
-        if child is not None:
-            self.diagram.add_aggregation(child, parent, relation.sentence)
-        else:
-            target_node = relation.target_node
-            names = relation.sentence.find_seq_names(target_node)
-            for name in names:
-                attr_name = re.sub(rf'\b{re.escape(parent.text)}\b', '', name).strip()
-                parent.add_attribute(attr_name, target_node)
 
     def extract_attr_have_rule(self, sentence):
         root = sentence.find_root()
@@ -418,39 +235,6 @@ class ClassDiagramExtractor:
             self.extract_attr_have_verb_rule(sentence, class_elements)
         if root.lemma.startswith('دارا'):
             self.extract_attr_have_noun_rule(sentence, class_elements)
-
-    def extract_attr_have_verb_rule(self, sentence, class_elements):
-        sentence_objects = sentence.find_objects()
-
-        for obj in sentence_objects:
-            if obj.lemma in self.attr_terms:
-                self.add_attr_terms_modifiers(sentence, obj, class_elements)
-                continue
-            names = sentence.find_seq_names(obj)
-            for name in names:
-                for element in class_elements:
-                    element.add_attribute(name, obj)
-
-    def extract_attr_have_noun_rule(self, sentence, class_elements):
-        sentence_obliques = sentence.find_obliques('arg')
-        for obl in sentence_obliques:
-            if obl.lemma in self.attr_terms:
-                self.add_attr_terms_modifiers(sentence, obl, class_elements)
-                continue
-            names = sentence.find_seq_names(obl)
-            for name in names:
-                for element in class_elements:
-                    element.add_attribute(name, obl)
-
-    def add_attr_terms_modifiers(self, sentence, node, class_elements):
-        noun_modifiers = sentence.find_noun_modifiers(node)
-        for noun in noun_modifiers:
-            names = sentence.find_seq_names(noun)
-            for element in class_elements:
-                for name in names:
-                    if name != element.text:
-                        name = name.replace('مورد', '')
-                        element.add_attribute(name.strip(), noun)
 
     def extract_attr_noun_noun_rule(self, sentence):
         nodes = sentence.nlp_nodes
@@ -505,29 +289,6 @@ class ClassDiagramExtractor:
                     for element in class_elements:
                         element.add_attribute(name, obl)
 
-    def add_attr_hastan_xcomp(self, sentence, node, class_element):
-        xcomps = sentence.find_xcomps()
-        for xcomp in xcomps:
-            if xcomp.text != node.text:
-                class_element.add_attribute(xcomp.text, xcomp)
-
-    def add_attr_esnadi_roots(self, sentence, class_element):
-        root = sentence.find_root()
-        if root.lemma.startswith('دارا'):
-            return
-        conjuncts = sentence.find_conjuncts(root)
-        conjuncts = [root] + conjuncts
-        for conjunct in conjuncts:
-            class_element.add_attribute(conjunct.text, conjunct)
-
-    def find_class_by_name(self, text):
-        filtered = [element for element in self.diagram.classes if element.text == text]
-        return filtered[0] if len(filtered) > 0 else None
-
-    def find_class_by_node_text(self, text):
-        filtered = [element for element in self.diagram.classes if element.node.text == text]
-        return filtered[0] if len(filtered) > 0 else None
-
     def attr_term_related_to_rule(self, sentence):
         related_term_nodes = sentence.find_node_by_text('مربوط') + sentence.find_node_by_text('مرتبط')
         related_term_nodes = [node for node in related_term_nodes if
@@ -545,6 +306,252 @@ class ClassDiagramExtractor:
                             attr_names = sentence.find_seq_names(modifier)
                             for attr_name in attr_names:
                                 class_element.add_attribute(attr_name, modifier)
+
+    def extract_attr_have_verb_rule(self, sentence, class_elements):
+        sentence_objects = sentence.find_objects()
+
+        for obj in sentence_objects:
+            if obj.lemma in self.attr_terms:
+                self.add_attr_terms_modifiers(sentence, obj, class_elements)
+                continue
+            names = sentence.find_seq_names(obj)
+            for name in names:
+                for element in class_elements:
+                    element.add_attribute(name, obj)
+
+    def extract_attr_have_noun_rule(self, sentence, class_elements):
+        sentence_obliques = sentence.find_obliques('arg')
+        for obl in sentence_obliques:
+            if obl.lemma in self.attr_terms:
+                self.add_attr_terms_modifiers(sentence, obl, class_elements)
+                continue
+            names = sentence.find_seq_names(obl)
+            for name in names:
+                for element in class_elements:
+                    element.add_attribute(name, obl)
+
+    def add_attr_terms_modifiers(self, sentence, node, class_elements):
+        noun_modifiers = sentence.find_noun_modifiers(node)
+        for noun in noun_modifiers:
+            names = sentence.find_seq_names(noun)
+            for element in class_elements:
+                for name in names:
+                    if name != element.text:
+                        name = name.replace('مورد', '')
+                        element.add_attribute(name.strip(), noun)
+
+    def add_attr_hastan_xcomp(self, sentence, node, class_element):
+        xcomps = sentence.find_xcomps()
+        for xcomp in xcomps:
+            if xcomp.text != node.text:
+                class_element.add_attribute(xcomp.text, xcomp)
+
+    def add_attr_esnadi_roots(self, sentence, class_element):
+        root = sentence.find_root()
+        if root.lemma.startswith('دارا'):
+            return
+        conjuncts = sentence.find_conjuncts(root)
+        conjuncts = [root] + conjuncts
+        for conjunct in conjuncts:
+            class_element.add_attribute(conjunct.text, conjunct)
+
+    # relations
+    def extract_relations(self):
+        self.extract_relation_bases()
+        self.extract_generalizations()
+        self.extract_aggregations()
+
+    # relation bases
+    def extract_relation_bases(self):
+        sentences = self.requirement.sentences
+        for sentence in sentences:
+            verbs = sentence.find_with_tag('VERB')
+            for verb in verbs:
+                if verb.rel == 'cop':
+                    self.find_relation_base_from_esnadi_verbs(sentence)
+
+                elif 'هست' in verb.lemma:
+                    self.find_relation_base_from_hastan(sentence, verb)
+                else:
+                    self.find_relation_base_from_normal_verb(sentence, verb)
+            if ':' in sentence.text:
+                self.find_list_relation_base(sentence)
+            if self.contain_word in sentence.text:
+                self.find_contain_relation_base(sentence)
+
+    def find_relation_base_from_esnadi_verbs(self, sentence):
+        root = sentence.find_root()
+        subjects = sentence.find_subjects(root)
+        roots = [root] + sentence.find_conjuncts(root)
+        self.add_relation_triples(subjects, [DesignElement('ESNADI')], roots, sentence)
+
+    def find_relation_base_from_hastan(self, sentence, verb):
+        subjects = sentence.find_subjects(verb)
+        xcomps = sentence.find_xcomps(verb)
+        self.add_relation_triples(subjects, [DesignElement('ESNADI')], xcomps, sentence)
+
+    def find_relation_base_from_normal_verb(self, sentence, verb):
+        if verb.lemma != 'داشت#دار':
+            infinitives = sentence.find_full_infinitive(verb)
+            infinitive_elements = [DesignElement(infinitive, verb) for infinitive in infinitives if
+                                   infinitive not in ['توانستن', 'خواستن']]
+            subjects = sentence.find_subjects(verb)
+            temp_verb = verb
+            while len(subjects) == 0:
+                if temp_verb.rel in ['conj', 'xcomp', 'ccomp']:  # probably advcl and acl should be added
+                    temp_verb = sentence.find_node_by_address(temp_verb.head)
+                    if temp_verb.tag == 'VERB':
+                        subjects = sentence.find_subjects(temp_verb)
+                    else:
+                        break
+                else:
+                    break
+            objects = sentence.find_objects(verb)
+            self.add_relation_triples(subjects, infinitive_elements, objects, sentence)
+
+    def find_list_relation_base(self, sentence):
+        if "«" in sentence.text or "»" in sentence.text:
+            return
+
+        colon_nodes = sentence.find_node_by_text(':')
+        if len(colon_nodes) == 0:
+            return
+        colon_node = colon_nodes[0]
+        after_colon_nodes = [node for node in sentence.nlp_nodes if node.address > colon_node.address]
+        if any(node.tag == 'VERB' for node in after_colon_nodes):
+            return
+        if not any(node.text in {'،', 'و', ','} for node in after_colon_nodes):
+            return
+        main_nodes = [node for node in after_colon_nodes if node.rel not in ['nmod', 'amod', 'punct', 'cc']]
+        subjects = sentence.find_subjects()
+        self.add_relation_triples(subjects, [DesignElement('LIST')], main_nodes, sentence)
+
+    def find_contain_relation_base(self, sentence):
+        contain_word_nodes = sentence.find_node_by_text(self.contain_word)
+        if len(contain_word_nodes) == 0:
+            return
+        contain_word_node = contain_word_nodes[0]
+        next_address = contain_word_node.address + 1
+        obl_addresses = contain_word_node.deps.get('obl:arg', None)
+        obl_node = sentence.find_node_by_address(
+            obl_addresses[0]) if obl_addresses is not None else sentence.find_node_by_address(next_address)
+        subjects = sentence.find_subjects()
+        nodes = [obl_node] + sentence.find_conjuncts(obl_node)
+        self.add_relation_triples(subjects, [DesignElement('CONTAIN')], nodes, sentence)
+
+    def add_relation_triples(self, source_nodes, infinitive_elements, target_nodes, sentence):
+        source_names = [name for source in source_nodes for name in sentence.find_seq_names(source)]
+        source_classes = [element for element in self.diagram.classes if element.text in source_names]
+        if len(target_nodes) == 0:
+            for subject_class in source_classes:
+                for infinitive_node in infinitive_elements:
+                    self.diagram.add_base_relation(RelationBase(subject_class, infinitive_node, None, sentence))
+        else:
+            for subject_class in source_classes:
+                for node in target_nodes:
+                    names = sentence.find_seq_names(node)
+                    for name in names:
+                        target_class = self.find_class_by_name(name)
+                        for infinitive_node in infinitive_elements:
+                            self.diagram.add_base_relation(
+                                RelationBase(subject_class, infinitive_node, target_class, sentence, node))
+
+    # generalizations
+    def extract_generalizations(self):
+        for relation in self.diagram.base_relations:
+            if relation.relation_title.text == 'ESNADI':
+                self.extract_generalizations_from_esnadi(relation)
+            if relation.relation_title.text == 'LIST':
+                self.extract_generalization_from_list(relation)
+            if any(term in relation.relation_title.text for term in self.categorizing_words):
+                self.extract_generalization_categorization(relation)
+            if any(term == relation.relation_title.text for term in self.complex_categorizing_words) and any(
+                    term in relation.sentence.text for term in self.category_words):
+                self.extract_generalization_categorization(relation)
+
+    def extract_generalizations_from_esnadi(self, relation):
+        base_source = relation.source
+        base_target = relation.target
+        sentence = relation.sentence
+        if base_target is not None:
+            self.diagram.add_generalization(base_target, base_source, sentence)
+
+    def extract_generalization_from_list(self, relation):
+        parent = relation.source
+        child = relation.target
+        if child is None:
+            node = relation.target_node
+            names = relation.sentence.find_seq_names(node, False)
+            for name in names:
+                child = ClassElement(name, node)
+                self.diagram.add_class(child)
+                self.diagram.add_generalization(child, parent, relation.sentence)
+        else:
+            self.diagram.add_generalization(child, parent, relation.sentence)
+
+    def extract_generalization_categorization(self, relation):
+        obls = [node for node in relation.sentence.find_obliques() if node.head == relation.relation_title.node.address]
+        xcomps = relation.sentence.find_xcomps(relation.relation_title.node)
+        nodes = obls + xcomps
+        main_nodes = []
+        for node in nodes:
+            if node.lemma in self.category_words + self.categorizing_words:
+                main_nodes += relation.sentence.find_noun_modifiers(node)
+            else:
+                main_nodes.append(node)
+        for node in main_nodes:
+            names = relation.sentence.find_seq_names(node, False)
+            for name in names:
+                class_element = self.find_class_by_name(name)
+                if class_element is None:
+                    class_element = ClassElement(name, node)
+                    self.diagram.add_class(class_element)
+                self.diagram.add_generalization(class_element, relation.source, relation.sentence)
+
+    # aggregations
+    def extract_aggregations(self):
+        for relation in self.diagram.base_relations:
+            if relation.relation_title.text == 'CONTAIN':
+                self.extract_aggregations_from_contain_relation(relation)
+
+    def extract_aggregations_from_contain_relation(self, relation):
+        parent = relation.source
+        child = relation.target
+        if child is not None:
+            self.diagram.add_aggregation(child, parent, relation.sentence)
+        else:
+            target_node = relation.target_node
+            names = relation.sentence.find_seq_names(target_node)
+            for name in names:
+                attr_name = re.sub(rf'\b{re.escape(parent.text)}\b', '', name).strip()
+                parent.add_attribute(attr_name, target_node)
+
+    # operations
+    def extract_operations(self):
+        relations = [relation for relation in self.diagram.base_relations if
+                     relation.relation_title.text not in ['ESNADI', 'LIST', 'CONTAIN']]
+        for relation in relations:
+            target = relation.target
+            source = relation.source
+            title = relation.relation_title
+            if target is None:
+                source.add_operation(title.text, title.node)
+                continue
+            if target.is_weak():
+                source.add_operation(f"{title.text} {target.text}", title.node)
+
+    def find_class_by_name(self, text):
+        filtered = [element for element in self.diagram.classes if element.text == text]
+        return filtered[0] if len(filtered) > 0 else None
+
+    def find_class_by_node_text(self, text):
+        filtered = [element for element in self.diagram.classes if element.node.text == text]
+        return filtered[0] if len(filtered) > 0 else None
+
+    def count_classes(self):
+        for element in self.diagram.classes:
+            count = self.requirement.text.count(element.text)
+            element.count = count
 
 
 class ExtractorEvaluator:
