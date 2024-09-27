@@ -1,3 +1,4 @@
+import json
 import sys
 import os
 
@@ -48,6 +49,8 @@ def submit_req(request):
     extractor = ClassDiagramExtractor(requirement)
     extractor.extract_class_names()
     extractor.extract_attributes()
+    extractor.extract_relations()
+    extractor.extract_operations()
     for element in extractor.diagram.classes:
         print(element.text, element.node.rel)
         print('attrs:')
@@ -55,8 +58,12 @@ def submit_req(request):
             print(attr.text, attr.node.rel)
         print('---------------------------')
     request.session['result'] = {
-        'classes': [{'text': element.text, 'attributes': [attr.text for attr in element.attributes]} for element in
-                    extractor.diagram.classes]
+        'classes': [{'text': element.text, 'attributes': [attr.text for attr in element.attributes],
+                     'operations': [operation.text for operation in element.operations]} for element in
+                    extractor.diagram.classes],
+        'relations': [
+            {'source': relation.source.text, 'relation_type': relation.relation_type, 'target': relation.target.text,
+             'label': relation.label} for relation in extractor.diagram.relations]
     }
     request.session['req'] = requirement.text
     return HttpResponseRedirect(reverse('UI:result'))
@@ -83,7 +90,8 @@ def evaluation_view(request):
         result_diagram = ClassDiagram([item for item in result['classes']])
         standard_classes = [{'text': class_name.strip(),
                              'attributes': [key.strip() for key in re.split(r'[\-–]', attributes) if key != '']} for
-                            class_name, attributes in zip(form_standard_classes, form_standard_attributes) if class_name !='']
+                            class_name, attributes in zip(form_standard_classes, form_standard_attributes) if
+                            class_name != '']
         # standard_classes = [key.strip() for key in re.split(r'[\-–]', standard_classes_string)]
         print(repr(standard_classes))
 
@@ -96,3 +104,9 @@ def evaluation_view(request):
         return render(request, 'UI/evaluation.html', {'classes': class_result, 'attributes': attribute_result})
     else:
         return HttpResponseRedirect(reverse('UI:result'))
+
+
+def diagram(request):
+    result = request.session.get('result')
+    result_json = json.dumps(result, ensure_ascii=False)
+    return render(request, 'UI/diagram.html', {'result': result_json})

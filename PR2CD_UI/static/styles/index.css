@@ -208,3 +208,11 @@ input{
 .evaluation-file-group{
     margin-bottom: 0.5rem;
 }
+
+.diagram-container *{
+    font-family: none;
+}
+#diagram-div{
+    display: flex;
+    justify-content: center;
+}

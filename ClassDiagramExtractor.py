@@ -45,6 +45,18 @@ class RelationBase:
         return False
 
 
+class Relation:
+    def __init__(self, source, relation_type, target, base, label=None):
+        self.source = source
+        self.relation_type = relation_type
+        self.target = target
+        self.label = label
+        self.base = base
+
+    def __eq__(self, other):
+        return self.source == other.source and self.target == other.target and self.relation_type == other.relation_type and self.label == other.label
+
+
 class ClassElement(DesignElement):
     def __init__(self, text, node=None, attributes=None, operations=None):
         super().__init__(text, node)
@@ -117,13 +129,13 @@ class ClassDiagram:
     def relation_exist(self, input_relation):
         return any(input_relation == relation for relation in self.relations)
 
-    def add_generalization(self, child, parent, sentence):
-        relation = RelationBase(child, DesignElement('GENERALIZATION'), parent, sentence)
+    def add_generalization(self, child, parent, base):
+        relation = Relation(child, 'GENERALIZATION', parent, base)
         if not self.relation_exist(relation):
             self.relations.append(relation)
 
-    def add_aggregation(self, child, parent, sentence):
-        relation = RelationBase(child, DesignElement('AGGREGATION'), parent, sentence)
+    def add_aggregation(self, child, parent, base):
+        relation = Relation(child, 'AGGREGATION', parent, base)
         if not self.relation_exist(relation):
             self.relations.append(relation)
 
@@ -474,7 +486,7 @@ class ClassDiagramExtractor:
         base_target = relation.target
         sentence = relation.sentence
         if base_target is not None:
-            self.diagram.add_generalization(base_target, base_source, sentence)
+            self.diagram.add_generalization(base_target, base_source, relation)
 
     def extract_generalization_from_list(self, relation):
         parent = relation.source
@@ -485,9 +497,9 @@ class ClassDiagramExtractor:
             for name in names:
                 child = ClassElement(name, node)
                 self.diagram.add_class(child)
-                self.diagram.add_generalization(child, parent, relation.sentence)
+                self.diagram.add_generalization(child, parent, relation)
         else:
-            self.diagram.add_generalization(child, parent, relation.sentence)
+            self.diagram.add_generalization(child, parent, relation)
 
     def extract_generalization_categorization(self, relation):
         obls = [node for node in relation.sentence.find_obliques() if node.head == relation.relation_title.node.address]
@@ -506,7 +518,7 @@ class ClassDiagramExtractor:
                 if class_element is None:
                     class_element = ClassElement(name, node)
                     self.diagram.add_class(class_element)
-                self.diagram.add_generalization(class_element, relation.source, relation.sentence)
+                self.diagram.add_generalization(class_element, relation.source, relation)
 
     # aggregations
     def extract_aggregations(self):
@@ -518,7 +530,7 @@ class ClassDiagramExtractor:
         parent = relation.source
         child = relation.target
         if child is not None:
-            self.diagram.add_aggregation(child, parent, relation.sentence)
+            self.diagram.add_aggregation(child, parent, relation)
         else:
             target_node = relation.target_node
             names = relation.sentence.find_seq_names(target_node)

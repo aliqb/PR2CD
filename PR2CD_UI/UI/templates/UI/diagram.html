@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block content %}
+<div>
+    <div class="diagram-container">
+        <div id="diagram-div">
+        </div>
+
+    </div>
+<!--    <button id="export-btn">test</button>-->
+<!--    <button id="svg-btn">test-svg</button>-->
+
+</div>
+<script>
+    mermaid.initialize({startOnLoad: true});
+    document.getElementById("svg-btn").addEventListener('click', exportSvg)
+    document.getElementById("export-btn").addEventListener('click', exportPng)
+    drawDiagram()
+
+    async function drawDiagram() {
+        const umlData = JSON.parse('{{ result|safe|escapejs }}');
+        console.log(umlData)
+        element = document.querySelector('#diagram-div');
+        let diagramDef = `classDiagram`;
+        const reg = /[\s‌]/g
+        const relationArrows = {
+            GENERALIZATION: '--|>',
+            AGGREGATION: '--o',
+            COMPOSITION: '--*',
+            ASSOCIATION: '-->'
+        }
+        diagramDef += '\n' + umlData.classes.map(item => {
+            const attrs = item.attributes.map(attr => attr.replaceAll(reg, '_')).join('\n')
+            const operations = item.operations.map(attr => `${attr.replaceAll(reg, '_')}()`).join('\n')
+            return `class ${item.text.replaceAll(reg, '_')}{
+                ${attrs}
+                ${operations}
+                }`
+        }).join('\n')
+        const relations = umlData.relations.map(relation => {
+            let def = `${relation.source.replaceAll(reg, '_')} ${relationArrows[relation.relation_type]} ${relation.target.replaceAll(reg, '_')}`
+            if (relation.label) {
+                def += ` : ${relation.label.replaceAll(reg, '_')}`
+            }
+            return def
+        }).join('\n')
+        diagramDef += '\n' + relations
+        console.log(diagramDef)
+        const {svg, bindFunctions} = await mermaid.render('graphDiv', diagramDef);
+        element.innerHTML = svg;
+        // This can also be written as `bindFunctions?.(element);` using the `?` shorthand.
+        if (bindFunctions) {
+            bindFunctions(element);
+        }
+    }
+
+    function exportSvg() {
+        const svgElement = document.querySelector('svg');  // Get the generated SVG element
+
+        // Convert SVG to a downloadable file
+        const svgBlob = new Blob([svgElement.outerHTML], {type: 'image/svg+xml'});
+        const svgUrl = URL.createObjectURL(svgBlob);
+
+        // Create a download link
+        const downloadLink = document.createElement('a');
+        downloadLink.href = svgUrl;
+        downloadLink.download = 'diagram.svg';
+        downloadLink.click();
+
+        // Clean up the URL
+        URL.revokeObjectURL(svgUrl);
+    }
+
+    function exportPng() {
+        const svgElement = document.querySelector('svg');
+        const svgData = new XMLSerializer().serializeToString(svgElement);
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Create an image element to hold the SVG data
+        const img = new Image();
+        const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
+        const url = URL.createObjectURL(svgBlob);
+
+        img.onload = function () {
+            // Set canvas size to match SVG size
+            canvas.width = svgElement.clientWidth;
+            canvas.height = svgElement.clientHeight;
+
+            // Draw the SVG onto the canvas
+            ctx.drawImage(img, 0, 0);
+
+            // Create a PNG from the canvas
+            const pngUrl = canvas.toDataURL('image/png');
+
+            // Create a download link
+            const downloadLink = document.createElement('a');
+            downloadLink.href = pngUrl;
+            downloadLink.download = 'diagram.png';
+            downloadLink.click();
+
+            // Clean up
+            URL.revokeObjectURL(url);
+        };
+
+        img.src = url;
+    }
+</script>
+{% endblock %}
