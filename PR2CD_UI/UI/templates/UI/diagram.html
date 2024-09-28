@@ -6,14 +6,17 @@
         </div>
 
     </div>
+    <div class="d-flex centering">
+        <a href="{% url 'UI:index' %}" class="btn outline">بازگشت</a>
+    </div>
 <!--    <button id="export-btn">test</button>-->
 <!--    <button id="svg-btn">test-svg</button>-->
 
 </div>
 <script>
     mermaid.initialize({startOnLoad: true});
-    document.getElementById("svg-btn").addEventListener('click', exportSvg)
-    document.getElementById("export-btn").addEventListener('click', exportPng)
+    // document.getElementById("svg-btn").addEventListener('click', exportSvg)
+    // document.getElementById("export-btn").addEventListener('click', exportPng)
     drawDiagram()
 
     async function drawDiagram() {

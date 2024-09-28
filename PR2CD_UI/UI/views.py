@@ -66,7 +66,7 @@ def submit_req(request):
              'label': relation.label} for relation in extractor.diagram.relations]
     }
     request.session['req'] = requirement.text
-    return HttpResponseRedirect(reverse('UI:result'))
+    return HttpResponseRedirect(reverse('UI:diagram'))
 
 
 def result_view(request):

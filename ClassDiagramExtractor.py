@@ -70,7 +70,8 @@ class ClassElement(DesignElement):
                 self.add_attribute(element)
             else:
                 self.add_attribute(element.text, element.node)
-
+        if operations is None:
+            return
         for element in operations:
             if isinstance(element, str):
                 self.add_attribute(element)
@@ -80,6 +81,9 @@ class ClassElement(DesignElement):
     def add_attribute(self, text, node=None):
         if not any(attr.text == text for attr in self.attributes):
             self.attributes.append(DesignElement(text, node))
+
+    def remove_attribute(self, name):
+        self.attributes = [attr for attr in self.attributes if attr.text != name]
 
     def add_operation(self, text, node=None):
         if not any(attr.text == text for attr in self.operations):
@@ -139,6 +143,11 @@ class ClassDiagram:
         if not self.relation_exist(relation):
             self.relations.append(relation)
 
+    def add_composition(self, child, parent, base):
+        relation = Relation(child, 'COMPOSITION', parent, base)
+        if not self.relation_exist(relation):
+            self.relations.append(relation)
+
 
 class ClassDiagramExtractor:
     def __init__(self, requirement: Requirement):
@@ -165,6 +174,20 @@ class ClassDiagramExtractor:
             'جای گرفتن'
         ]
         self.contain_word = 'شامل'
+        self.composition_verb_particles = [
+            'ساختن',
+            'تشکیل'
+        ]
+        self.composition_nouns = [
+            'قسمت',
+            'جزئی',
+            'بخش',
+        ]
+
+        self.composition_parent_words = [
+            'ساختار',
+            'اجزا'
+        ]
 
     # classes
     def extract_class_names(self):
@@ -372,6 +395,7 @@ class ClassDiagramExtractor:
         self.extract_relation_bases()
         self.extract_generalizations()
         self.extract_aggregations()
+        self.extract_composition()
 
     # relation bases
     def extract_relation_bases(self):
@@ -485,6 +509,9 @@ class ClassDiagramExtractor:
         base_source = relation.source
         base_target = relation.target
         sentence = relation.sentence
+        if relation.target_node is not None and any(
+                term in relation.target_node.text for term in self.composition_nouns):
+            return
         if base_target is not None:
             self.diagram.add_generalization(base_target, base_source, relation)
 
@@ -525,6 +552,7 @@ class ClassDiagramExtractor:
         for relation in self.diagram.base_relations:
             if relation.relation_title.text == 'CONTAIN':
                 self.extract_aggregations_from_contain_relation(relation)
+        # self.convert_attributes_to_aggregation()
 
     def extract_aggregations_from_contain_relation(self, relation):
         parent = relation.source
@@ -537,6 +565,77 @@ class ClassDiagramExtractor:
             for name in names:
                 attr_name = re.sub(rf'\b{re.escape(parent.text)}\b', '', name).strip()
                 parent.add_attribute(attr_name, target_node)
+
+    def convert_attributes_to_aggregation(self):
+        for class_element in self.diagram.classes:
+            for attribute in class_element.attributes:
+                name = attribute.text
+                attr_class = self.find_class_by_name(name)
+                if attr_class is not None:
+                    self.diagram.add_aggregation(attr_class, class_element, None)
+                    class_element.remove_attribute(name)
+
+    # composition
+    def extract_composition(self):
+        for relation in self.diagram.base_relations:
+            if any(term in relation.relation_title.text for term in self.composition_verb_particles):
+                self.extract_composition_from_composition_verbs(relation)
+            if relation.relation_title.text == 'ESNADI':
+                self.extract_composition_from_esnadi(relation)
+
+    def extract_composition_from_composition_verbs(self, relation):
+        if relation.target is None:
+            self.find_composition_from_passive_composition_verb(relation)
+        else:
+            self.find_composition_from_active_composition_verb(relation)
+
+    def find_composition_from_passive_composition_verb(self, relation):
+        preposition_nodes = relation.sentence.find_node_by_text('از')
+        if len(preposition_nodes) == 0:
+            return
+        preposition_node = preposition_nodes[0]
+        next_node = relation.sentence.find_node_by_address(preposition_node.address + 1)
+        nodes = [next_node] + relation.sentence.find_conjuncts(next_node)
+        for node in nodes:
+            names = relation.sentence.find_seq_names(node)
+            for name in names:
+                child = self.find_class_by_name(name)
+                if child is not None:
+                    self.diagram.add_composition(child, relation.source, relation)
+                else:
+                    relation.source.add_attribute(name, node)
+
+    def find_composition_from_active_composition_verb(self, relation):
+        parent = relation.target
+        if parent is None:
+            return
+        child = relation.source
+        self.diagram.add_composition(child, parent, relation)
+
+    def extract_composition_from_esnadi(self, relation):
+        nlp_nodes = [node for node in relation.sentence.nlp_nodes if node.text is not None]
+        composition_nodes = [node for node in nlp_nodes if
+                             any(term in node.text for term in self.composition_nouns)]
+        preposition_nodes = relation.sentence.find_node_by_text('از')
+        if len(preposition_nodes) == 0 or len(composition_nodes) == 0:
+            return
+        composition_node = composition_nodes[0]
+        preposition_node = preposition_nodes[0]
+        if composition_node.address < preposition_node.address:
+            base_address = preposition_node.address
+
+        else:
+            base_address = composition_node.address
+        next_node = relation.sentence.find_node_by_address(base_address + 1)
+        if any(term in next_node.text for term in self.composition_parent_words):
+            next_node = relation.sentence.find_node_by_address(next_node.address + 1)
+        nodes = [next_node] + relation.sentence.find_conjuncts(next_node)
+        for node in nodes:
+            names = relation.sentence.find_seq_names(node)
+            for name in names:
+                parent = self.find_class_by_name(name)
+                if parent is not None:
+                    self.diagram.add_composition(relation.source, parent, relation)
 
     # operations
     def extract_operations(self):

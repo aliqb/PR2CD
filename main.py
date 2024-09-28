@@ -20,22 +20,22 @@ def printGraph(dg):
 
 def print_for_debug(extractor):
     classes = sorted(extractor.diagram.classes, key=lambda x: x.text)
-    # for element in classes:
-    #     print(element.text, element.node.rel, element.count)
-    #     print('attrs:')
-    #     for attr in element.attributes:
-    #         print(attr.text, attr.node.rel)
-    #     print('operations:')
-    #     for operation in element.operations:
-    #         print(operation.text)
-    #     print('---------------------------')
-    # print('\n\nBase Relations:')
-    # for relation in extractor.diagram.base_relations:
-    #     print(relation.sentence.text)
-    #     print(
-    #         f"{relation.source.text},{relation.relation_title.text},{relation.target.text if relation.target else 'None'} {relation.target_node.text if relation.target_node else 'None'}")
-    #     print('----------------')
-    # #
+    for element in classes:
+        print(element.text, element.node.rel, element.count)
+        print('attrs:')
+        for attr in element.attributes:
+            print(attr.text, attr.node.rel)
+        print('operations:')
+        for operation in element.operations:
+            print(operation.text)
+        print('---------------------------')
+    print('\n\nBase Relations:')
+    for relation in extractor.diagram.base_relations:
+        print(relation.sentence.text)
+        print(
+            f"{relation.source.text},{relation.relation_title.text},{relation.target.text if relation.target else 'None'} {relation.target_node.text if relation.target_node else 'None'}")
+        print('----------------')
+    #
     print('\n\nRelations:')
     for relation in extractor.diagram.relations:
         # print(relation.sentence.text)
@@ -61,10 +61,10 @@ def extract_and_evaluate_from_file(name, extractor, print_elements):
         if print_elements:
             print_for_debug(test_extractor)
 
-        # standard_diagram = ClassDiagram(elements)
-        # evaluator = ExtractorEvaluator(test_extractor.diagram, standard_diagram)
-        # print(evaluator.evaluate_classes())
-        # print(evaluator.evaluate_attributes())
+        standard_diagram = ClassDiagram(elements)
+        evaluator = ExtractorEvaluator(test_extractor.diagram, standard_diagram)
+        print(evaluator.evaluate_classes())
+        print(evaluator.evaluate_attributes())
         print("//////////////////////////////////////////////////////")
     except FileNotFoundError:
         print("File not Found")
@@ -98,20 +98,22 @@ if __name__ == '__main__':
     ]
     hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
     # stanza_extractor = StanzaExtractor()
-    for file in file_names:
-        extract_and_evaluate_from_file(file, hazm_extractor, True)
+    # for file in file_names[0:1]:
+    #     extract_and_evaluate_from_file(file, hazm_extractor, True)
     # text = "سازها به سه گروه گیتار، درام و کیبورد دسته‌بندی می‌شوند. سازها به گیتار، درام و کیبورد دسته‌بندی می‌شوند. " \
     #        "سازها به سه گروه گیتار، درام و کیبورد تقسیم می‌شوند. سازها به گیتار، درام و کیبورد تقسیم می‌شوند. سازها " \
     #        "در سه گروه گیتار، درام و کیبورد تفکیک می‌شوند. سازها در گیتار، درام و کیبورد تفکیک می‌شوند. سازها به سه " \
     #        "گروه گیتار، درام و کیبورد گروه‌بندی می‌شوند. سازها به گیتار، درام و کیبورد گروه‌بندی می‌شوند. سازها به سه " \
     #        "گروه گیتار، درام و کیبورد طبقه‌بندی می‌شوند. سازها به گیتار، درام و کیبورد طبقه‌بندی می‌شوند. سازها به سه " \
     #        "نوع گیتار، درام و کیبورد دسته‌بندی می‌شوند. سازها به انواع گیتار، درام و کیبورد دسته‌بندی می‌شوند. "
-    # text = "سیستم باید از شبکه‌ی بانکی کامپیوتری پشتیبانی کند که شامل صندوق‌داران انسانی و دستگاه‌های خودپرداز است."
-    # test_req = Requirement(text, hazm_extractor.extract)
-    # test_extractor = ClassDiagramExtractor(test_req)
-    # test_extractor.extract_class_names()
-    # test_extractor.extract_attributes()
-    # print_for_debug(test_extractor)
+    text = "کاربر ماشین می‌خرد. جرخ از قسمت‌های ماشین است. چرخ برند و سایز دارد."
+    test_req = Requirement(text, hazm_extractor.extract)
+    test_extractor = ClassDiagramExtractor(test_req)
+    test_extractor.extract_class_names()
+    test_extractor.extract_attributes()
+    test_extractor.extract_relations()
+    test_extractor.extract_operations()
+    print_for_debug(test_extractor)
 
     # standard_diagram = ClassDiagram(elements)
     # evaluator = ExtractorEvaluator(test_extractor.diagram, standard_diagram)
