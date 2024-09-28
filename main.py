@@ -98,22 +98,22 @@ if __name__ == '__main__':
     ]
     hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
     # stanza_extractor = StanzaExtractor()
-    # for file in file_names[0:1]:
-    #     extract_and_evaluate_from_file(file, hazm_extractor, True)
+    for file in file_names:
+        extract_and_evaluate_from_file(file, hazm_extractor, True)
     # text = "سازها به سه گروه گیتار، درام و کیبورد دسته‌بندی می‌شوند. سازها به گیتار، درام و کیبورد دسته‌بندی می‌شوند. " \
     #        "سازها به سه گروه گیتار، درام و کیبورد تقسیم می‌شوند. سازها به گیتار، درام و کیبورد تقسیم می‌شوند. سازها " \
     #        "در سه گروه گیتار، درام و کیبورد تفکیک می‌شوند. سازها در گیتار، درام و کیبورد تفکیک می‌شوند. سازها به سه " \
     #        "گروه گیتار، درام و کیبورد گروه‌بندی می‌شوند. سازها به گیتار، درام و کیبورد گروه‌بندی می‌شوند. سازها به سه " \
     #        "گروه گیتار، درام و کیبورد طبقه‌بندی می‌شوند. سازها به گیتار، درام و کیبورد طبقه‌بندی می‌شوند. سازها به سه " \
     #        "نوع گیتار، درام و کیبورد دسته‌بندی می‌شوند. سازها به انواع گیتار، درام و کیبورد دسته‌بندی می‌شوند. "
-    text = "کاربر ماشین می‌خرد. جرخ از قسمت‌های ماشین است. چرخ برند و سایز دارد."
-    test_req = Requirement(text, hazm_extractor.extract)
-    test_extractor = ClassDiagramExtractor(test_req)
-    test_extractor.extract_class_names()
-    test_extractor.extract_attributes()
-    test_extractor.extract_relations()
-    test_extractor.extract_operations()
-    print_for_debug(test_extractor)
+    # text = "کاربر ماشین می‌خرد. جرخ از قسمت‌های ماشین است. چرخ برند و سایز دارد."
+    # test_req = Requirement(text, hazm_extractor.extract)
+    # test_extractor = ClassDiagramExtractor(test_req)
+    # test_extractor.extract_class_names()
+    # test_extractor.extract_attributes()
+    # test_extractor.extract_relations()
+    # test_extractor.extract_operations()
+    # print_for_debug(test_extractor)
 
     # standard_diagram = ClassDiagram(elements)
     # evaluator = ExtractorEvaluator(test_extractor.diagram, standard_diagram)

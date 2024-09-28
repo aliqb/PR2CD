@@ -133,6 +133,9 @@ class ClassDiagram:
     def relation_exist(self, input_relation):
         return any(input_relation == relation for relation in self.relations)
 
+    def relation_with_base_exist(self, base_relation):
+        return any(base_relation == relation.base for relation in self.relations)
+
     def add_generalization(self, child, parent, base):
         relation = Relation(child, 'GENERALIZATION', parent, base)
         if not self.relation_exist(relation):
@@ -145,6 +148,11 @@ class ClassDiagram:
 
     def add_composition(self, child, parent, base):
         relation = Relation(child, 'COMPOSITION', parent, base)
+        if not self.relation_exist(relation):
+            self.relations.append(relation)
+
+    def add_association(self, source, target, base):
+        relation = Relation(source, 'ASSOCIATION', target, base, base.relation_title.text)
         if not self.relation_exist(relation):
             self.relations.append(relation)
 
@@ -396,6 +404,7 @@ class ClassDiagramExtractor:
         self.extract_generalizations()
         self.extract_aggregations()
         self.extract_composition()
+        self.extract_associations()
 
     # relation bases
     def extract_relation_bases(self):
@@ -636,6 +645,13 @@ class ClassDiagramExtractor:
                 parent = self.find_class_by_name(name)
                 if parent is not None:
                     self.diagram.add_composition(relation.source, parent, relation)
+
+    # ASSOCIATION
+    def extract_associations(self):
+        for relation in self.diagram.base_relations:
+            if self.diagram.relation_with_base_exist(relation) or relation.target is None or relation.target.is_weak():
+                continue
+            self.diagram.add_association(relation.source, relation.target, relation)
 
     # operations
     def extract_operations(self):
