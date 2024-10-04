@@ -75,44 +75,35 @@ class ClassDiagramExtractor:
         for obj in sentence_objects:
             all_objects += sentence.find_conjuncts(obj)
         nodes = all_subjects + all_objects
+        self.add_nodes_to_classes(sentence, nodes)
+
+    def extract_esnadi_class_names(self, sentence):
+        root = sentence.find_root()
+        roots = [root] + sentence.find_conjuncts(root)
+        self.add_nodes_to_classes(sentence, roots)
+
+    def extract_hastan_class_names(self, sentence):
+        root = sentence.find_root()
+        xcomps = sentence.find_xcomps(root)
+        self.add_nodes_to_classes(sentence, xcomps)
+
+
+    def add_nodes_to_classes(self, sentence, nodes):
         for node in nodes:
             tag = node.tag
             if not (tag.startswith('NOUN') or tag.startswith('PROPN')):
                 continue
             names = sentence.find_seq_names(node)
             for name in names:
+
                 same_class = self.find_class_by_name(name)
                 if same_class is None:
+                    if self.word_compound_exist(name):
+                        continue
                     self.diagram.add_class(ClassElement(name, node))
                 else:
                     if not same_class.node.is_subject() and node.is_subject():
                         same_class.node = node
-
-    def extract_esnadi_class_names(self, sentence):
-        root = sentence.find_root()
-        roots = [root] + sentence.find_conjuncts(root)
-        for node in roots:
-            tag = node.tag
-            if not (tag.startswith('NOUN') or tag.startswith('PROPN')):
-                continue
-            names = sentence.find_seq_names(node)
-            for name in names:
-                same_class = self.find_class_by_name(name)
-                if same_class is None:
-                    self.diagram.add_class(ClassElement(name, node))
-
-    def extract_hastan_class_names(self, sentence):
-        root = sentence.find_root()
-        xcomps = sentence.find_xcomps(root)
-        for node in xcomps:
-            tag = node.tag
-            if not (tag.startswith('NOUN') or tag.startswith('PROPN')):
-                continue
-            names = sentence.find_seq_names(node)
-            for name in names:
-                same_class = self.find_class_by_name(name)
-                if same_class is None:
-                    self.diagram.add_class(ClassElement(name, node))
 
     # attributes
     def extract_attributes(self):
@@ -526,11 +517,12 @@ class ClassDiagramExtractor:
         self.remove_info_words()
 
     def remove_info_words(self):
-        info_contain_terms = self.attr_terms  + self.categorizing_words + [self.contain_word] + self.composition_nouns[0:2] + self.composition_parent_words
+        info_contain_terms = self.attr_terms + self.categorizing_words + [self.contain_word] + self.composition_nouns[
+                                                                                               0:2] + self.composition_parent_words
         info_exact_terms = self.category_words
         for class_element in self.diagram.classes:
             for term in info_contain_terms:
-                if term in class_element.text :
+                if term in class_element.text:
                     self.diagram.remove_class(class_element)
             for term in info_exact_terms:
                 if class_element.text == term:
@@ -539,6 +531,16 @@ class ClassDiagramExtractor:
     def find_class_by_name(self, text):
         filtered = [element for element in self.diagram.classes if element.text == text]
         return filtered[0] if len(filtered) > 0 else None
+
+    def word_compound_exist(self, name):
+        words = name.split(' ')
+        compound = ''
+        for word in reversed(words):
+            compound = f"{word}{' ' if compound != '' else ''}{compound}"
+            class_element = self.find_class_by_name(compound)
+            if class_element is not None:
+                return True
+        return False
 
     def find_class_by_node_text(self, text):
         filtered = [element for element in self.diagram.classes if element.node.text == text]
