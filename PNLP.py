@@ -195,7 +195,8 @@ class Sentence:
                     self.are_together(dep_node, dep_node[index + 1]))
                 if not skip_adj or dep_node.rel != 'amod' or not dep_node.is_pure_adj():
                     old_name = name
-                    name += ' ' + dep_node.text
+                    text = dep_node.text if index <len(dep_nodes)-1 else dep_node.lemma
+                    name += ' ' + text
                     nodes.append(dep_node)
                 if must_break:
                     break

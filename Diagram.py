@@ -1,3 +1,6 @@
+import re
+
+
 class DesignElement:
     def __init__(self, text, node=None):
         self.text = text
@@ -124,6 +127,33 @@ class ClassDiagram:
         self.relations = [relation for relation in self.relations if
                           relation.source.text != class_element.text and relation.target.text != class_element.text]
 
+    def merge_classes(self, classes, text):
+        attrs = []
+        short_class_list = [element for element in classes if element.text == text]
+        subj_nodes = [element.node for element in classes if element.node.is_subject()]
+        if short_class_list:
+            new_class = short_class_list[0]
+        else:
+            if subj_nodes:
+                node = subj_nodes[0]
+            else:
+                node = classes[0].node
+            new_class = ClassElement(text, node)
+
+        self.add_class(new_class)
+        for element in classes:
+            attrs += element.attributes
+            new_attr_text = re.sub(rf'\b{re.escape(text)}\b', '', element.text).strip()
+            attrs.append(DesignElement(new_attr_text, element.node))
+            for relation in self.relations:
+                if relation.source.text == element.text:
+                    relation.source = new_class
+                if relation.target and relation.target == element.text:
+                    relation.target = new_class
+            self.remove_class(element)
+        for attr in attrs:
+            new_class.add_attribute(attr.text, attr.node)
+
     def add_base_relation(self, relation):
         if not self.base_relation_exist(relation):
             self.base_relations.append(relation)
@@ -136,6 +166,11 @@ class ClassDiagram:
 
     def relation_with_base_exist(self, base_relation):
         return any(base_relation == relation.base for relation in self.relations)
+
+    def any_relation_by_class(self, class_element):
+        return any(
+            class_element.text == relation.source.text or class_element.text == relation.target.text for relation in
+            self.relations)
 
     def add_generalization(self, child, parent, base):
         relation = Relation(child, 'GENERALIZATION', parent, base)

@@ -158,7 +158,7 @@ class ClassDiagramExtractor:
                             names = [name for name in names if nearest_head.text in name]
                             if len(names) > 0:
                                 for name in names:
-                                    modifier_name = re.sub(rf'\b{re.escape(node.text)}\b', '', name).strip()
+                                    modifier_name = re.sub(rf'\b{re.escape(node.lemma)}\b', '', name).strip()
                                     class_element.add_attribute(modifier_name.strip(), head_node)
                             else:
                                 class_element.add_attribute(nearest_head.lemma, head_node)
@@ -168,7 +168,7 @@ class ClassDiagramExtractor:
         attr_compounds = list(set([node.text for node in compounds]) & set(self.attr_verb_particles))
         if len(attr_compounds) > 0:
             subjects = sentence.find_subjects()
-            subject_names = [name for subject in subjects for name,name_nodes in sentence.find_seq_names(subject)]
+            subject_names = [name for subject in subjects for name, name_nodes in sentence.find_seq_names(subject)]
             class_elements = [element for element in self.diagram.classes if element.text in subject_names]
             sentence_obliques = sentence.find_obliques()
             for obl in sentence_obliques:
@@ -518,6 +518,7 @@ class ClassDiagramExtractor:
     # post
     def post_process(self):
         self.remove_info_words()
+        self.merge_classes()
 
     def remove_info_words(self):
         info_contain_terms = self.attr_terms + self.categorizing_words + [self.contain_word] + self.composition_nouns[
@@ -551,6 +552,38 @@ class ClassDiagramExtractor:
     def find_class_by_node_text(self, text):
         filtered = [element for element in self.diagram.classes if element.node.text == text]
         return filtered[0] if len(filtered) > 0 else None
+
+    def merge_classes(self):
+        same_endings = self.find_class_with_same_ending(1)
+        while len(same_endings.items()):
+            for ending, classes in same_endings.items():
+                self.diagram.merge_classes(classes, ending)
+            same_endings = self.find_class_with_same_ending(1)
+
+    def find_class_with_same_ending(self, num_words):
+        # Create a dictionary to store strings with the same ending words
+        endings_dict = {}
+        for class_element in self.diagram.classes:
+            if self.diagram.any_relation_by_class(
+                    class_element) or class_element.attributes or class_element.operations:
+                continue
+            # Split the string into words
+
+            words = class_element.text.split()
+            if len(words) >= num_words:  # Ensure the string has enough words
+                # Get the last 'num_words' words
+                last_words = ' '.join(words[-num_words:])
+
+                # Add the string to the dictionary based on its last words
+                if last_words in endings_dict:
+                    endings_dict[last_words].append(class_element)
+                else:
+                    endings_dict[last_words] = [class_element]
+
+        # Filter out groups that have more than one string with the same ending
+        result = {k: v for k, v in endings_dict.items() if len(v) > 1}
+
+        return result
 
     def count_classes(self):
         for element in self.diagram.classes:
