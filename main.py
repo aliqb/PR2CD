@@ -29,12 +29,12 @@ def print_for_debug(extractor):
         for operation in element.operations:
             print(operation.text)
         print('---------------------------')
-    print('\n\nBase Relations:')
-    for relation in extractor.diagram.base_relations:
-        print(relation.sentence.text)
-        print(
-            f"{relation.source.text},{relation.relation_title.text},{relation.target.text if relation.target else 'None'} {relation.target_node.text if relation.target_node else 'None'}")
-        print('----------------')
+    # print('\n\nBase Relations:')
+    # for relation in extractor.diagram.base_relations:
+    #     print(relation.sentence.text)
+    #     print(
+    #         f"{relation.source.text},{relation.relation_title.text},{relation.target.text if relation.target else 'None'} {relation.target_node.text if relation.target_node else 'None'}")
+    #     print('----------------')
     #
     print('\n\nRelations:')
     for relation in extractor.diagram.relations:
@@ -53,10 +53,7 @@ def extract_and_evaluate_from_file(name, extractor, print_elements):
         # text = "بازیکن‌ها اطلاعاتی مانند نام، ژانر، جنسیت، سطح و سلاح مورد استفاده خود دارند."
         test_req = Requirement(text, extractor.extract)
         test_extractor = ClassDiagramExtractor(test_req)
-        test_extractor.extract_class_names()
-        test_extractor.extract_attributes()
-        test_extractor.extract_relations()
-        test_extractor.extract_operations()
+        test_extractor.extract_diagram()
         print(name)
         if print_elements:
             print_for_debug(test_extractor)

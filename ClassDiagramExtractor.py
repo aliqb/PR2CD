@@ -123,6 +123,11 @@ class ClassDiagram:
     def add_class(self, class_element):
         self.classes.append(class_element)
 
+    def remove_class(self, class_element):
+        self.classes = [element for element in self.classes if element.text != class_element.text]
+        self.relations = [relation for relation in self.relations if
+                          relation.source.text != class_element.text and relation.target.text != class_element.text]
+
     def add_base_relation(self, relation):
         if not self.base_relation_exist(relation):
             self.base_relations.append(relation)
@@ -196,6 +201,14 @@ class ClassDiagramExtractor:
             'ساختار',
             'اجزا'
         ]
+
+    def extract_diagram(self):
+        self.extract_class_names()
+        self.extract_attributes()
+        self.extract_relation_bases()
+        self.extract_operations()
+        self.extract_relations()
+        self.post_process()
 
     # classes
     def extract_class_names(self):
@@ -400,7 +413,7 @@ class ClassDiagramExtractor:
 
     # relations
     def extract_relations(self):
-        self.extract_relation_bases()
+        # self.extract_relation_bases()
         self.extract_generalizations()
         self.extract_aggregations()
         self.extract_composition()
@@ -666,6 +679,21 @@ class ClassDiagramExtractor:
                 continue
             if target.is_weak():
                 source.add_operation(f"{title.text} {target.text}", title.node)
+
+    # post
+    def post_process(self):
+        self.remove_info_words()
+
+    def remove_info_words(self):
+        info_contain_terms = self.attr_terms  + self.categorizing_words + [self.contain_word] + self.composition_nouns[0:2] + self.composition_parent_words
+        info_exact_terms = self.category_words
+        for class_element in self.diagram.classes:
+            for term in info_contain_terms:
+                if term in class_element.text :
+                    self.diagram.remove_class(class_element)
+            for term in info_exact_terms:
+                if class_element.text == term:
+                    self.diagram.remove_class(class_element)
 
     def find_class_by_name(self, text):
         filtered = [element for element in self.diagram.classes if element.text == text]

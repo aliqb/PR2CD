@@ -47,10 +47,7 @@ def submit_req(request):
     hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
     requirement = Requirement(req_text, hazm_extractor.extract)
     extractor = ClassDiagramExtractor(requirement)
-    extractor.extract_class_names()
-    extractor.extract_attributes()
-    extractor.extract_relations()
-    extractor.extract_operations()
+    extractor.extract_diagram()
     for element in extractor.diagram.classes:
         print(element.text, element.node.rel)
         print('attrs:')
