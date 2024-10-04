@@ -2,7 +2,8 @@
 from hazm.dependency_parser import SpacyDependencyParser
 from hazm import POSTagger, Lemmatizer, DependencyParser, word_tokenize
 from Requirement import Requirement
-from ClassDiagramExtractor import ClassDiagramExtractor, ClassDiagram, ExtractorEvaluator
+from ClassDiagramExtractor import ClassDiagramExtractor, ExtractorEvaluator
+from Diagram import ClassDiagram
 from PNLP import HazmExtractor, StanzaExtractor
 import json
 
