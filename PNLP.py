@@ -186,6 +186,7 @@ class Sentence:
         if is_seq_root and len(dep_nodes) > 0:
             dep_node = dep_nodes[0]
             old_name = name
+            nodes = [node]
             for index in range(len(dep_nodes)):
                 dep_node = dep_nodes[index]
 
@@ -195,16 +196,17 @@ class Sentence:
                 if not skip_adj or dep_node.rel != 'amod' or not dep_node.is_pure_adj():
                     old_name = name
                     name += ' ' + dep_node.text
+                    nodes.append(dep_node)
                 if must_break:
                     break
-            names.append(name)
+            names.append((name, nodes))
             conjuncts = self.find_conjuncts(dep_node)
             for conjunct in conjuncts:
                 conjunct_names = self.find_seq_dependency_names(conjunct)
-                for conjunct_name in conjunct_names:
-                    names.append(old_name + " " + conjunct_name)
+                for conjunct_name, conj_nodes in conjunct_names:
+                    names.append((old_name + " " + conjunct_name, nodes[0:-1]+conj_nodes))
         else:
-            names.append(name)
+            names.append((name, [node]))
         return names
 
     def find_ezafe_names(self, node):

@@ -72,7 +72,6 @@ def extract_and_evaluate_from_file(name, extractor, print_elements):
 
 if __name__ == '__main__':
     lemmatizer = Lemmatizer()
-    # print(lemmatizer.lemmatize('می دهد','VERB'))
 
     tagger = POSTagger(model='pos_tagger.model')
     parser = DependencyParser(tagger=tagger, lemmatizer=lemmatizer)

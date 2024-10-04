@@ -87,18 +87,17 @@ class ClassDiagramExtractor:
         xcomps = sentence.find_xcomps(root)
         self.add_nodes_to_classes(sentence, xcomps)
 
-
     def add_nodes_to_classes(self, sentence, nodes):
         for node in nodes:
             tag = node.tag
             if not (tag.startswith('NOUN') or tag.startswith('PROPN')):
                 continue
             names = sentence.find_seq_names(node)
-            for name in names:
+            for name, name_nodes in names:
 
                 same_class = self.find_class_by_name(name)
                 if same_class is None:
-                    if self.word_compound_exist(name):
+                    if self.word_compound_exist(name_nodes):
                         continue
                     self.diagram.add_class(ClassElement(name, node))
                 else:
@@ -117,7 +116,7 @@ class ClassDiagramExtractor:
     def extract_attr_have_rule(self, sentence):
         root = sentence.find_root()
         subjects = sentence.find_subjects()
-        subject_names = [name for subject in subjects for name in sentence.find_seq_names(subject)]
+        subject_names = [name for subject in subjects for name, name_nodes in sentence.find_seq_names(subject)]
         class_elements = [element for element in self.diagram.classes if element.text in subject_names]
         if root.lemma == 'داشت#دار':
             self.extract_attr_have_verb_rule(sentence, class_elements)
@@ -141,7 +140,8 @@ class ClassDiagramExtractor:
                     head_node = prev_head
 
                 node_names = sentence.find_seq_names(node)
-                class_elements = [self.find_class_by_name(node_name) for node_name in node_names]  #############
+                class_elements = [self.find_class_by_name(node_name) for node_name, linked_nodes in
+                                  node_names]  #############
                 for class_element in class_elements:
                     if class_element is not None:
                         if head_node.lemma in self.attr_terms:
@@ -154,7 +154,7 @@ class ClassDiagramExtractor:
                         if head_node.address == nearest_head.address:
                             class_element.add_attribute(nearest_head.lemma, head_node)
                         else:
-                            names = sentence.find_seq_names(head_node)
+                            names = [name for name, linked_nodes in sentence.find_seq_names(head_node)]
                             names = [name for name in names if nearest_head.text in name]
                             if len(names) > 0:
                                 for name in names:
@@ -168,11 +168,11 @@ class ClassDiagramExtractor:
         attr_compounds = list(set([node.text for node in compounds]) & set(self.attr_verb_particles))
         if len(attr_compounds) > 0:
             subjects = sentence.find_subjects()
-            subject_names = [name for subject in subjects for name in sentence.find_seq_names(subject)]
+            subject_names = [name for subject in subjects for name,name_nodes in sentence.find_seq_names(subject)]
             class_elements = [element for element in self.diagram.classes if element.text in subject_names]
             sentence_obliques = sentence.find_obliques()
             for obl in sentence_obliques:
-                names = sentence.find_seq_names(obl)
+                names = [name for name, linked_nodes in sentence.find_seq_names(obl)]
                 for name in names:
                     for element in class_elements:
                         element.add_attribute(name, obl)
@@ -185,13 +185,14 @@ class ClassDiagramExtractor:
             obl_address = node.deps.get('obl:arg', None)
             if obl_address is not None:
                 obl = sentence.find_node_by_address(obl_address[0])
-                names = sentence.find_seq_names(obl)
+                names = [name for name, linked_nodes in sentence.find_seq_names(obl)]
                 class_elements = [self.find_class_by_name(name) for name in names]
                 for class_element in class_elements:
                     if class_element is not None:
                         modifiers = sentence.find_noun_modifiers(obl)
                         for modifier in modifiers:
-                            attr_names = sentence.find_seq_names(modifier)
+                            attr_names = [name for name, linked_nodes in sentence.find_seq_names(modifier)]
+
                             for attr_name in attr_names:
                                 class_element.add_attribute(attr_name, modifier)
 
@@ -202,7 +203,7 @@ class ClassDiagramExtractor:
             if obj.lemma in self.attr_terms:
                 self.add_attr_terms_modifiers(sentence, obj, class_elements)
                 continue
-            names = sentence.find_seq_names(obj)
+            names = [name for name, linked_nodes in sentence.find_seq_names(obj)]
             for name in names:
                 for element in class_elements:
                     element.add_attribute(name, obj)
@@ -213,7 +214,7 @@ class ClassDiagramExtractor:
             if obl.lemma in self.attr_terms:
                 self.add_attr_terms_modifiers(sentence, obl, class_elements)
                 continue
-            names = sentence.find_seq_names(obl)
+            names = [name for name, linked_nodes in sentence.find_seq_names(obl)]
             for name in names:
                 for element in class_elements:
                     element.add_attribute(name, obl)
@@ -221,7 +222,7 @@ class ClassDiagramExtractor:
     def add_attr_terms_modifiers(self, sentence, node, class_elements):
         noun_modifiers = sentence.find_noun_modifiers(node)
         for noun in noun_modifiers:
-            names = sentence.find_seq_names(noun)
+            names = [name for name, linked_nodes in sentence.find_seq_names(noun)]
             for element in class_elements:
                 for name in names:
                     if name != element.text:
@@ -330,7 +331,7 @@ class ClassDiagramExtractor:
         self.add_relation_triples(subjects, [DesignElement('CONTAIN')], nodes, sentence)
 
     def add_relation_triples(self, source_nodes, infinitive_elements, target_nodes, sentence):
-        source_names = [name for source in source_nodes for name in sentence.find_seq_names(source)]
+        source_names = [name for source in source_nodes for name, name_nodes in sentence.find_seq_names(source)]
         source_classes = [element for element in self.diagram.classes if element.text in source_names]
         if len(target_nodes) == 0:
             for subject_class in source_classes:
@@ -339,7 +340,7 @@ class ClassDiagramExtractor:
         else:
             for subject_class in source_classes:
                 for node in target_nodes:
-                    names = sentence.find_seq_names(node)
+                    names = [name for name, linked_nodes in sentence.find_seq_names(node)]
                     for name in names:
                         target_class = self.find_class_by_name(name)
                         for infinitive_node in infinitive_elements:
@@ -374,7 +375,7 @@ class ClassDiagramExtractor:
         child = relation.target
         if child is None:
             node = relation.target_node
-            names = relation.sentence.find_seq_names(node, False)
+            names = [name for name, linked_nodes in relation.sentence.find_seq_names(node, False)]
             for name in names:
                 child = ClassElement(name, node)
                 self.diagram.add_class(child)
@@ -393,7 +394,7 @@ class ClassDiagramExtractor:
             else:
                 main_nodes.append(node)
         for node in main_nodes:
-            names = relation.sentence.find_seq_names(node, False)
+            names = [name for name, linked_nodes in relation.sentence.find_seq_names(node, False)]
             for name in names:
                 class_element = self.find_class_by_name(name)
                 if class_element is None:
@@ -415,7 +416,7 @@ class ClassDiagramExtractor:
             self.diagram.add_aggregation(child, parent, relation)
         else:
             target_node = relation.target_node
-            names = relation.sentence.find_seq_names(target_node)
+            names = [name for name, linked_nodes in relation.sentence.find_seq_names(target_node)]
             for name in names:
                 attr_name = re.sub(rf'\b{re.escape(parent.text)}\b', '', name).strip()
                 parent.add_attribute(attr_name, target_node)
@@ -451,7 +452,8 @@ class ClassDiagramExtractor:
         next_node = relation.sentence.find_node_by_address(preposition_node.address + 1)
         nodes = [next_node] + relation.sentence.find_conjuncts(next_node)
         for node in nodes:
-            names = relation.sentence.find_seq_names(node)
+            names = [name for name, linked_nodes in relation.sentence.find_seq_names(node)]
+
             for name in names:
                 child = self.find_class_by_name(name)
                 if child is not None:
@@ -485,7 +487,8 @@ class ClassDiagramExtractor:
             next_node = relation.sentence.find_node_by_address(next_node.address + 1)
         nodes = [next_node] + relation.sentence.find_conjuncts(next_node)
         for node in nodes:
-            names = relation.sentence.find_seq_names(node)
+            names = [name for name, linked_nodes in relation.sentence.find_seq_names(node)]
+
             for name in names:
                 parent = self.find_class_by_name(name)
                 if parent is not None:
@@ -532,12 +535,15 @@ class ClassDiagramExtractor:
         filtered = [element for element in self.diagram.classes if element.text == text]
         return filtered[0] if len(filtered) > 0 else None
 
-    def word_compound_exist(self, name):
-        words = name.split(' ')
+    def word_compound_exist(self, nodes):
         compound = ''
-        for word in reversed(words):
-            compound = f"{word}{' ' if compound != '' else ''}{compound}"
-            class_element = self.find_class_by_name(compound)
+        for node in reversed(nodes):
+            if compound == '':
+                class_element = self.find_class_by_name(node.lemma)
+                compound = node.text
+            else:
+                compound = f"{node.text}{' ' if compound != '' else ''}{compound}"
+                class_element = self.find_class_by_name(compound)
             if class_element is not None:
                 return True
         return False
