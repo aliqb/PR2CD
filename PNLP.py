@@ -49,8 +49,9 @@ class NLPNode:
 
 
 class Sentence:
-    def __init__(self, text, nlp_nodes: List[NLPNode], find_seq_method: Literal['dep', 'ezafe'] = 'dep',
+    def __init__(self, index, text, nlp_nodes: List[NLPNode], find_seq_method: Literal['dep', 'ezafe'] = 'dep',
                  with_ezafe_tag: bool = False):
+        self.index = index
         self.with_ezafe_tag = with_ezafe_tag
         self.text = text
         self.nlp_nodes = sorted(nlp_nodes, key=lambda x: x.address)
@@ -195,7 +196,7 @@ class Sentence:
                     self.are_together(dep_node, dep_node[index + 1]))
                 if not skip_adj or dep_node.rel != 'amod' or not dep_node.is_pure_adj():
                     old_name = name
-                    text = dep_node.text if index <len(dep_nodes)-1 else dep_node.lemma
+                    text = dep_node.text if index < len(dep_nodes) - 1 else dep_node.lemma
                     name += ' ' + text
                     nodes.append(dep_node)
                 if must_break:
@@ -205,7 +206,7 @@ class Sentence:
             for conjunct in conjuncts:
                 conjunct_names = self.find_seq_dependency_names(conjunct)
                 for conjunct_name, conj_nodes in conjunct_names:
-                    names.append((old_name + " " + conjunct_name, nodes[0:-1]+conj_nodes))
+                    names.append((old_name + " " + conjunct_name, nodes[0:-1] + conj_nodes))
         else:
             names.append((name, [node]))
         return names
@@ -299,7 +300,8 @@ class HazmExtractor:
         final_text = self.text_preprocess(text)
         raw_sentences = [sentence[:-1] for sentence in sentence_tokenizer.tokenize(final_text)]
         sentences = []
-        for sentence in raw_sentences:
+        for index in range(len(raw_sentences)):
+            sentence = raw_sentences[index]
             hazm_nodes = (self.parser.parse(word_tokenizer.tokenize(sentence))).nodes
             nodes = []
             for node in hazm_nodes.values():
@@ -312,7 +314,8 @@ class HazmExtractor:
                     NLPNode(address=node['address'], text=node['word'], tag=tag, rel=node['rel'], head=node['head'],
                             deps=node['deps'], lemma=node['lemma']))
             sentences.append(
-                Sentence(sentence, nodes, with_ezafe_tag=self.with_ezafe_tag, find_seq_method=self.find_seq_method))
+                Sentence(index, sentence, nodes, with_ezafe_tag=self.with_ezafe_tag,
+                         find_seq_method=self.find_seq_method))
 
         return sentences
 

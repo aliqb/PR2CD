@@ -95,7 +95,7 @@ if __name__ == '__main__':
     ]
     hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
     # stanza_extractor = StanzaExtractor()
-    for file in file_names[-3:-2]:
+    for file in file_names:
         extract_and_evaluate_from_file(file, hazm_extractor, True)
     # text = "سازها به سه گروه گیتار، درام و کیبورد دسته‌بندی می‌شوند. سازها به گیتار، درام و کیبورد دسته‌بندی می‌شوند. " \
     #        "سازها به سه گروه گیتار، درام و کیبورد تقسیم می‌شوند. سازها به گیتار، درام و کیبورد تقسیم می‌شوند. سازها " \

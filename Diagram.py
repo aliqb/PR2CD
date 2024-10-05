@@ -57,10 +57,11 @@ class Relation:
 
 
 class ClassElement(DesignElement):
-    def __init__(self, text, node=None, attributes=None, operations=None):
+    def __init__(self, text, node=None, attributes=None, operations=None, sentence=None):
         super().__init__(text, node)
         self.attributes = []
         self.operations = []
+        self.sentence = sentence
         self._count = 0
         if attributes is None:
             return

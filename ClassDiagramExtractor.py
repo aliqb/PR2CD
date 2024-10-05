@@ -97,9 +97,9 @@ class ClassDiagramExtractor:
 
                 same_class = self.find_class_by_name(name)
                 if same_class is None:
-                    if self.word_compound_exist(name_nodes):
-                        continue
-                    self.diagram.add_class(ClassElement(name, node))
+                    # if self.word_compound_exist(name_nodes):
+                    #     continue
+                    self.diagram.add_class(ClassElement(name, node, sentence=sentence))
                 else:
                     if not same_class.node.is_subject() and node.is_subject():
                         same_class.node = node
@@ -363,7 +363,6 @@ class ClassDiagramExtractor:
     def extract_generalizations_from_esnadi(self, relation):
         base_source = relation.source
         base_target = relation.target
-        sentence = relation.sentence
         if relation.target_node is not None and any(
                 term in relation.target_node.text for term in self.composition_nouns):
             return
@@ -377,7 +376,7 @@ class ClassDiagramExtractor:
             node = relation.target_node
             names = [name for name, linked_nodes in relation.sentence.find_seq_names(node, False)]
             for name in names:
-                child = ClassElement(name, node)
+                child = ClassElement(name, node, sentence=relation.sentence)
                 self.diagram.add_class(child)
                 self.diagram.add_generalization(child, parent, relation)
         else:
@@ -398,7 +397,7 @@ class ClassDiagramExtractor:
             for name in names:
                 class_element = self.find_class_by_name(name)
                 if class_element is None:
-                    class_element = ClassElement(name, node)
+                    class_element = ClassElement(name, node, sentence=relation.sentence)
                     self.diagram.add_class(class_element)
                 self.diagram.add_generalization(class_element, relation.source, relation)
 
@@ -518,6 +517,7 @@ class ClassDiagramExtractor:
     # post
     def post_process(self):
         self.remove_info_words()
+        self.remove_bigger_classes()
         self.merge_classes()
 
     def remove_info_words(self):
@@ -531,6 +531,29 @@ class ClassDiagramExtractor:
             for term in info_exact_terms:
                 if class_element.text == term:
                     self.diagram.remove_class(class_element)
+
+    def remove_bigger_classes(self):
+        for element in self.diagram.classes:
+            if self.shorter_class_exist_before(element):
+                self.diagram.remove_class(element)
+
+    def shorter_class_exist_before(self, class_element):
+        class_sorted_sentence = list(sorted(self.diagram.classes, key=lambda x: x.sentence.index))
+        words = class_element.text.split(' ')
+        compound = ''
+        for word in reversed(words):
+            if compound == '':
+                compound = word
+            else:
+                compound = f"{word} {compound}"
+            found_class = self.find_class_by_name(compound)
+            if found_class:
+                if found_class.sentence.index < class_element.sentence.index:
+                    return True
+        return False
+        # for element in class_sorted_sentence:
+        #     if element.sentence.index >= class_element.index:
+        #         return False
 
     def find_class_by_name(self, text):
         filtered = [element for element in self.diagram.classes if element.text == text]
