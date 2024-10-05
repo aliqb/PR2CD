@@ -14,6 +14,7 @@ class NLPNode:
         self.tag = tag
         self.text = text
         self.address = address
+        self.meta_rel = rel
 
     def __str__(self):
         return f"{self.address}, {self.text}, rel:{self.rel}, head:{self.head}, tag:{self.tag}"
@@ -67,7 +68,10 @@ class Sentence:
 
     def find_conjuncts(self, node):
         conj_addresses = node.deps.get('conj', [])
-        return [self.find_node_by_address(address) for address in conj_addresses]
+        conjs = [self.find_node_by_address(address) for address in conj_addresses]
+        for conj in conjs:
+            conj.meta_rel = node.rel
+        return conjs
 
     def are_together(self, node1, node2, ignore_determiners=False):
         if node1.address + 1 == node2.address:
