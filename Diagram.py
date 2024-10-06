@@ -140,18 +140,19 @@ class ClassDiagram:
             else:
                 node = classes[0].node
             new_class = ClassElement(text, node)
-
-        self.add_class(new_class)
+            self.add_class(new_class)
         for element in classes:
-            attrs += element.attributes
-            new_attr_text = re.sub(rf'\b{re.escape(text)}\b', '', element.text).strip()
-            attrs.append(DesignElement(new_attr_text, element.node))
             for relation in self.relations:
                 if relation.source.text == element.text:
                     relation.source = new_class
-                if relation.target and relation.target == element.text:
+                if relation.target and relation.target.text == element.text:
                     relation.target = new_class
-            self.remove_class(element)
+            if element.text != text:
+                attrs += element.attributes
+                if text in element.text:
+                    new_attr_text = re.sub(rf'\b{re.escape(text)}\b', '', element.text).strip()
+                    attrs.append(DesignElement(new_attr_text, element.node))
+                self.remove_class(element)
         for attr in attrs:
             new_class.add_attribute(attr.text, attr.node)
 

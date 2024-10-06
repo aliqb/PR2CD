@@ -315,7 +315,7 @@ class ClassDiagramExtractor:
             return
         main_nodes = [node for node in after_colon_nodes if node.rel not in ['nmod', 'amod', 'punct', 'cc']]
         subjects = sentence.find_subjects()
-        self.add_relation_triples(subjects, [DesignElement('LIST')], main_nodes, sentence)
+        self.add_relation_triples(subjects, [DesignElement('LIST')], main_nodes, sentence, False)
 
     def find_contain_relation_base(self, sentence):
         contain_word_nodes = sentence.find_node_by_text(self.contain_word)
@@ -330,7 +330,7 @@ class ClassDiagramExtractor:
         nodes = [obl_node] + sentence.find_conjuncts(obl_node)
         self.add_relation_triples(subjects, [DesignElement('CONTAIN')], nodes, sentence)
 
-    def add_relation_triples(self, source_nodes, infinitive_elements, target_nodes, sentence):
+    def add_relation_triples(self, source_nodes, infinitive_elements, target_nodes, sentence, skip_adj=True):
         source_names = [name for source in source_nodes for name, name_nodes in sentence.find_seq_names(source)]
         source_classes = [element for element in self.diagram.classes if element.text in source_names]
         if len(target_nodes) == 0:
@@ -340,7 +340,7 @@ class ClassDiagramExtractor:
         else:
             for subject_class in source_classes:
                 for node in target_nodes:
-                    names = [name for name, linked_nodes in sentence.find_seq_names(node)]
+                    names = [name for name, linked_nodes in sentence.find_seq_names(node, skip_adj)]
                     for name in names:
                         target_class = self.find_class_by_name(name)
                         for infinitive_node in infinitive_elements:
@@ -517,6 +517,7 @@ class ClassDiagramExtractor:
     # post
     def post_process(self):
         self.remove_info_words()
+        self.replace_category_words()
         self.remove_bigger_classes()
         self.merge_classes()
 
@@ -528,9 +529,29 @@ class ClassDiagramExtractor:
             for term in info_contain_terms:
                 if term in class_element.text:
                     self.diagram.remove_class(class_element)
-            for term in info_exact_terms:
+            # for term in info_exact_terms:
+            #     if class_element.text == term:
+            #         self.diagram.remove_class(class_element)
+
+    def replace_category_words(self):
+        for class_element in self.diagram.classes:
+            for term in self.category_words:
                 if class_element.text == term:
-                    self.diagram.remove_class(class_element)
+                    node = class_element.node
+                    next_node = class_element.sentence.find_node_by_address(node.address + 1)
+                    if next_node:
+                        name,name_nodes = class_element.sentence.find_seq_names(next_node)[0]
+                        main_class = self.find_class_by_name(name)
+                        if main_class:
+                            self.diagram.merge_classes([main_class, class_element], main_class.text)
+                        else:
+                            class_element.text = name
+                            class_element.node = next_node
+                elif term in class_element.text:
+                    text = re.sub(rf'\b{re.escape(term)}\b', '', class_element.text).strip()
+                    main_class = self.find_class_by_name(text)
+                    if main_class:
+                        self.diagram.merge_classes([main_class, class_element], main_class.text)
 
     def remove_bigger_classes(self):
         for element in self.diagram.classes:

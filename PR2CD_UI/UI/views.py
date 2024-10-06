@@ -49,12 +49,12 @@ def submit_req(request):
     requirement = Requirement(req_text, hazm_extractor.extract)
     extractor = ClassDiagramExtractor(requirement)
     extractor.extract_diagram()
-    for element in extractor.diagram.classes:
-        print(element.text, element.node.rel)
-        print('attrs:')
-        for attr in element.attributes:
-            print(attr.text, attr.node.rel)
-        print('---------------------------')
+    # for element in extractor.diagram.classes:
+    #     print(element.text, element.node.rel)
+    #     print('attrs:')
+    #     for attr in element.attributes:
+    #         print(attr.text, attr.node.rel)
+    #     print('---------------------------')
     request.session['result'] = {
         'classes': [{'text': element.text, 'attributes': [attr.text for attr in element.attributes],
                      'operations': [operation.text for operation in element.operations]} for element in
@@ -69,13 +69,12 @@ def submit_req(request):
 
 def result_view(request):
     result = request.session.get('result')
-    print(result)
+    # print(result)
     return render(request, 'UI/result.html', {'result': result})
 
 
 def evaluation_view(request):
     result = request.session.get('result')
-    print(request.method)
     if request.method == 'POST':
         # Get lists of all submitted standard_classes and standard_attributes
         form_standard_classes = request.POST.getlist('standard_classes')
@@ -107,4 +106,5 @@ def evaluation_view(request):
 def diagram(request):
     result = request.session.get('result')
     result_json = json.dumps(result, ensure_ascii=False)
+    print(result_json)
     return render(request, 'UI/diagram.html', {'result': result_json})

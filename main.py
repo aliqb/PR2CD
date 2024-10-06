@@ -25,7 +25,7 @@ def print_for_debug(extractor):
         print(element.text, element.node.rel if element.node else '' , element.count)
         print('attrs:')
         for attr in element.attributes:
-            print(attr.text, attr.node.rel)
+            print(attr.text, attr.node.meta_rel)
         print('operations:')
         for operation in element.operations:
             print(operation.text)
@@ -36,7 +36,7 @@ def print_for_debug(extractor):
     #     print(
     #         f"{relation.source.text},{relation.relation_title.text},{relation.target.text if relation.target else 'None'} {relation.target_node.text if relation.target_node else 'None'}")
     #     print('----------------')
-    #
+
     print('\n\nRelations:')
     for relation in extractor.diagram.relations:
         # print(relation.sentence.text)
