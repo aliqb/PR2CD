@@ -43,6 +43,8 @@ class ClassDiagramExtractor:
             'اجزا'
         ]
 
+        self.modal_infinitives = ['توانستن', 'خواستن']
+
     def extract_diagram(self):
         self.extract_class_names()
         self.extract_attributes()
@@ -273,7 +275,14 @@ class ClassDiagramExtractor:
     def find_relation_base_from_esnadi_verbs(self, sentence):
         root = sentence.find_root()
         subjects = sentence.find_subjects(root)
-        roots = [root] + sentence.find_conjuncts(root)
+        if root.tag == 'VERB':
+            infinitives = sentence.find_full_infinitive(root)
+            if any(infinitive in self.modal_infinitives for infinitive in infinitives):
+                roots = sentence.find_ccomps(root) + sentence.find_xcomps(root)
+            else:
+                roots = [root] + sentence.find_conjuncts(root)
+        else:
+            roots = [root] + sentence.find_conjuncts(root)
         self.add_relation_triples(subjects, [DesignElement('ESNADI')], roots, sentence)
 
     def find_relation_base_from_hastan(self, sentence, verb):
@@ -285,7 +294,7 @@ class ClassDiagramExtractor:
         if verb.lemma != 'داشت#دار':
             infinitives = sentence.find_full_infinitive(verb)
             infinitive_elements = [DesignElement(infinitive, verb) for infinitive in infinitives if
-                                   infinitive not in ['توانستن', 'خواستن']]
+                                   infinitive not in self.modal_infinitives]
             subjects = sentence.find_subjects(verb)
             temp_verb = verb
             while len(subjects) == 0:
@@ -540,7 +549,7 @@ class ClassDiagramExtractor:
                     node = class_element.node
                     next_node = class_element.sentence.find_node_by_address(node.address + 1)
                     if next_node:
-                        name,name_nodes = class_element.sentence.find_seq_names(next_node)[0]
+                        name, name_nodes = class_element.sentence.find_seq_names(next_node)[0]
                         main_class = self.find_class_by_name(name)
                         if main_class:
                             self.diagram.merge_classes([main_class, class_element], main_class.text)

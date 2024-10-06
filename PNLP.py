@@ -149,6 +149,14 @@ class Sentence:
             conjs += self.find_conjuncts(xcomp)
         return xcomps + conjs
 
+    def find_ccomps(self, verb):
+        ccomps = [node for node in self.nlp_nodes if
+                  node.rel is not None and node.rel == 'ccomp' and node.head == verb.address]
+        conjs = []
+        for ccomp in ccomps:
+            conjs += self.find_conjuncts(ccomp)
+        return ccomps + conjs
+
     def find_node_by_address(self, address):
         filtered = [node for node in self.nlp_nodes if node.address == address]
         if len(filtered) > 0:
