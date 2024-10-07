@@ -63,6 +63,7 @@ class ClassElement(DesignElement):
         self.operations = []
         self.sentence = sentence
         self._count = 0
+        self._frequency = 0
         if attributes is None:
             return
         for element in attributes:
@@ -102,6 +103,14 @@ class ClassElement(DesignElement):
     def count(self, new_count):
         self._count = new_count
 
+    @property
+    def frequency(self):
+        return self._frequency
+
+    @frequency.setter
+    def frequency(self, new_frequency):
+        self._frequency = new_frequency
+
 
 class ClassDiagram:
     def __init__(self, classes=None):
@@ -130,7 +139,7 @@ class ClassDiagram:
 
     def merge_classes(self, classes, text):
         attrs = []
-        short_class_list = [element for element in classes if element.text == text]
+        short_class_list = [element for element in self.classes if element.text == text]
         subj_nodes = [element.node for element in classes if element.node.is_subject()]
         if short_class_list:
             new_class = short_class_list[0]

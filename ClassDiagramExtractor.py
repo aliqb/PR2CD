@@ -580,6 +580,9 @@ class ClassDiagramExtractor:
             if found_class:
                 if found_class.sentence.index < class_element.sentence.index:
                     return True
+                elif found_class.sentence.index == class_element.sentence.index:
+                    if found_class.node.address < class_element.node.address:
+                        return True
         return False
         # for element in class_sorted_sentence:
         #     if element.sentence.index >= class_element.index:
@@ -639,9 +642,18 @@ class ClassDiagramExtractor:
         return result
 
     def count_classes(self):
+        names = []
+        for sentence in self.requirement.sentences:
+            for node in sentence.nlp_nodes:
+                if node.tag.startswith('NOUN'):
+                    names += [name for name, name_nodes in sentence.find_seq_names(node)]
+        unique_names = set(names)
+        n = len(unique_names)
         for element in self.diagram.classes:
-            count = self.requirement.text.count(element.text)
+            count = len([name for name in names if name == element.text])
             element.count = count
+            element.frequency = count/n
+
 
 
 class ExtractorEvaluator:

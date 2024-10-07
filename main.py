@@ -6,7 +6,7 @@ from ClassDiagramExtractor import ClassDiagramExtractor, ExtractorEvaluator
 from Diagram import ClassDiagram
 from PNLP import HazmExtractor, StanzaExtractor
 import json
-
+from hazm.utils import words_list
 
 def printGraph(dg):
     for node in dg.nodes.values():
@@ -22,7 +22,7 @@ def printGraph(dg):
 def print_for_debug(extractor):
     classes = sorted(extractor.diagram.classes, key=lambda x: x.text)
     for element in classes:
-        print(element.text, element.node.rel if element.node else '' , element.count)
+        print(element.text, element.node.meta_rel if element.node else '' , element.count, element.frequency)
         print('attrs:')
         for attr in element.attributes:
             print(attr.text, attr.node.meta_rel)
@@ -72,7 +72,6 @@ def extract_and_evaluate_from_file(name, extractor, print_elements):
 
 if __name__ == '__main__':
     lemmatizer = Lemmatizer()
-
     tagger = POSTagger(model='pos_tagger.model')
     parser = DependencyParser(tagger=tagger, lemmatizer=lemmatizer)
     spacy_parser = SpacyDependencyParser(tagger=tagger, lemmatizer=lemmatizer,
@@ -94,6 +93,7 @@ if __name__ == '__main__':
         "Fitness center"
     ]
     hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
+
     # stanza_extractor = StanzaExtractor()
     for file in file_names:
         extract_and_evaluate_from_file(file, hazm_extractor, True)
