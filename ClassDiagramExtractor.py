@@ -595,6 +595,7 @@ class ClassDiagramExtractor:
                 self.diagram.remove_class(element)
 
     def post_process_attributes(self):
+        self.convert_same_start_attributes_to_class()
         self.remove_generalized_attribute()
         self.convert_whole_part_attributes()
 
@@ -623,6 +624,25 @@ class ClassDiagramExtractor:
                     if not bigger_class:
                         self.diagram.add_aggregation(part_class, element, None)
                     element.remove_attribute(attribute.text)
+
+    def convert_same_start_attributes_to_class(self):
+        for element in self.diagram.classes:
+            same_starts = self.find_attribute_with_same_start(element, 1)
+
+            for start, attributes in same_starts.items():
+                parent_class = self.find_class_by_name(start)
+                if not parent_class:
+                    parent_class = ClassElement(start)
+                    self.diagram.add_class(parent_class)
+                for attribute in attributes:
+                    part_class_name = re.sub(rf'\b{re.escape(start)}\b', '', attribute.text).strip()
+                    part_class = self.find_class_by_name(part_class_name)
+                    if not part_class:
+                        part_class = ClassElement(part_class_name, attribute.node)
+                        self.diagram.add_class(part_class)
+                    element.remove_attribute(attribute)
+                    self.diagram.add_generalization(part_class, parent_class, None)
+                self.diagram.add_aggregation(parent_class, element, None)
 
     def find_class_by_name(self, text):
         filtered = [element for element in self.diagram.classes if element.text == text]
@@ -677,6 +697,28 @@ class ClassDiagramExtractor:
 
         return result
 
+    def find_attribute_with_same_start(self, class_element, num_words):
+        # Create a dictionary to store strings with the same ending words
+        beginning_dict = {}
+        for attribute in class_element.attributes:
+            # Split the string into words
+
+            words = attribute.text.split()
+            if len(words) > num_words:  # Ensure the string has enough words
+                # Get the last 'num_words' words
+                first_words = ' '.join(words[:num_words])
+
+                # Add the string to the dictionary based on its last words
+                if first_words in beginning_dict:
+                    beginning_dict[first_words].append(attribute)
+                else:
+                    beginning_dict[first_words] = [attribute]
+
+        # Filter out groups that have more than one string with the same ending
+        result = {k: v for k, v in beginning_dict.items() if len(v) > 1}
+
+        return result
+
     def count_classes(self):
         names = []
         for sentence in self.requirement.sentences:
@@ -701,7 +743,7 @@ class ClassDiagramExtractor:
         return True
 
     def add_attribute_to_class(self, class_element, text, node):
-        if text == self.info_exact_terms:
+        if text in self.info_exact_terms:
             return
         if any(term in text for term in self.info_contain_terms):
             return
