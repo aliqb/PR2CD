@@ -6,7 +6,7 @@ from ClassDiagramExtractor import ClassDiagramExtractor, ExtractorEvaluator
 from Diagram import ClassDiagram
 from PNLP import HazmExtractor, StanzaExtractor
 import json
-from hazm.utils import words_list
+from hazm.utils import verbs_list
 
 def printGraph(dg):
     for node in dg.nodes.values():
@@ -95,6 +95,7 @@ if __name__ == '__main__':
     hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
 
     # stanza_extractor = StanzaExtractor()
+
     for file in file_names:
         extract_and_evaluate_from_file(file, hazm_extractor, True)
     # text = "سازها به سه گروه گیتار، درام و کیبورد دسته‌بندی می‌شوند. سازها به گیتار، درام و کیبورد دسته‌بندی می‌شوند. " \

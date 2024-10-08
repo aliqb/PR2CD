@@ -2,7 +2,7 @@ from typing import List, Literal
 from hazm import Normalizer, SentenceTokenizer, WordTokenizer, Lemmatizer, POSTagger, DependencyParser
 import stanza
 import re
-from hazm.utils import words_list
+from hazm.utils import words_list,verbs_list
 
 
 class NLPNode:
@@ -48,6 +48,14 @@ class NLPNode:
             return False
         result = self.meta_rel.endswith('obj')
         return result
+
+    def is_infinitive(self):
+        if self.text[-1] != 'ن':
+            return False
+        past_root = self.text[:-1]
+        verbs = verbs_list()
+        pasts = [verb.split('#')[0] for verb in verbs]
+        return past_root in pasts
 
 
 class Sentence:

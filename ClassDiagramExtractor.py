@@ -47,6 +47,11 @@ class ClassDiagramExtractor:
 
         self.frequency_threshold_precentage = 5
 
+        self.info_contain_terms = self.attr_terms + self.categorizing_words + [
+            self.contain_word] + self.composition_nouns[
+                                 0:2] + self.composition_parent_words
+        self.info_exact_terms = self.category_words
+
     def extract_diagram(self):
         self.extract_class_names()
         self.extract_attributes()
@@ -155,17 +160,19 @@ class ClassDiagramExtractor:
                             # if sentence.is_hastan_masdar():
                             #     self.add_attr_hastan_xcomp(sentence, node, class_element)
                             return
-                        if head_node.address == nearest_head.address:
-                            class_element.add_attribute(nearest_head.lemma, head_node)
-                        else:
-                            names = [name for name, linked_nodes in sentence.find_seq_names(head_node)]
-                            names = [name for name in names if nearest_head.text in name]
-                            if len(names) > 0:
-                                for name in names:
+                        if head_node.address != nearest_head.address:
+                            names_result = [result for result in sentence.find_seq_names(head_node)]
+                            names_result = [result for result in names_result if nearest_head.text in result[0]]
+                            if len(names_result) > 0:
+                                for item in names_result:
+                                    if any(name_node.is_infinitive() for name_node in item[1]):
+                                        continue
+                                    name = item[0]
                                     modifier_name = re.sub(rf'\b{re.escape(node.lemma)}\b', '', name).strip()
-                                    class_element.add_attribute(modifier_name.strip(), head_node)
-                            else:
-                                class_element.add_attribute(nearest_head.lemma, head_node)
+                                    self.add_attribute_to_class(class_element, modifier_name.strip(), head_node)
+                                continue
+                        self.add_attribute_to_class(class_element, nearest_head.lemma, head_node)
+
 
     def extract_attr_verb_particle_rule(self, sentence):
         compounds = sentence.find_compounds()
@@ -179,7 +186,7 @@ class ClassDiagramExtractor:
                 names = [name for name, linked_nodes in sentence.find_seq_names(obl)]
                 for name in names:
                     for element in class_elements:
-                        element.add_attribute(name, obl)
+                        self.add_attribute_to_class(element, name, obl)
 
     def attr_term_related_to_rule(self, sentence):
         related_term_nodes = sentence.find_node_by_text('مربوط') + sentence.find_node_by_text('مرتبط')
@@ -198,7 +205,7 @@ class ClassDiagramExtractor:
                             attr_names = [name for name, linked_nodes in sentence.find_seq_names(modifier)]
 
                             for attr_name in attr_names:
-                                class_element.add_attribute(attr_name, modifier)
+                                self.add_attribute_to_class(class_element, attr_name, modifier)
 
     def extract_attr_have_verb_rule(self, sentence, class_elements):
         sentence_objects = sentence.find_objects()
@@ -210,7 +217,7 @@ class ClassDiagramExtractor:
             names = [name for name, linked_nodes in sentence.find_seq_names(obj)]
             for name in names:
                 for element in class_elements:
-                    element.add_attribute(name, obj)
+                    self.add_attribute_to_class(element, name, obj)
 
     def extract_attr_have_noun_rule(self, sentence, class_elements):
         sentence_obliques = sentence.find_obliques('arg')
@@ -221,7 +228,7 @@ class ClassDiagramExtractor:
             names = [name for name, linked_nodes in sentence.find_seq_names(obl)]
             for name in names:
                 for element in class_elements:
-                    element.add_attribute(name, obl)
+                    self.add_attribute_to_class(element, name, obl)
 
     def add_attr_terms_modifiers(self, sentence, node, class_elements):
         noun_modifiers = sentence.find_noun_modifiers(node)
@@ -231,13 +238,13 @@ class ClassDiagramExtractor:
                 for name in names:
                     if name != element.text:
                         name = name.replace('مورد', '')
-                        element.add_attribute(name.strip(), noun)
+                        self.add_attribute_to_class(element, name.strip(), noun)
 
     def add_attr_hastan_xcomp(self, sentence, node, class_element):
         xcomps = sentence.find_xcomps()
         for xcomp in xcomps:
             if xcomp.text != node.text:
-                class_element.add_attribute(xcomp.text, xcomp)
+                self.add_attribute_to_class(class_element, xcomp.text, xcomp)
 
     def add_attr_esnadi_roots(self, sentence, class_element):
         root = sentence.find_root()
@@ -246,7 +253,7 @@ class ClassDiagramExtractor:
         conjuncts = sentence.find_conjuncts(root)
         conjuncts = [root] + conjuncts
         for conjunct in conjuncts:
-            class_element.add_attribute(conjunct.text, conjunct)
+            self.add_attribute_to_class(class_element, conjunct.text, conjunct)
 
     # relations
     def extract_relations(self):
@@ -429,7 +436,7 @@ class ClassDiagramExtractor:
             names = [name for name, linked_nodes in relation.sentence.find_seq_names(target_node)]
             for name in names:
                 attr_name = re.sub(rf'\b{re.escape(parent.text)}\b', '', name).strip()
-                parent.add_attribute(attr_name, target_node)
+                self.add_attribute_to_class(parent, attr_name, target_node)
 
     def convert_attributes_to_aggregation(self):
         for class_element in self.diagram.classes:
@@ -469,7 +476,7 @@ class ClassDiagramExtractor:
                 if child is not None:
                     self.diagram.add_composition(child, relation.source, relation)
                 else:
-                    relation.source.add_attribute(name, node)
+                    self.add_attribute_to_class(relation.source, name, node)
 
     def find_composition_from_active_composition_verb(self, relation):
         parent = relation.target
@@ -528,6 +535,9 @@ class ClassDiagramExtractor:
 
     # post
     def post_process(self):
+        self.post_process_classes()
+
+    def post_process_classes(self):
         self.remove_info_words()
         self.replace_category_words()
         self.remove_bigger_classes()
@@ -535,11 +545,8 @@ class ClassDiagramExtractor:
         self.remove_weak_classes()
 
     def remove_info_words(self):
-        info_contain_terms = self.attr_terms + self.categorizing_words + [self.contain_word] + self.composition_nouns[
-                                                                                               0:2] + self.composition_parent_words
-        info_exact_terms = self.category_words
         for class_element in self.diagram.classes:
-            for term in info_contain_terms:
+            for term in self.info_contain_terms:
                 if term in class_element.text:
                     self.diagram.remove_class(class_element)
             # for term in info_exact_terms:
@@ -672,6 +679,15 @@ class ClassDiagramExtractor:
         if len(class_element.attributes) > 0 or len(class_element.operations) > 0:
             return False
         return True
+
+    def add_attribute_to_class(self, class_element, text, node):
+        if text == self.info_exact_terms:
+            return
+        if any(term in text for term in self.info_contain_terms):
+            return
+        if node.is_infinitive():
+            return
+        class_element.add_attribute(text, node)
 
 
 class ExtractorEvaluator:
