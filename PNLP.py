@@ -39,14 +39,15 @@ class NLPNode:
             return False
 
     def is_subject(self):
-        if self.rel is None:
+        if self.meta_rel is None:
             return False
-        return 'subj' in self.rel
+        return 'subj' in self.meta_rel
 
     def is_obj(self):
-        if self.rel is None:
+        if self.meta_rel is None:
             return False
-        return self.rel.endswith('obj')
+        result = self.meta_rel.endswith('obj')
+        return result
 
 
 class Sentence:

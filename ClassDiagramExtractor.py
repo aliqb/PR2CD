@@ -45,6 +45,8 @@ class ClassDiagramExtractor:
 
         self.modal_infinitives = ['توانستن', 'خواستن']
 
+        self.frequency_threshold_precentage = 5
+
     def extract_diagram(self):
         self.extract_class_names()
         self.extract_attributes()
@@ -505,7 +507,8 @@ class ClassDiagramExtractor:
     # ASSOCIATION
     def extract_associations(self):
         for relation in self.diagram.base_relations:
-            if self.diagram.relation_with_base_exist(relation) or relation.target is None or relation.target.is_weak():
+            if self.diagram.relation_with_base_exist(relation) or relation.target is None or self.is_weak_class(
+                    relation.target):
                 continue
             self.diagram.add_association(relation.source, relation.target, relation)
 
@@ -520,7 +523,7 @@ class ClassDiagramExtractor:
             if target is None:
                 source.add_operation(title.text, title.node)
                 continue
-            if target.is_weak():
+            if self.is_weak_class(target):
                 source.add_operation(f"{title.text} {target.text}", title.node)
 
     # post
@@ -529,6 +532,7 @@ class ClassDiagramExtractor:
         self.replace_category_words()
         self.remove_bigger_classes()
         self.merge_classes()
+        self.remove_weak_classes()
 
     def remove_info_words(self):
         info_contain_terms = self.attr_terms + self.categorizing_words + [self.contain_word] + self.composition_nouns[
@@ -588,6 +592,11 @@ class ClassDiagramExtractor:
         #     if element.sentence.index >= class_element.index:
         #         return False
 
+    def remove_weak_classes(self):
+        for element in self.diagram.classes:
+            if self.is_weak_class(element):
+                self.diagram.remove_class(element)
+
     def find_class_by_name(self, text):
         filtered = [element for element in self.diagram.classes if element.text == text]
         return filtered[0] if len(filtered) > 0 else None
@@ -621,7 +630,7 @@ class ClassDiagramExtractor:
         endings_dict = {}
         for class_element in self.diagram.classes:
             if self.diagram.any_relation_by_class(
-                    class_element) or class_element.attributes or class_element.operations:
+                    class_element):
                 continue
             # Split the string into words
 
@@ -652,8 +661,17 @@ class ClassDiagramExtractor:
         for element in self.diagram.classes:
             count = len([name for name in names if name == element.text])
             element.count = count
-            element.frequency = count/n
+            element.frequency = count / n
 
+    def is_weak_class(self, class_element):
+        if not class_element.is_candidate():
+            return False
+        if self.diagram.any_no_association_relation_by_class(
+                class_element):
+            return False
+        if len(class_element.attributes) > 0 or len(class_element.operations) > 0:
+            return False
+        return True
 
 
 class ExtractorEvaluator:

@@ -90,10 +90,12 @@ class ClassElement(DesignElement):
         if not any(attr.text == text for attr in self.operations):
             self.operations.append(DesignElement(text, node))
 
-    def is_weak(self):
+    def is_candidate(self):
         if self.node is None:
             return True
-        return not self.node.is_subject()
+        if self.node.is_obj():
+            return True
+        return False
 
     @property
     def count(self):
@@ -134,8 +136,21 @@ class ClassDiagram:
 
     def remove_class(self, class_element):
         self.classes = [element for element in self.classes if element.text != class_element.text]
+        new_relations = []
+        for relation in self.relations:
+            if relation.source.text != class_element.text and relation.target.text != class_element.text:
+                new_relations.append(relation)
+            else:
+                if relation.relation_type == 'ASSOCIATION':
+                    self.convert_association_to_operation(relation)
         self.relations = [relation for relation in self.relations if
                           relation.source.text != class_element.text and relation.target.text != class_element.text]
+
+    def convert_association_to_operation(self, relation):
+        target = relation.target
+        source = relation.source
+        title = relation.base.relation_title
+        source.add_operation(f"{title.text} {target.text}", title.node)
 
     def merge_classes(self, classes, text):
         attrs = []
@@ -182,6 +197,11 @@ class ClassDiagram:
         return any(
             class_element.text == relation.source.text or class_element.text == relation.target.text for relation in
             self.relations)
+
+    def any_no_association_relation_by_class(self, class_element):
+        return any(
+            class_element.text == relation.source.text or class_element.text == relation.target.text for relation in
+            self.relations if relation.relation_type != 'ASSOCIATION')
 
     def add_generalization(self, child, parent, base):
         relation = Relation(child, 'GENERALIZATION', parent, base)
