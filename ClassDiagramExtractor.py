@@ -173,7 +173,6 @@ class ClassDiagramExtractor:
                                 continue
                         self.add_attribute_to_class(class_element, nearest_head.lemma, head_node)
 
-
     def extract_attr_verb_particle_rule(self, sentence):
         compounds = sentence.find_compounds()
         attr_compounds = list(set([node.text for node in compounds]) & set(self.attr_verb_particles))
@@ -424,7 +423,6 @@ class ClassDiagramExtractor:
         for relation in self.diagram.base_relations:
             if relation.relation_title.text == 'CONTAIN':
                 self.extract_aggregations_from_contain_relation(relation)
-        # self.convert_attributes_to_aggregation()
 
     def extract_aggregations_from_contain_relation(self, relation):
         parent = relation.source
@@ -437,15 +435,6 @@ class ClassDiagramExtractor:
             for name in names:
                 attr_name = re.sub(rf'\b{re.escape(parent.text)}\b', '', name).strip()
                 self.add_attribute_to_class(parent, attr_name, target_node)
-
-    def convert_attributes_to_aggregation(self):
-        for class_element in self.diagram.classes:
-            for attribute in class_element.attributes:
-                name = attribute.text
-                attr_class = self.find_class_by_name(name)
-                if attr_class is not None:
-                    self.diagram.add_aggregation(attr_class, class_element, None)
-                    class_element.remove_attribute(name)
 
     # composition
     def extract_composition(self):
@@ -536,6 +525,7 @@ class ClassDiagramExtractor:
     # post
     def post_process(self):
         self.post_process_classes()
+        self.post_process_attributes()
 
     def post_process_classes(self):
         self.remove_info_words()
@@ -603,6 +593,36 @@ class ClassDiagramExtractor:
         for element in self.diagram.classes:
             if self.is_weak_class(element):
                 self.diagram.remove_class(element)
+
+    def post_process_attributes(self):
+        self.remove_generalized_attribute()
+        self.convert_whole_part_attributes()
+
+    def remove_generalized_attribute(self):
+        generalizations = self.diagram.get_generalizations()
+        for relation in generalizations:
+            source = relation.source
+            target = relation.target
+            target_attributes = target.attributes
+            if not target_attributes:
+                continue
+            for attribute in source.attributes:
+                if attribute.text == target.text:
+                    source.remove_attribute(attribute.text)
+                    continue
+                if any(attribute.text == target_attribute.text for target_attribute in target_attributes):
+                    source.remove_attribute(attribute.text)
+
+    def convert_whole_part_attributes(self):
+        for element in self.diagram.classes:
+            for attribute in element.attributes:
+                part_class = self.find_class_by_name(attribute.text)
+                if part_class:
+                    compound_name = f"{attribute.text} {element.text}"
+                    bigger_class = self.find_class_by_name(compound_name)
+                    if not bigger_class:
+                        self.diagram.add_aggregation(part_class, element, None)
+                    element.remove_attribute(attribute.text)
 
     def find_class_by_name(self, text):
         filtered = [element for element in self.diagram.classes if element.text == text]

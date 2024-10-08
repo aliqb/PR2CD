@@ -45,7 +45,7 @@ class RelationBase:
 
 
 class Relation:
-    def __init__(self, source, relation_type, target, base, label=None):
+    def __init__(self, source, relation_type, target, base=None, label=None):
         self.source = source
         self.relation_type = relation_type
         self.target = target
@@ -208,17 +208,29 @@ class ClassDiagram:
         if not self.relation_exist(relation):
             self.relations.append(relation)
 
+    def get_generalizations(self):
+        return [relation for relation in self.relations if relation.relation_type == 'GENERALIZATION']
+
     def add_aggregation(self, child, parent, base):
         relation = Relation(child, 'AGGREGATION', parent, base)
         if not self.relation_exist(relation):
             self.relations.append(relation)
+
+    def get_aggregations(self):
+        return [relation for relation in self.relations if relation.relation_type == 'AGGREGATION']
 
     def add_composition(self, child, parent, base):
         relation = Relation(child, 'COMPOSITION', parent, base)
         if not self.relation_exist(relation):
             self.relations.append(relation)
 
+    def get_compositions(self):
+        return [relation for relation in self.relations if relation.relation_type == 'COMPOSITION']
+
     def add_association(self, source, target, base):
         relation = Relation(source, 'ASSOCIATION', target, base, base.relation_title.text)
         if not self.relation_exist(relation):
             self.relations.append(relation)
+
+    def get_associations(self):
+        return [relation for relation in self.relations if relation.relation_type == 'ASSOCIATION']
