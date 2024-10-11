@@ -316,8 +316,20 @@ class ClassDiagramExtractor:
                         break
                 else:
                     break
-            objects = sentence.find_objects(verb)
-            self.add_relation_triples(subjects, infinitive_elements, objects, sentence)
+            targets = sentence.find_objects(verb)
+            # temp_verb = verb
+            # while len(objects) == 0:
+            #     if temp_verb.rel == 'conj':  # probably advcl and acl should be added
+            #         temp_verb = sentence.find_node_by_address(temp_verb.head)
+            #         if temp_verb.tag == 'VERB':
+            #             objects = sentence.find_objects(temp_verb)
+            #         else:
+            #             break
+            #     else:
+            #         break
+            if len(targets) ==0:
+                targets = [obl for obl in sentence.find_obliques('arg') if obl.head == verb.address]
+            self.add_relation_triples(subjects, infinitive_elements, targets, sentence)
 
     def find_list_relation_base(self, sentence):
         if "«" in sentence.text or "»" in sentence.text:
@@ -533,9 +545,17 @@ class ClassDiagramExtractor:
             if target is None:
                 if target_node:
                     result = sentence.find_seq_names(target_node)
-                    for item in result:
-                        name, name_nodes = item
-                        source.add_operation(f"{title.text} {name}", target_node)
+                    if target_node.is_obj():
+                        for item in result:
+                            name, name_nodes = item
+                            source.add_operation(f"{title.text} {name}", target_node)
+                    else:
+                        case = sentence.find_case(target_node)
+                        if case:
+                            for item in result:
+
+                                name, name_nodes = item
+                                source.add_operation(f"{title.text} {case.text} {name}", target_node)
                 else:
                     source.add_operation(title.text, title.node)
                 continue

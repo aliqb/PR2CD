@@ -306,6 +306,12 @@ class Sentence:
             return infinitives
         return [infinitive]
 
+    def find_case(self,node):
+        if 'case' not in node.deps:
+            return None
+        address = node.deps['case'][0]
+        case = self.find_node_by_address(address)
+        return case
 
 class HazmExtractor:
     def __init__(self, parser, lemmatizer, with_ezafe_tag: bool = False,
