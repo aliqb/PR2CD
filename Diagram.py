@@ -37,7 +37,9 @@ class RelationBase:
             if self.target is None:
                 if self.target_node is None or other.target_node is None:
                     return False  # One of the target_nodes is None while the other isn't
-                return self.target_node.text == other.target_node.text and self.target_node.address == other.target_node.address
+                if self.target_node.text != other.target_node.text or self.target_node.address != other.target_node.address:
+                    return False
+                return self.sentence.text == other.sentence.text
 
             # If 'target' is not None, return True since the 'target' comparison passed
             return True
@@ -156,13 +158,15 @@ class ClassDiagram:
         attrs = []
         short_class_list = [element for element in self.classes if element.text == text]
         subj_nodes = [element.node for element in classes if element.node.is_subject()]
+        if subj_nodes:
+            node = subj_nodes[0]
+        else:
+            node = classes[0].node
+
         if short_class_list:
             new_class = short_class_list[0]
+            new_class.node = node
         else:
-            if subj_nodes:
-                node = subj_nodes[0]
-            else:
-                node = classes[0].node
             new_class = ClassElement(text, node)
             self.add_class(new_class)
         for element in classes:

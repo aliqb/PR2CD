@@ -72,6 +72,8 @@ class ClassDiagramExtractor:
                 self.extract_esnadi_class_names(sentence)
             if sentence.is_hastan_masdar():
                 self.extract_hastan_class_names(sentence)
+        self.remove_info_words()
+        self.replace_category_words()
         self.count_classes()
 
     def extract_subject_object_class_name(self, sentence):
@@ -350,6 +352,15 @@ class ClassDiagramExtractor:
     def add_relation_triples(self, source_nodes, infinitive_elements, target_nodes, sentence, skip_adj=True):
         source_names = [name for source in source_nodes for name, name_nodes in sentence.find_seq_names(source)]
         source_classes = [element for element in self.diagram.classes if element.text in source_names]
+        if len(source_classes) == 0:
+            for name in source_names:
+                raw_name = ''
+                for term in self.category_words:
+                    if term in name:
+                        raw_name = re.sub(rf'\b{re.escape(term)}\b', '', name).strip()
+                if raw_name:
+                    source_class = self.find_class_by_name(raw_name)
+                    source_classes.append(source_class)
         if len(target_nodes) == 0:
             for subject_class in source_classes:
                 for infinitive_node in infinitive_elements:
@@ -360,6 +371,7 @@ class ClassDiagramExtractor:
                     names = [name for name, linked_nodes in sentence.find_seq_names(node, skip_adj)]
                     for name in names:
                         target_class = self.find_class_by_name(name)
+
                         for infinitive_node in infinitive_elements:
                             self.diagram.add_base_relation(
                                 RelationBase(subject_class, infinitive_node, target_class, sentence, node))
@@ -516,8 +528,16 @@ class ClassDiagramExtractor:
             target = relation.target
             source = relation.source
             title = relation.relation_title
+            target_node = relation.target_node
+            sentence = relation.sentence
             if target is None:
-                source.add_operation(title.text, title.node)
+                if target_node:
+                    result = sentence.find_seq_names(target_node)
+                    for item in result:
+                        name, name_nodes = item
+                        source.add_operation(f"{title.text} {name}", target_node)
+                else:
+                    source.add_operation(title.text, title.node)
                 continue
             if self.is_weak_class(target):
                 source.add_operation(f"{title.text} {target.text}", title.node)
@@ -528,8 +548,8 @@ class ClassDiagramExtractor:
         self.post_process_attributes()
 
     def post_process_classes(self):
-        self.remove_info_words()
-        self.replace_category_words()
+        # self.remove_info_words()
+        # self.replace_category_words()
         self.remove_bigger_classes()
         self.merge_classes()
         self.remove_weak_classes()
@@ -566,7 +586,8 @@ class ClassDiagramExtractor:
     def remove_bigger_classes(self):
         for element in self.diagram.classes:
             if self.shorter_class_exist_before(element):
-                self.diagram.remove_class(element)
+                if len(element.attributes) == 0 and len(element.operations) == 0:
+                    self.diagram.remove_class(element)
 
     def shorter_class_exist_before(self, class_element):
         class_sorted_sentence = list(sorted(self.diagram.classes, key=lambda x: x.sentence.index))

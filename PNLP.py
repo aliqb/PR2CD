@@ -2,7 +2,7 @@ from typing import List, Literal
 from hazm import Normalizer, SentenceTokenizer, WordTokenizer, Lemmatizer, POSTagger, DependencyParser
 import stanza
 import re
-from hazm.utils import words_list,verbs_list
+from hazm.utils import words_list, verbs_list
 
 
 class NLPNode:
@@ -142,13 +142,19 @@ class Sentence:
         root = self.find_root()
         if verb is not None:
             root = verb
-        sentence_objects = [node for node in self.nlp_nodes if
-                            node.rel is not None and 'subj' in node.rel and node.head == root.address]
+        subjects = [node for node in self.nlp_nodes if node.rel is not None and node.is_subject()]
+        sentence_subjects = [node for node in subjects if node.head == root.address]
+        advance_subject = []
+        for subject in subjects:
+            deb_verbs = [node for node in self.find_dependent_nodes(subject) if node.address == root.address]
+            if deb_verbs:
+                advance_subject.append(subject)
+        sentence_subjects += advance_subject
         subject_conjs = []
-        for subj in sentence_objects:
+        for subj in sentence_subjects:
             subject_conjs += self.find_conjuncts(subj)
 
-        return sentence_objects + subject_conjs
+        return sentence_subjects + subject_conjs
 
     def find_xcomps(self, verb):
         xcomps = [node for node in self.nlp_nodes if
@@ -183,6 +189,12 @@ class Sentence:
         return self.find_ezafe_names(node)
 
     def find_dependent_nodes(self, node):
+        nodes = []
+        for dep in node.deps.keys():
+            nodes += [self.find_node_by_address(address) for address in node.deps[dep]]
+        return nodes
+
+    def find_seq_dependent_nodes(self, node):
         seq_dependencies = ['amod', 'nmod', 'flat']
         # addresses = []
         nodes = []
@@ -194,13 +206,13 @@ class Sentence:
                 nodes += dep_nodes
         all_nodes = nodes.copy()
         for node in nodes:
-            all_nodes += self.find_dependent_nodes(node)
+            all_nodes += self.find_seq_dependent_nodes(node)
         return all_nodes
 
     def find_seq_dependency_names(self, node, skip_adj=True):
         name = node.lemma
         names = []
-        dep_nodes = [node for node in self.find_dependent_nodes(node) if node.tag != 'PRON']
+        dep_nodes = [node for node in self.find_seq_dependent_nodes(node) if node.tag != 'PRON']
         dep_nodes.sort(key=lambda n: n.address)
         is_seq_root = node.tag.endswith('EZ') and (
                 len(dep_nodes) and self.are_together(node, dep_nodes[0]))

@@ -46,7 +46,7 @@ def print_for_debug(extractor):
 
 def extract_and_evaluate_from_file(name, extractor, print_elements):
     try:
-        with open(f'./dataset/refined-requirements/{name}.txt', 'r', encoding='utf-8') as file:
+        with open(f'./dataset/refined-requirements-1/{name}.txt', 'r', encoding='utf-8') as file:
             text = file.read()
         with open(f'./dataset/design-elements/{name}.json', 'r', encoding='utf-8') as json_file:
             elements = json.load(json_file)
