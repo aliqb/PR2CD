@@ -139,7 +139,7 @@ class ClassDiagramExtractor:
         for node in nodes:
             if node.rel == 'nmod':
                 head_node = sentence.find_node_by_address(node.head)
-                if 'NOUN' not in head_node.tag or  not sentence.are_together(head_node, node, True):
+                if 'NOUN' not in head_node.tag or not sentence.are_together(head_node, node, True):
                     continue
                 nearest_head = head_node
                 head_node = sentence.find_seq_first_head(node)
@@ -573,13 +573,22 @@ class ClassDiagramExtractor:
     def post_process(self):
         self.post_process_classes()
         self.post_process_attributes()
+        self.post_process_relations()
 
     def post_process_classes(self):
         # self.remove_info_words()
         # self.replace_category_words()
         self.remove_bigger_classes()
-        self.merge_classes()
+        # self.merge_classes()
         self.remove_weak_classes()
+
+    def post_process_attributes(self):
+        self.convert_same_start_attributes_to_class()
+        self.remove_generalized_attribute()
+        self.convert_whole_part_attributes()
+
+    def post_process_relations(self):
+        self.same_end_to_composition()
 
     def remove_info_words(self):
         for class_element in self.diagram.classes:
@@ -641,11 +650,6 @@ class ClassDiagramExtractor:
         for element in self.diagram.classes:
             if self.is_weak_class(element):
                 self.diagram.remove_class(element)
-
-    def post_process_attributes(self):
-        self.convert_same_start_attributes_to_class()
-        self.remove_generalized_attribute()
-        self.convert_whole_part_attributes()
 
     def remove_generalized_attribute(self):
         generalizations = self.diagram.get_generalizations()
@@ -724,9 +728,9 @@ class ClassDiagramExtractor:
         # Create a dictionary to store strings with the same ending words
         endings_dict = {}
         for class_element in self.diagram.classes:
-            if self.diagram.any_relation_by_class(
-                    class_element):
-                continue
+            # if self.diagram.any_relation_by_class(
+            #         class_element):
+            #     continue
             # Split the string into words
 
             words = class_element.text.split()
@@ -766,6 +770,18 @@ class ClassDiagramExtractor:
         result = {k: v for k, v in beginning_dict.items() if len(v) > 1}
 
         return result
+
+    def same_end_to_composition(self):
+        same_endings = self.find_class_with_same_ending(1)
+        for ending, classes in same_endings.items():
+            short_classes = [element for element in classes if element.text == ending]
+            if short_classes:
+                whole_class = short_classes[0]
+                part_classes = [element for element in classes if element.text != ending]
+                for element in part_classes:
+                    without_end_name = re.sub(rf'\b{re.escape(ending)}\b', '', element.text).strip()
+                    if not self.find_class_by_name(without_end_name):
+                        self.diagram.add_composition(element, whole_class, None)
 
     def count_classes(self):
         names = []

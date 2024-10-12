@@ -244,7 +244,7 @@ class Sentence:
                     nodes.append(dep_node)
                 else:
                     words = name.split(" ")
-                    if words[-1] != nodes[-1].lemma and node[-1].tage != 'VERB':
+                    if words[-1] != nodes[-1].lemma and nodes[-1].tag != 'VERB':
                         words[-1] = nodes[-1].lemma
                         name = " ".join(words)
                 if must_break:

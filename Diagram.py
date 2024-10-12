@@ -238,3 +238,10 @@ class ClassDiagram:
 
     def get_associations(self):
         return [relation for relation in self.relations if relation.relation_type == 'ASSOCIATION']
+
+    def relation_between_exist(self, source, target, just_advance):
+        relations = [relation for relation in self.relations if
+                     relation.source.text == source.text and relation.target.text == target]
+        if just_advance:
+            relations = [relation for relation in relations if relation.relation_type != 'ASSOCIATION']
+        return len(relations) > 0
