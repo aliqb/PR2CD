@@ -139,17 +139,10 @@ class ClassDiagramExtractor:
         for node in nodes:
             if node.rel == 'nmod':
                 head_node = sentence.find_node_by_address(node.head)
-                if 'NOUN' not in head_node.tag:
-                    continue
-                if not sentence.are_together(head_node, node, True):
+                if 'NOUN' not in head_node.tag or  not sentence.are_together(head_node, node, True):
                     continue
                 nearest_head = head_node
-                while head_node.rel == 'nmod':
-                    prev_head = sentence.find_node_by_address(head_node.head)
-                    if 'NOUN' not in prev_head.tag or 'سیستم' in prev_head.text:  ######
-                        break
-                    head_node = prev_head
-
+                head_node = sentence.find_seq_first_head(node)
                 node_names = sentence.find_seq_names(node)
                 class_elements = [self.find_class_by_name(node_name) for node_name, linked_nodes in
                                   node_names]  #############
@@ -161,7 +154,7 @@ class ClassDiagramExtractor:
                                 self.add_attr_esnadi_roots(sentence, class_element)
                             # if sentence.is_hastan_masdar():
                             #     self.add_attr_hastan_xcomp(sentence, node, class_element)
-                            return
+                            continue
                         if head_node.address != nearest_head.address:
                             names_result = [result for result in sentence.find_seq_names(head_node)]
                             names_result = [result for result in names_result if nearest_head.text in result[0]]
@@ -174,6 +167,10 @@ class ClassDiagramExtractor:
                                     self.add_attribute_to_class(class_element, modifier_name.strip(), head_node)
                                 continue
                         self.add_attribute_to_class(class_element, nearest_head.lemma, head_node)
+                        new_head = head_node
+                        while new_head.rel == 'conj':
+                            new_head = sentence.find_node_by_address(new_head.head)
+                            self.add_attribute_to_class(class_element, new_head.lemma, new_head)
 
     def extract_attr_verb_particle_rule(self, sentence):
         compounds = sentence.find_compounds()
@@ -327,8 +324,15 @@ class ClassDiagramExtractor:
             #             break
             #     else:
             #         break
-            if len(targets) ==0:
+            if len(targets) == 0:
                 targets = [obl for obl in sentence.find_obliques('arg') if obl.head == verb.address]
+                if len(targets) == 0:
+                    infinitive_related_part = [node for node in sentence.find_compounds() + sentence.find_xcomps(verb)
+                                               if node.head == verb.address]
+                    if len(infinitive_related_part) > 0:
+                        part = infinitive_related_part[0]
+                        targets = [obl for obl in sentence.find_obliques('arg') if obl.head == part.address]
+
             self.add_relation_triples(subjects, infinitive_elements, targets, sentence)
 
     def find_list_relation_base(self, sentence):
@@ -536,10 +540,14 @@ class ClassDiagramExtractor:
     def extract_operations(self):
         relations = [relation for relation in self.diagram.base_relations if
                      relation.relation_title.text not in ['ESNADI', 'LIST', 'CONTAIN']]
+        terms = self.categorizing_words + self.complex_categorizing_words + self.composition_verb_particles + self.attr_verb_particles
         for relation in relations:
+            title = relation.relation_title
+            if any(term in title.text for term in terms):
+                continue
             target = relation.target
             source = relation.source
-            title = relation.relation_title
+
             target_node = relation.target_node
             sentence = relation.sentence
             if target is None:
@@ -553,7 +561,6 @@ class ClassDiagramExtractor:
                         case = sentence.find_case(target_node)
                         if case:
                             for item in result:
-
                                 name, name_nodes = item
                                 source.add_operation(f"{title.text} {case.text} {name}", target_node)
                 else:

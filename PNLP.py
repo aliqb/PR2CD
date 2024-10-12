@@ -82,6 +82,15 @@ class Sentence:
             conj.meta_rel = node.rel
         return conjs
 
+    def find_seq_first_head(self, node):
+        head_node = self.find_node_by_address(node.head)
+        while head_node.rel == 'nmod':
+            prev_head = self.find_node_by_address(head_node.head)
+            if 'NOUN' not in prev_head.tag or 'سیستم' in prev_head.text:  ######
+                break
+            head_node = prev_head
+        return head_node
+
     def are_together(self, node1, node2, ignore_determiners=False):
         if node1.address + 1 == node2.address:
             return True
@@ -210,7 +219,7 @@ class Sentence:
         return all_nodes
 
     def find_seq_dependency_names(self, node, skip_adj=True):
-        name = node.lemma
+        name = node.lemma if node.tag != 'VERB' else node.text
         names = []
         dep_nodes = [node for node in self.find_seq_dependent_nodes(node) if node.tag != 'PRON']
         dep_nodes.sort(key=lambda n: n.address)
@@ -229,22 +238,29 @@ class Sentence:
                     self.are_together(dep_node, dep_node[index + 1]))
                 if not skip_adj or dep_node.rel != 'amod' or not dep_node.is_pure_adj():
                     old_name = name
-                    text = dep_node.text if index < len(dep_nodes) - 1 and not must_break else dep_node.lemma
+                    text = dep_node.text if (index < len(
+                        dep_nodes) - 1 and not must_break) or dep_node.tag == 'VERB' else dep_node.lemma
                     name += ' ' + text
                     nodes.append(dep_node)
                 else:
                     words = name.split(" ")
-                    if words[-1] != nodes[-1].lemma:
+                    if words[-1] != nodes[-1].lemma and node[-1].tage != 'VERB':
                         words[-1] = nodes[-1].lemma
                         name = " ".join(words)
                 if must_break:
                     break
             names.append((name, nodes))
-            conjuncts = self.find_conjuncts(dep_node)
-            for conjunct in conjuncts:
+            end_conjuncts = self.find_conjuncts(dep_node)
+            for conjunct in end_conjuncts:
                 conjunct_names = self.find_seq_dependency_names(conjunct)
                 for conjunct_name, conj_nodes in conjunct_names:
                     names.append((old_name + " " + conjunct_name, nodes[0:-1] + conj_nodes))
+            # start_conjuncts = self.find_conjuncts(node)
+            # for conjunct in start_conjuncts:
+            #     conjunct_names = self.find_seq_dependency_names(conjunct)
+            #     for conjunct_name, conj_nodes in conjunct_names:
+            #         no_start_name = " ".join(name[1:])
+            #         names.append((conjunct_name + " " + no_start_name, nodes[1:] + conj_nodes))
         else:
             names.append((name, [node]))
         return names
@@ -306,12 +322,13 @@ class Sentence:
             return infinitives
         return [infinitive]
 
-    def find_case(self,node):
+    def find_case(self, node):
         if 'case' not in node.deps:
             return None
         address = node.deps['case'][0]
         case = self.find_node_by_address(address)
         return case
+
 
 class HazmExtractor:
     def __init__(self, parser, lemmatizer, with_ezafe_tag: bool = False,
