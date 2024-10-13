@@ -594,6 +594,7 @@ class ClassDiagramExtractor:
 
     def post_process_relations(self):
         self.same_end_to_composition()
+        self.remove_generalized_relations()
 
     def remove_info_words(self):
         for class_element in self.diagram.classes:
@@ -803,6 +804,22 @@ class ClassDiagramExtractor:
                     without_end_name = re.sub(rf'\b{re.escape(ending)}\b', '', element.text).strip()
                     if not self.find_class_by_name(without_end_name):
                         self.diagram.add_composition(element, whole_class, None)
+
+    def remove_generalized_relations(self):
+        generalizations = self.diagram.get_generalizations()
+        for relation in generalizations:
+            child = relation.source
+            parent = relation.target
+            child_relations = self.diagram.get_relations_of_class(child)
+            for child_relation in child_relations:
+                source = child_relation.source
+                target = child_relation.target
+                if source.text == child.text:
+                    if self.diagram.relation_between_exist(parent, target , False):
+                        self.diagram.remove_relation(child_relation)
+                else:
+                    if self.diagram.relation_between_exist(source, parent, False):
+                        self.diagram.remove_relation(child_relation)
 
     def count_classes(self):
         names = []

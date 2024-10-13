@@ -91,7 +91,6 @@ class ClassElement(DesignElement):
     def remove_operation(self, name):
         self.operations = [operation for operation in self.operations if operation.text != name]
 
-
     def add_operation(self, text, node=None):
         if not any(attr.text == text for attr in self.operations):
             self.operations.append(DesignElement(text, node))
@@ -201,15 +200,17 @@ class ClassDiagram:
     def relation_with_base_exist(self, base_relation):
         return any(base_relation == relation.base for relation in self.relations)
 
+    def get_relations_of_class(self, class_element):
+        return [relation for relation in self.relations if
+                class_element.text == relation.source.text or class_element.text == relation.target.text]
+
     def any_relation_by_class(self, class_element):
-        return any(
-            class_element.text == relation.source.text or class_element.text == relation.target.text for relation in
-            self.relations)
+        return len(self.get_relations_of_class(class_element)) > 0
 
     def any_no_association_relation_by_class(self, class_element):
-        return any(
-            class_element.text == relation.source.text or class_element.text == relation.target.text for relation in
-            self.relations if relation.relation_type != 'ASSOCIATION')
+        relations = self.get_relations_of_class(class_element)
+        no_associations = [relation for relation in relations if relation.relation_type != 'ASSOCIATION']
+        return len(no_associations) > 0
 
     def add_generalization(self, child, parent, base):
         relation = Relation(child, 'GENERALIZATION', parent, base)
@@ -245,7 +246,10 @@ class ClassDiagram:
 
     def relation_between_exist(self, source, target, just_advance):
         relations = [relation for relation in self.relations if
-                     relation.source.text == source.text and relation.target.text == target]
+                     relation.source.text == source.text and relation.target.text == target.text]
         if just_advance:
             relations = [relation for relation in relations if relation.relation_type != 'ASSOCIATION']
         return len(relations) > 0
+
+    def remove_relation(self, input_relation):
+        self.relations = [relation for relation in self.relations if relation != input_relation]
