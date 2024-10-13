@@ -56,8 +56,8 @@ class ClassDiagramExtractor:
         self.extract_class_names()
         self.extract_attributes()
         self.extract_relation_bases()
-        self.extract_operations()
         self.extract_relations()
+        self.extract_operations()
         self.post_process()
 
     # classes
@@ -330,8 +330,8 @@ class ClassDiagramExtractor:
                     infinitive_related_part = [node for node in sentence.find_compounds() + sentence.find_xcomps(verb)
                                                if node.head == verb.address]
                     if len(infinitive_related_part) > 0:
-                        part = infinitive_related_part[0]
-                        targets = [obl for obl in sentence.find_obliques('arg') if obl.head == part.address]
+                        for part in infinitive_related_part:
+                            targets += [obl for obl in sentence.find_obliques('arg') if obl.head == part.address]
 
             self.add_relation_triples(subjects, infinitive_elements, targets, sentence)
 
