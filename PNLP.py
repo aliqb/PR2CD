@@ -153,12 +153,13 @@ class Sentence:
             root = verb
         subjects = [node for node in self.nlp_nodes if node.rel is not None and node.is_subject()]
         sentence_subjects = [node for node in subjects if node.head == root.address]
-        advance_subject = []
-        for subject in subjects:
-            deb_verbs = [node for node in self.find_dependent_nodes(subject) if node.address == root.address]
-            if deb_verbs:
-                advance_subject.append(subject)
-        sentence_subjects += advance_subject
+        if len(sentence_subjects) == 0:
+            advance_subject = []
+            for subject in subjects:
+                deb_verbs = [node for node in self.find_dependent_nodes(subject) if node.address == root.address]
+                if deb_verbs:
+                    advance_subject.append(subject)
+            sentence_subjects += advance_subject
         subject_conjs = []
         for subj in sentence_subjects:
             subject_conjs += self.find_conjuncts(subj)

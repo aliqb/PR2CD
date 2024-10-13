@@ -574,6 +574,7 @@ class ClassDiagramExtractor:
         self.post_process_classes()
         self.post_process_attributes()
         self.post_process_relations()
+        self.post_process_operations()
 
     def post_process_classes(self):
         # self.remove_info_words()
@@ -586,6 +587,10 @@ class ClassDiagramExtractor:
         self.convert_same_start_attributes_to_class()
         self.remove_generalized_attribute()
         self.convert_whole_part_attributes()
+
+    def post_process_operations(self):
+        self.remove_passive_operations()
+
 
     def post_process_relations(self):
         self.same_end_to_composition()
@@ -679,7 +684,7 @@ class ClassDiagramExtractor:
 
     def convert_same_start_attributes_to_class(self):
         for element in self.diagram.classes:
-            same_starts = self.find_attribute_with_same_start(element, 1)
+            same_starts = self.find_items_with_same_start(element.attributes, 1)
 
             for start, attributes in same_starts.items():
                 parent_class = self.find_class_by_name(start)
@@ -695,6 +700,13 @@ class ClassDiagramExtractor:
                     element.remove_attribute(attribute)
                     self.diagram.add_generalization(part_class, parent_class, None)
                 self.diagram.add_aggregation(parent_class, element, None)
+
+    def remove_passive_operations(self):
+        for element in self.diagram.classes:
+            for operation in element.operations:
+                if operation.text.endswith('شدن'):
+                    element.remove_operation(operation.text)
+
 
     def find_class_by_name(self, text):
         filtered = [element for element in self.diagram.classes if element.text == text]
@@ -749,10 +761,10 @@ class ClassDiagramExtractor:
 
         return result
 
-    def find_attribute_with_same_start(self, class_element, num_words):
+    def find_items_with_same_start(self, items, num_words):
         # Create a dictionary to store strings with the same ending words
         beginning_dict = {}
-        for attribute in class_element.attributes:
+        for attribute in items:
             # Split the string into words
 
             words = attribute.text.split()
@@ -770,6 +782,9 @@ class ClassDiagramExtractor:
         result = {k: v for k, v in beginning_dict.items() if len(v) > 1}
 
         return result
+
+
+
 
     def same_end_to_composition(self):
         same_endings = self.find_class_with_same_ending(1)

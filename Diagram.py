@@ -88,6 +88,10 @@ class ClassElement(DesignElement):
     def remove_attribute(self, name):
         self.attributes = [attr for attr in self.attributes if attr.text != name]
 
+    def remove_operation(self, name):
+        self.operations = [operation for operation in self.operations if operation.text != name]
+
+
     def add_operation(self, text, node=None):
         if not any(attr.text == text for attr in self.operations):
             self.operations.append(DesignElement(text, node))
