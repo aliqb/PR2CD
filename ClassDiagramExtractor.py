@@ -590,7 +590,7 @@ class ClassDiagramExtractor:
 
     def post_process_operations(self):
         self.remove_passive_operations()
-
+        self.merge_same_start_operations()
 
     def post_process_relations(self):
         self.same_end_to_composition()
@@ -707,6 +707,15 @@ class ClassDiagramExtractor:
                 if operation.text.endswith('شدن'):
                     element.remove_operation(operation.text)
 
+    def merge_same_start_operations(self):
+        for element in self.diagram.classes:
+            same_starts = self.find_items_with_same_start(element.operations, 1)
+            for start, operations in same_starts.items():
+                sorted_operations = sorted(operations, key=lambda x: x.text)
+                shortest_operation = sorted_operations[0]
+                for operation in operations:
+                    if operation.text != shortest_operation.text and operation.text.startswith(shortest_operation.text):
+                        element.remove_operation(operation.text)
 
     def find_class_by_name(self, text):
         filtered = [element for element in self.diagram.classes if element.text == text]
@@ -782,9 +791,6 @@ class ClassDiagramExtractor:
         result = {k: v for k, v in beginning_dict.items() if len(v) > 1}
 
         return result
-
-
-
 
     def same_end_to_composition(self):
         same_endings = self.find_class_with_same_ending(1)
