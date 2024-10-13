@@ -585,16 +585,17 @@ class ClassDiagramExtractor:
 
     def post_process_attributes(self):
         self.convert_same_start_attributes_to_class()
-        self.remove_generalized_attribute()
+        # self.remove_generalized_attribute()
         self.convert_whole_part_attributes()
 
     def post_process_operations(self):
         self.remove_passive_operations()
         self.merge_same_start_operations()
+        # self.remove_generalized_operations()
 
     def post_process_relations(self):
         self.same_end_to_composition()
-        self.remove_generalized_relations()
+        self.remove_generalized_items()
 
     def remove_info_words(self):
         for class_element in self.diagram.classes:
@@ -657,20 +658,18 @@ class ClassDiagramExtractor:
             if self.is_weak_class(element):
                 self.diagram.remove_class(element)
 
-    def remove_generalized_attribute(self):
-        generalizations = self.diagram.get_generalizations()
-        for relation in generalizations:
-            source = relation.source
-            target = relation.target
-            target_attributes = target.attributes
-            if not target_attributes:
-                continue
-            for attribute in source.attributes:
-                if attribute.text == target.text:
-                    source.remove_attribute(attribute.text)
-                    continue
-                if any(attribute.text == target_attribute.text for target_attribute in target_attributes):
-                    source.remove_attribute(attribute.text)
+    def remove_generalized_attribute(self, relation):
+        source = relation.source
+        target = relation.target
+        target_attributes = target.attributes
+        if not target_attributes:
+            return
+        for attribute in source.attributes:
+            if attribute.text == target.text:
+                source.remove_attribute(attribute.text)
+                return
+            if any(attribute.text == target_attribute.text for target_attribute in target_attributes):
+                source.remove_attribute(attribute.text)
 
     def convert_whole_part_attributes(self):
         for element in self.diagram.classes:
@@ -679,7 +678,7 @@ class ClassDiagramExtractor:
                 if part_class:
                     compound_name = f"{attribute.text} {element.text}"
                     bigger_class = self.find_class_by_name(compound_name)
-                    if not bigger_class:
+                    if not bigger_class and not self.diagram.relation_between_exist(element, part_class, True):
                         self.diagram.add_aggregation(part_class, element, None)
                     element.remove_attribute(attribute.text)
 
@@ -717,6 +716,16 @@ class ClassDiagramExtractor:
                 for operation in operations:
                     if operation.text != shortest_operation.text and operation.text.startswith(shortest_operation.text):
                         element.remove_operation(operation.text)
+
+    def remove_generalized_operations(self, relation):
+        source = relation.source
+        target = relation.target
+        target_operations = target.operations
+        if not target_operations:
+            return
+        for operation in source.operations:
+            if any(operation.text == target_operation.text for target_operation in target_operations):
+                source.remove_operation(operation.text)
 
     def find_class_by_name(self, text):
         filtered = [element for element in self.diagram.classes if element.text == text]
@@ -793,6 +802,13 @@ class ClassDiagramExtractor:
 
         return result
 
+    def remove_generalized_items(self):
+        generalizations = self.diagram.get_generalizations()
+        for generalization in generalizations:
+            self.remove_generalized_attribute(generalization)
+            self.remove_generalized_operations(generalization)
+            self.remove_generalized_relations(generalization)
+
     def same_end_to_composition(self):
         same_endings = self.find_class_with_same_ending(1)
         for ending, classes in same_endings.items():
@@ -805,21 +821,19 @@ class ClassDiagramExtractor:
                     if not self.find_class_by_name(without_end_name):
                         self.diagram.add_composition(element, whole_class, None)
 
-    def remove_generalized_relations(self):
-        generalizations = self.diagram.get_generalizations()
-        for relation in generalizations:
-            child = relation.source
-            parent = relation.target
-            child_relations = self.diagram.get_relations_of_class(child)
-            for child_relation in child_relations:
-                source = child_relation.source
-                target = child_relation.target
-                if source.text == child.text:
-                    if self.diagram.relation_between_exist(parent, target , False):
-                        self.diagram.remove_relation(child_relation)
-                else:
-                    if self.diagram.relation_between_exist(source, parent, False):
-                        self.diagram.remove_relation(child_relation)
+    def remove_generalized_relations(self, relation):
+        child = relation.source
+        parent = relation.target
+        child_relations = self.diagram.get_relations_of_class(child)
+        for child_relation in child_relations:
+            source = child_relation.source
+            target = child_relation.target
+            if source.text == child.text:
+                if self.diagram.relation_between_exist(parent, target, False):
+                    self.diagram.remove_relation(child_relation)
+            else:
+                if self.diagram.relation_between_exist(source, parent, False):
+                    self.diagram.remove_relation(child_relation)
 
     def count_classes(self):
         names = []
