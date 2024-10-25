@@ -1,0 +1,24 @@
+classDiagram
+    class File
+    class Document{
+        name
+        size
+        creation_date
+        author_info
+    }
+    class Editor{
+        name
+        task 
+    }
+    class Text_editor
+    class Image_editor
+    class Video_editor
+    class User
+    Editor <|-- Image_editor
+    Editor <|-- Text_editor
+    Editor <|-- Video_editor
+    File o-- Document
+    Document -->Editor:use
+    User -->Editor:select
+    Document --> File:add
+    Document -->File:remove

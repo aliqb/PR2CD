@@ -1,0 +1,33 @@
+classDiagram
+    class Shop_assistant{
+        save_info()
+        save_car_rent()
+        save_customer_info()
+    }
+    class Gallery
+    class Rent_record
+    class Customer{
+        fist_name
+        last_name
+        plate_number
+        rent_conditions
+    }
+    class Car{
+        plate_number
+        model
+        cost
+    }
+    class System{
+    }
+    class Main_office{
+        alert_delay()
+    }
+    Gallery *-- Shop_assistant
+    Gallery o-- Car
+    Customer --> Car :rent
+    Customer o-- Rent_record
+    Car o-- Rent_record
+    Shop_assistant --> Rent_record:update
+    Shop_assistant --> Rent_record:make_report
+    System --> Rent_record:list
+    Shop_assistant -->Car:search

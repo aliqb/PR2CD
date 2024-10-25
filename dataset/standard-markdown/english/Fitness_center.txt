@@ -1,0 +1,35 @@
+classDiagram
+    class Fintness_center
+    class Member{
+        first_name
+        last_name
+        number
+        work_out()
+        swim()
+        use_spa()
+    }
+    class Package{
+        cost
+        fitness_option
+    }
+    class Golden_package{
+        spa_option
+        swim_option
+    }
+    class Silver_package{
+        swim_option
+    }
+    class Boronz_package{
+        swim_option
+    }
+    class Normal_member
+    class Student_member{
+        discount_percentage
+    }
+    Member <|-- Normal_member
+    Member <|-- Student_member
+    Package <|--Golden_package
+    Package <|--Silver_package
+    Package <|-- Boronz_package
+    Member --> Package:buy
+    Fintness_center -->Member:register

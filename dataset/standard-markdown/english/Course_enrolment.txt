@@ -1,0 +1,24 @@
+classDiagram
+    class Student{
+        get_inovice()
+        change_schedule()
+    }
+    class Course{
+        department
+        prerequisites
+    }
+    class Course_catalogue
+    class Professor
+    class Registration_system
+    class Billing_system
+    Student -->Course:select
+    Student -->Course:add
+    Student -->Course:remove
+    Student --> Registration_system:access
+    Student --> Course_catalogue:request
+    Course o-- Professor
+    Course_catalogue o-- Course
+    Professor -->Course:teach
+    Professor -->Registration_system:access
+    Registration_system -->Billing_system:send_info
+    Billing_system -->Student:give_credit
