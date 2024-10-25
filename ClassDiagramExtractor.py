@@ -126,6 +126,12 @@ class ClassDiagramExtractor:
 
     def extract_attr_have_rule(self, sentence):
         root = sentence.find_root()
+        if 'هست' in root.lemma:
+            xcomps = sentence.find_xcomps(root)
+            if xcomps:
+                root = xcomps[0]
+            else:
+                return
         subjects = sentence.find_subjects()
         subject_names = [name for subject in subjects for name, name_nodes in sentence.find_seq_names(subject)]
         class_elements = [element for element in self.diagram.classes if element.text in subject_names]
@@ -139,7 +145,7 @@ class ClassDiagramExtractor:
         for node in nodes:
             if node.rel == 'nmod':
                 head_node = sentence.find_node_by_address(node.head)
-                if 'NOUN' not in head_node.tag or not sentence.are_together(head_node, node, True):
+                if 'NOUN' not in head_node.tag or not sentence.are_together(head_node, node, True) or head_node.lemma in self.info_exact_terms:
                     continue
                 nearest_head = head_node
                 head_node = sentence.find_seq_first_head(node)
@@ -149,11 +155,12 @@ class ClassDiagramExtractor:
                 for class_element in class_elements:
                     if class_element is not None:
                         if head_node.lemma in self.attr_terms:
-                            self.add_attr_terms_modifiers(sentence, head_node, [class_element])
                             if sentence.is_esnadi():
                                 self.add_attr_esnadi_roots(sentence, class_element)
+                                continue
                             # if sentence.is_hastan_masdar():
                             #     self.add_attr_hastan_xcomp(sentence, node, class_element)
+                            self.add_attr_terms_modifiers(sentence, head_node, [class_element])
                             continue
                         if head_node.address != nearest_head.address:
                             names_result = [result for result in sentence.find_seq_names(head_node)]
@@ -163,14 +170,14 @@ class ClassDiagramExtractor:
                                     if any(name_node.is_infinitive() for name_node in item[1]):
                                         continue
                                     name = item[0]
-                                    modifier_name = re.sub(rf'\b{re.escape(node.lemma)}\b', '', name).strip()
-                                    self.add_attribute_to_class(class_element, modifier_name.strip(), head_node)
+                                    # modifier_name = re.sub(rf'\b{re.escape(node.lemma)}\b', '', name).strip()
+                                    self.add_attribute_to_class(class_element, name, head_node)
                                 continue
                         self.add_attribute_to_class(class_element, nearest_head.lemma, head_node)
-                        new_head = head_node
-                        while new_head.rel == 'conj':
-                            new_head = sentence.find_node_by_address(new_head.head)
-                            self.add_attribute_to_class(class_element, new_head.lemma, new_head)
+                        # new_head = head_node
+                        # while new_head.rel == 'conj':
+                        #     new_head = sentence.find_node_by_address(new_head.head)
+                        #     self.add_attribute_to_class(class_element, new_head.lemma, new_head)
 
     def extract_attr_verb_particle_rule(self, sentence):
         compounds = sentence.find_compounds()
@@ -689,8 +696,7 @@ class ClassDiagramExtractor:
             for start, attributes in same_starts.items():
                 parent_class = self.find_class_by_name(start)
                 if not parent_class:
-                    parent_class = ClassElement(start)
-                    self.diagram.add_class(parent_class)
+                    continue
                 for attribute in attributes:
                     part_class_name = re.sub(rf'\b{re.escape(start)}\b', '', attribute.text).strip()
                     part_class = self.find_class_by_name(part_class_name)
@@ -859,13 +865,14 @@ class ClassDiagramExtractor:
         return True
 
     def add_attribute_to_class(self, class_element, text, node):
-        if text in self.info_exact_terms:
-            return
+        # if text in self.info_exact_terms:
+        #     return
         if any(term in text for term in self.info_contain_terms):
             return
         if node.is_infinitive():
             return
-        class_element.add_attribute(text, node)
+        attr_name = re.sub(rf'\b{class_element.text}\b', '', text).strip()
+        class_element.add_attribute(attr_name, node)
 
 
 class ExtractorEvaluator:

@@ -78,8 +78,10 @@ class Sentence:
     def find_conjuncts(self, node):
         conj_addresses = node.deps.get('conj', [])
         conjs = [self.find_node_by_address(address) for address in conj_addresses]
-        for conj in conjs:
+        temp_conjs = conjs
+        for conj in temp_conjs:
             conj.meta_rel = node.rel
+            conjs += self.find_conjuncts(conj)
         return conjs
 
     def find_seq_first_head(self, node):
@@ -306,7 +308,7 @@ class Sentence:
             if 'compound' in dep:
                 address = node.deps[dep][0]
                 compound = self.find_node_by_address(address)
-            if 'xcomp' in dep and infinitive in ['کردن', 'شدن']:
+            if 'xcomp' in dep and infinitive in ['کردن', 'شدن','گرفتن']:
                 address = node.deps[dep][0]
                 xcomp = self.find_node_by_address(address)
         if compound != '':

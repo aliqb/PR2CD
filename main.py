@@ -8,6 +8,7 @@ from PNLP import HazmExtractor, StanzaExtractor
 import json
 from hazm.utils import verbs_list
 
+
 def printGraph(dg):
     for node in dg.nodes.values():
         print(node)
@@ -22,7 +23,7 @@ def printGraph(dg):
 def print_for_debug(extractor):
     classes = sorted(extractor.diagram.classes, key=lambda x: x.text)
     for element in classes:
-        print(element.text, element.node.meta_rel if element.node else '' , element.count, element.frequency)
+        print(element.text, element.node.meta_rel if element.node else '', element.count, element.frequency)
         print('attrs:')
         for attr in element.attributes:
             print(attr.text, attr.node.meta_rel)
@@ -40,7 +41,8 @@ def print_for_debug(extractor):
     print('\n\nRelations:')
     for relation in extractor.diagram.relations:
         # print(relation.sentence.text)
-        print(f"{relation.source.text},{relation.relation_type},{relation.target.text},{relation.label if relation.label else 'None'}")
+        print(
+            f"{relation.source.text},{relation.relation_type},{relation.target.text},{relation.label if relation.label else 'None'}")
         print('----------------')
 
 
@@ -48,8 +50,6 @@ def extract_and_evaluate_from_file(name, extractor, print_elements):
     try:
         with open(f'./dataset/refined-requirements-1/{name}.txt', 'r', encoding='utf-8') as file:
             text = file.read()
-        with open(f'./dataset/design-elements/{name}.json', 'r', encoding='utf-8') as json_file:
-            elements = json.load(json_file)
 
         # text = "بازیکن‌ها اطلاعاتی مانند نام، ژانر، جنسیت، سطح و سلاح مورد استفاده خود دارند."
         test_req = Requirement(text, extractor.extract)
@@ -59,15 +59,22 @@ def extract_and_evaluate_from_file(name, extractor, print_elements):
         if print_elements:
             print_for_debug(test_extractor)
 
-        standard_diagram = ClassDiagram(elements)
-        evaluator = ExtractorEvaluator(test_extractor.diagram, standard_diagram)
-        print(evaluator.evaluate_classes())
-        print(evaluator.evaluate_attributes())
-        print("//////////////////////////////////////////////////////")
     except FileNotFoundError:
         print("File not Found")
     except json.JSONDecodeError:
         print("Error decoding JSON")
+    try:
+        with open(f'./dataset/design-elements/{name}.json', 'r', encoding='utf-8') as json_file:
+            elements = json.load(json_file)
+        standard_diagram = ClassDiagram(elements)
+        evaluator = ExtractorEvaluator(test_extractor.diagram, standard_diagram)
+        print(evaluator.evaluate_classes())
+        print(evaluator.evaluate_attributes())
+    except FileNotFoundError:
+        print("File not Found")
+    except json.JSONDecodeError:
+        print("Error decoding JSON")
+    print("//////////////////////////////////////////////////////")
 
 
 if __name__ == '__main__':
@@ -90,13 +97,18 @@ if __name__ == '__main__':
         "Musical store",
         "Cinema",
         "Company",
-        "Fitness center"
+        "Fitness center",
+
+    ]
+    new_file_names = [
+        "Academic program",
+        "Monitoring Pressure"
     ]
     hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
 
     # stanza_extractor = StanzaExtractor()
 
-    for file in file_names:
+    for file in new_file_names[1:]:
         extract_and_evaluate_from_file(file, hazm_extractor, True)
     # text = "سازها به سه گروه گیتار، درام و کیبورد دسته‌بندی می‌شوند. سازها به گیتار، درام و کیبورد دسته‌بندی می‌شوند. " \
     #        "سازها به سه گروه گیتار، درام و کیبورد تقسیم می‌شوند. سازها به گیتار، درام و کیبورد تقسیم می‌شوند. سازها " \
