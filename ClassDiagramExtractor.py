@@ -90,11 +90,16 @@ class ClassDiagramExtractor:
 
     def extract_esnadi_class_names(self, sentence):
         root = sentence.find_root()
+        verb = [node for node in sentence.nlp_nodes if node.rel =='cop'][0]
+        if verb.text == 'است':
+            return
         roots = [root] + sentence.find_conjuncts(root)
         self.add_nodes_to_classes(sentence, roots)
 
     def extract_hastan_class_names(self, sentence):
         root = sentence.find_root()
+        if root.text == 'هست':
+            return
         xcomps = sentence.find_xcomps(root)
         self.add_nodes_to_classes(sentence, xcomps)
 
@@ -275,7 +280,7 @@ class ClassDiagramExtractor:
             verbs = sentence.find_with_tag('VERB')
             for verb in verbs:
                 if verb.rel == 'cop':
-                    self.find_relation_base_from_esnadi_verbs(sentence)
+                    self.find_relation_base_from_esnadi_verbs(sentence, verb)
 
                 elif 'هست' in verb.lemma:
                     self.find_relation_base_from_hastan(sentence, verb)
@@ -286,7 +291,7 @@ class ClassDiagramExtractor:
             if self.contain_word in sentence.text:
                 self.find_contain_relation_base(sentence)
 
-    def find_relation_base_from_esnadi_verbs(self, sentence):
+    def find_relation_base_from_esnadi_verbs(self, sentence, verb):
         root = sentence.find_root()
         subjects = sentence.find_subjects(root)
         if root.tag == 'VERB':
@@ -297,12 +302,15 @@ class ClassDiagramExtractor:
                 roots = [root] + sentence.find_conjuncts(root)
         else:
             roots = [root] + sentence.find_conjuncts(root)
-        self.add_relation_triples(subjects, [DesignElement('ESNADI')], roots, sentence)
+        tag = 'ESNADI SINGLE' if verb.text == 'است' else 'ESNADI'
+        self.add_relation_triples(subjects, [DesignElement(tag)], roots, sentence)
 
     def find_relation_base_from_hastan(self, sentence, verb):
         subjects = sentence.find_subjects(verb)
         xcomps = sentence.find_xcomps(verb)
-        self.add_relation_triples(subjects, [DesignElement('ESNADI')], xcomps, sentence)
+        tag = 'ESNADI SINGLE' if verb.text == 'است' else 'ESNADI'
+
+        self.add_relation_triples(subjects, [DesignElement(tag)], xcomps, sentence)
 
     def find_relation_base_from_normal_verb(self, sentence, verb):
         if verb.lemma != 'داشت#دار':
@@ -402,7 +410,7 @@ class ClassDiagramExtractor:
     # generalizations
     def extract_generalizations(self):
         for relation in self.diagram.base_relations:
-            if relation.relation_title.text == 'ESNADI':
+            if relation.is_esnadi():
                 self.extract_generalizations_from_esnadi(relation)
             if relation.relation_title.text == 'LIST':
                 self.extract_generalization_from_list(relation)
@@ -413,12 +421,16 @@ class ClassDiagramExtractor:
                 self.extract_generalization_categorization(relation)
 
     def extract_generalizations_from_esnadi(self, relation):
-        base_source = relation.source
-        base_target = relation.target
+        if relation.is_single_esnadi():
+            base_source = relation.target
+            base_target = relation.source
+        else:
+            base_source = relation.source
+            base_target = relation.target
         if relation.target_node is not None and any(
                 term in relation.target_node.text for term in self.composition_nouns):
             return
-        if base_target is not None:
+        if base_target is not None and base_source is not None:
             self.diagram.add_generalization(base_target, base_source, relation)
 
     def extract_generalization_from_list(self, relation):
@@ -546,7 +558,7 @@ class ClassDiagramExtractor:
     # operations
     def extract_operations(self):
         relations = [relation for relation in self.diagram.base_relations if
-                     relation.relation_title.text not in ['ESNADI', 'LIST', 'CONTAIN']]
+                     relation.relation_title.text not in ['ESNADI', 'ESNADI SINGLE', 'LIST', 'CONTAIN']]
         terms = self.categorizing_words + self.complex_categorizing_words + self.composition_verb_particles + self.attr_verb_particles
         for relation in relations:
             title = relation.relation_title
