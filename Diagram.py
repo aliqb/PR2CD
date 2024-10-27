@@ -45,6 +45,12 @@ class RelationBase:
             return True
         return False
 
+    def is_esnadi(self):
+        return self.relation_title.text.startswith("ESNADI")
+
+    def is_single_esnadi(self):
+        return self.relation_title.text == 'ESNADI SINGLE'
+
 
 class Relation:
     def __init__(self, source, relation_type, target, base=None, label=None):
