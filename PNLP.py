@@ -125,15 +125,17 @@ class Sentence:
             objects_conjs += self.find_conjuncts(obj)
         return sentence_objects + objects_conjs
 
-    def find_obliques(self, oblique_type=None):
+    def find_obliques(self, oblique_type=None, head=None):
         rel = 'obl'
         if oblique_type is not None:
             rel += f":{oblique_type}"
-        sentence_objects = [node for node in self.nlp_nodes if node.rel is not None and node.rel.startswith(rel)]
+        sentence_obliques = [node for node in self.nlp_nodes if node.rel is not None and node.rel.startswith(rel)]
+        if head:
+            sentence_obliques = [node for node in sentence_obliques if node.head == head.address]
         oblique_conjs = []
-        for obl in sentence_objects:
+        for obl in sentence_obliques:
             oblique_conjs += self.find_conjuncts(obl)
-        return sentence_objects + oblique_conjs
+        return sentence_obliques + oblique_conjs
 
     def find_compounds(self, compound_type=None):
         rel = 'compound'
@@ -173,6 +175,9 @@ class Sentence:
             subject_conjs += self.find_conjuncts(subj)
 
         return sentence_subjects + subject_conjs
+
+    def find_recursive_subject(self, verb):
+        pass
 
     def find_xcomps(self, verb):
         xcomps = [node for node in self.nlp_nodes if

@@ -90,7 +90,7 @@ class ClassDiagramExtractor:
 
     def extract_esnadi_class_names(self, sentence):
         root = sentence.find_root()
-        verb = [node for node in sentence.nlp_nodes if node.rel =='cop'][0]
+        verb = [node for node in sentence.nlp_nodes if node.rel == 'cop'][0]
         if verb.text == 'است':
             return
         roots = [root] + sentence.find_conjuncts(root)
@@ -142,15 +142,42 @@ class ClassDiagramExtractor:
         class_elements = [element for element in self.diagram.classes if element.text in subject_names]
         if root.lemma == 'داشت#دار':
             self.extract_attr_have_verb_rule(sentence, class_elements)
-        if root.lemma.startswith('دارا'):
+        if 'دارا' in sentence.text:
             self.extract_attr_have_noun_rule(sentence, class_elements)
+
+    def extract_attr_have_verb_rule(self, sentence, class_elements):
+        sentence_objects = sentence.find_objects()
+
+        for obj in sentence_objects:
+            if obj.lemma in self.attr_terms:
+                self.add_attr_terms_modifiers(sentence, obj, class_elements)
+                continue
+            names = [name for name, linked_nodes in sentence.find_seq_names(obj)]
+            for name in names:
+                for element in class_elements:
+                    self.add_attribute_to_class(element, name, obj)
+
+    def extract_attr_have_noun_rule(self, sentence, class_elements):
+        have_noun_nodes = [node for node in sentence.nlp_nodes if
+                           node.lemma is not None and node.lemma.startswith('دارا')]
+        for node in have_noun_nodes:
+            sentence_obliques = sentence.find_obliques('arg', head=node)
+            for obl in sentence_obliques:
+                if obl.lemma in self.attr_terms:
+                    self.add_attr_terms_modifiers(sentence, obl, class_elements)
+                    continue
+                names = [name for name, linked_nodes in sentence.find_seq_names(obl)]
+                for name in names:
+                    for element in class_elements:
+                        self.add_attribute_to_class(element, name, obl)
 
     def extract_attr_noun_noun_rule(self, sentence):
         nodes = sentence.nlp_nodes
         for node in nodes:
             if node.rel == 'nmod':
                 head_node = sentence.find_node_by_address(node.head)
-                if 'NOUN' not in head_node.tag or not sentence.are_together(head_node, node, True) or head_node.lemma in self.info_exact_terms:
+                if 'NOUN' not in head_node.tag or not sentence.are_together(head_node, node,
+                                                                            True) or head_node.lemma in self.info_exact_terms:
                     continue
                 nearest_head = head_node
                 head_node = sentence.find_seq_first_head(node)
@@ -216,29 +243,6 @@ class ClassDiagramExtractor:
 
                             for attr_name in attr_names:
                                 self.add_attribute_to_class(class_element, attr_name, modifier)
-
-    def extract_attr_have_verb_rule(self, sentence, class_elements):
-        sentence_objects = sentence.find_objects()
-
-        for obj in sentence_objects:
-            if obj.lemma in self.attr_terms:
-                self.add_attr_terms_modifiers(sentence, obj, class_elements)
-                continue
-            names = [name for name, linked_nodes in sentence.find_seq_names(obj)]
-            for name in names:
-                for element in class_elements:
-                    self.add_attribute_to_class(element, name, obj)
-
-    def extract_attr_have_noun_rule(self, sentence, class_elements):
-        sentence_obliques = sentence.find_obliques('arg')
-        for obl in sentence_obliques:
-            if obl.lemma in self.attr_terms:
-                self.add_attr_terms_modifiers(sentence, obl, class_elements)
-                continue
-            names = [name for name, linked_nodes in sentence.find_seq_names(obl)]
-            for name in names:
-                for element in class_elements:
-                    self.add_attribute_to_class(element, name, obl)
 
     def add_attr_terms_modifiers(self, sentence, node, class_elements):
         noun_modifiers = sentence.find_noun_modifiers(node)
@@ -485,10 +489,10 @@ class ClassDiagramExtractor:
     # composition
     def extract_composition(self):
         for relation in self.diagram.base_relations:
-            if any(term in relation.relation_title.text  for term in self.composition_verb_particles):
+            if any(term in relation.relation_title.text for term in self.composition_verb_particles):
                 self.extract_composition_from_composition_verbs(relation)
             if relation.is_esnadi():
-                if any(term in relation.target_node.text  for term in self.composition_verb_particles):
+                if any(term in relation.target_node.text for term in self.composition_verb_particles):
                     self.extract_composition_from_composition_verbs(relation)
                 self.extract_composition_from_esnadi(relation)
 
@@ -511,7 +515,7 @@ class ClassDiagramExtractor:
             for name in names:
                 child = self.find_class_by_name(name)
 
-                if child is  None:
+                if child is None:
                     child = ClassElement(name, node, sentence=relation.sentence)
                     self.diagram.add_class(child)
                 self.diagram.add_composition(child, relation.source, relation)
