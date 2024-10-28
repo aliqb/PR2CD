@@ -372,10 +372,9 @@ class ClassDiagramExtractor:
         if len(contain_word_nodes) == 0:
             return
         contain_word_node = contain_word_nodes[0]
-        next_address = contain_word_node.address + 1
         obl_addresses = contain_word_node.deps.get('obl:arg', None)
         obl_node = sentence.find_node_by_address(
-            obl_addresses[0]) if obl_addresses is not None else sentence.find_node_by_address(next_address)
+            obl_addresses[0]) if obl_addresses is not None else sentence.find_next_noun(contain_word_node)
         subjects = sentence.find_subjects()
         nodes = [obl_node] + sentence.find_conjuncts(obl_node)
         self.add_relation_triples(subjects, [DesignElement('CONTAIN')], nodes, sentence)
@@ -486,9 +485,11 @@ class ClassDiagramExtractor:
     # composition
     def extract_composition(self):
         for relation in self.diagram.base_relations:
-            if any(term in relation.relation_title.text for term in self.composition_verb_particles):
+            if any(term in relation.relation_title.text  for term in self.composition_verb_particles):
                 self.extract_composition_from_composition_verbs(relation)
-            if relation.relation_title.text == 'ESNADI':
+            if relation.is_esnadi():
+                if any(term in relation.target_node.text  for term in self.composition_verb_particles):
+                    self.extract_composition_from_composition_verbs(relation)
                 self.extract_composition_from_esnadi(relation)
 
     def extract_composition_from_composition_verbs(self, relation):
@@ -502,17 +503,19 @@ class ClassDiagramExtractor:
         if len(preposition_nodes) == 0:
             return
         preposition_node = preposition_nodes[0]
-        next_node = relation.sentence.find_node_by_address(preposition_node.address + 1)
+        next_node = relation.sentence.find_next_noun(preposition_node)
         nodes = [next_node] + relation.sentence.find_conjuncts(next_node)
         for node in nodes:
             names = [name for name, linked_nodes in relation.sentence.find_seq_names(node)]
 
             for name in names:
                 child = self.find_class_by_name(name)
-                if child is not None:
-                    self.diagram.add_composition(child, relation.source, relation)
-                else:
-                    self.add_attribute_to_class(relation.source, name, node)
+
+                if child is  None:
+                    child = ClassElement(name, node, sentence=relation.sentence)
+                    self.diagram.add_class(child)
+                self.diagram.add_composition(child, relation.source, relation)
+                # self.add_attribute_to_class(relation.source, name, node)
 
     def find_composition_from_active_composition_verb(self, relation):
         parent = relation.target
@@ -531,11 +534,11 @@ class ClassDiagramExtractor:
         composition_node = composition_nodes[0]
         preposition_node = preposition_nodes[0]
         if composition_node.address < preposition_node.address:
-            base_address = preposition_node.address
+            base_node = preposition_node
 
         else:
-            base_address = composition_node.address
-        next_node = relation.sentence.find_node_by_address(base_address + 1)
+            base_node = composition_node
+        next_node = relation.sentence.find_next_noun(base_node)
         if any(term in next_node.text for term in self.composition_parent_words):
             next_node = relation.sentence.find_node_by_address(next_node.address + 1)
         nodes = [next_node] + relation.sentence.find_conjuncts(next_node)
@@ -619,8 +622,18 @@ class ClassDiagramExtractor:
     def remove_info_words(self):
         for class_element in self.diagram.classes:
             for term in self.info_contain_terms:
-                if term in class_element.text:
-                    self.diagram.remove_class(class_element)
+                text = class_element.text
+                if term in text:
+                    if term == text:
+                        self.diagram.remove_class(class_element)
+                    elif text.endswith(term) and term != text:
+                        short_text = re.sub(rf'\b{re.escape(term)}\b', '', text).strip()
+                        short_class = self.find_class_by_name(short_text)
+                        if short_class:
+                            self.diagram.remove_class(class_element)
+                    elif text.startswith(term):
+                        self.diagram.remove_class(class_element)
+
             # for term in info_exact_terms:
             #     if class_element.text == term:
             #         self.diagram.remove_class(class_element)
@@ -630,7 +643,7 @@ class ClassDiagramExtractor:
             for term in self.category_words:
                 if class_element.text == term:
                     node = class_element.node
-                    next_node = class_element.sentence.find_node_by_address(node.address + 1)
+                    next_node = class_element.sentence.find_next_noun(node)
                     if next_node:
                         name, name_nodes = class_element.sentence.find_seq_names(next_node)[0]
                         main_class = self.find_class_by_name(name)

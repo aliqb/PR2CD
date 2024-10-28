@@ -75,6 +75,12 @@ class Sentence:
     def find_with_tag(self, tag):
         return [node for node in self.nlp_nodes if node.tag == tag]
 
+    def find_next_noun(self, source_node):
+        nouns = [node for node in self.nlp_nodes if node.address > source_node.address and 'NOUN' in node.tag]
+        if nouns:
+            return nouns[0]
+        return None
+
     def find_conjuncts(self, node):
         conj_addresses = node.deps.get('conj', [])
         conjs = [self.find_node_by_address(address) for address in conj_addresses]
@@ -308,7 +314,7 @@ class Sentence:
             if 'compound' in dep:
                 address = node.deps[dep][0]
                 compound = self.find_node_by_address(address)
-            if 'xcomp' in dep and infinitive in ['کردن', 'شدن','گرفتن']:
+            if 'xcomp' in dep and infinitive in ['کردن', 'شدن', 'گرفتن']:
                 address = node.deps[dep][0]
                 xcomp = self.find_node_by_address(address)
         if compound != '':
@@ -356,6 +362,7 @@ class HazmExtractor:
             "مثل"
         ]
         text = self.replace_words(text, example_terms, 'مانند')
+        text = re.sub(r'(["\'«»])(.*?)(["\'«»])', '', text)
         return text
 
     def extract(self, text: str):
