@@ -8,6 +8,8 @@ class ClassDiagramExtractor:
         self.requirement = requirement
         self.diagram = ClassDiagram()
         self.attr_terms = ['اطلاعات', 'فیلد', 'ویژگی', 'اطلاعاتی']
+        self.countable_dets = ['تعداد','چند','شمار','عدد']
+        self.uncountable_dets = ['مقدار','میزان']
         self.attr_verb_particles = ['تعریف', 'تعیین', 'متمایز', 'مشخص']
         self.category_words = [
             'دسته',
@@ -166,9 +168,16 @@ class ClassDiagramExtractor:
                 if attr_node.lemma in self.attr_terms:
                     self.add_attr_terms_modifiers(sentence, attr_node, class_elements)
                     continue
+                if any(term in attr_node.lemma for term in self.countable_dets):
+                    self.add_attr_terms_modifiers(sentence, attr_node, class_elements, self.countable_dets[0])
+                    continue
+                if any(term in attr_node.lemma for term in self.uncountable_dets):
+                    self.add_attr_terms_modifiers(sentence, attr_node, class_elements, self.uncountable_dets[0])
+                    continue
                 names = [name for name, attr_node in sentence.find_seq_names(attr_node)]
                 for name in names:
                     for element in class_elements:
+                        # if name == 'تعداد'
                         self.add_attribute_to_class(element, name, attr_node)
 
     def extract_attr_noun_noun_rule(self, sentence):
@@ -244,14 +253,15 @@ class ClassDiagramExtractor:
                             for attr_name in attr_names:
                                 self.add_attribute_to_class(class_element, attr_name, modifier)
 
-    def add_attr_terms_modifiers(self, sentence, node, class_elements):
+    def add_attr_terms_modifiers(self, sentence, node, class_elements, prefix=None):
         noun_modifiers = sentence.find_noun_modifiers(node)
         for noun in noun_modifiers:
             names = [name for name, linked_nodes in sentence.find_seq_names(noun)]
             for element in class_elements:
                 for name in names:
                     if name != element.text:
-                        name = name.replace('مورد', '')
+                        if prefix:
+                            name = f"{prefix} {name}"
                         self.add_attribute_to_class(element, name.strip(), noun)
 
     def add_attr_hastan_xcomp(self, sentence, node, class_element):
@@ -891,6 +901,9 @@ class ClassDiagramExtractor:
         if node.is_infinitive():
             return
         attr_name = re.sub(rf'\b{class_element.text}\b', '', text).strip()
+        attr_name = re.sub(rf'\bمورد\b', '', attr_name).strip()
+        if attr_name == '':
+            return
         class_element.add_attribute(attr_name, node)
 
 
