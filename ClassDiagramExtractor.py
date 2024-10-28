@@ -162,14 +162,16 @@ class ClassDiagramExtractor:
                            node.lemma is not None and node.lemma.startswith('دارا')]
         for node in have_noun_nodes:
             sentence_obliques = sentence.find_obliques('arg', head=node)
-            for obl in sentence_obliques:
-                if obl.lemma in self.attr_terms:
-                    self.add_attr_terms_modifiers(sentence, obl, class_elements)
+            next_node = sentence.find_next_noun(node)
+            nodes = [next_node] + sentence.find_conjuncts(next_node)
+            for attr_node in nodes:
+                if attr_node.lemma in self.attr_terms:
+                    self.add_attr_terms_modifiers(sentence, attr_node, class_elements)
                     continue
-                names = [name for name, linked_nodes in sentence.find_seq_names(obl)]
+                names = [name for name, attr_node in sentence.find_seq_names(attr_node)]
                 for name in names:
                     for element in class_elements:
-                        self.add_attribute_to_class(element, name, obl)
+                        self.add_attribute_to_class(element, name, attr_node)
 
     def extract_attr_noun_noun_rule(self, sentence):
         nodes = sentence.nlp_nodes
@@ -321,17 +323,7 @@ class ClassDiagramExtractor:
             infinitives = sentence.find_full_infinitive(verb)
             infinitive_elements = [DesignElement(infinitive, verb) for infinitive in infinitives if
                                    infinitive not in self.modal_infinitives]
-            subjects = sentence.find_subjects(verb)
-            temp_verb = verb
-            while len(subjects) == 0:
-                if temp_verb.rel in ['conj', 'xcomp', 'ccomp']:  # probably advcl and acl should be added
-                    temp_verb = sentence.find_node_by_address(temp_verb.head)
-                    if temp_verb.tag == 'VERB':
-                        subjects = sentence.find_subjects(temp_verb)
-                    else:
-                        break
-                else:
-                    break
+            subjects = sentence.find_recursive_subject(verb)
             targets = sentence.find_objects(verb)
             # temp_verb = verb
             # while len(objects) == 0:

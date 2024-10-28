@@ -177,7 +177,18 @@ class Sentence:
         return sentence_subjects + subject_conjs
 
     def find_recursive_subject(self, verb):
-        pass
+        temp_verb = verb
+        subjects = self.find_subjects(verb)
+        while len(subjects) == 0:
+            if temp_verb.rel in ['conj', 'xcomp', 'ccomp']:  # probably advcl and acl should be added
+                temp_verb = self.find_node_by_address(temp_verb.head)
+                if temp_verb.tag == 'VERB':
+                    subjects = self.find_subjects(temp_verb)
+                else:
+                    break
+            else:
+                break
+        return subjects
 
     def find_xcomps(self, verb):
         xcomps = [node for node in self.nlp_nodes if
