@@ -130,23 +130,19 @@ class ClassDiagramExtractor:
             self.attr_term_related_to_rule(sentence)
 
     def extract_attr_have_rule(self, sentence):
-        root = sentence.find_root()
-        if 'هست' in root.lemma:
-            xcomps = sentence.find_xcomps(root)
-            if xcomps:
-                root = xcomps[0]
-            else:
-                return
-        subjects = sentence.find_subjects()
+        verbs = sentence.find_with_tag('VERB')
+        have_verbs = [verb for verb in verbs if verb.lemma == 'داشت#دار']
+        if have_verbs:
+            for verb in have_verbs:
+                self.extract_attr_have_verb_rule(sentence, verb)
+        if 'دارا' in sentence.text:
+            self.extract_attr_have_noun_rule(sentence)
+
+    def extract_attr_have_verb_rule(self, sentence, verb):
+        subjects = sentence.find_recursive_subject(verb)
         subject_names = [name for subject in subjects for name, name_nodes in sentence.find_seq_names(subject)]
         class_elements = [element for element in self.diagram.classes if element.text in subject_names]
-        if root.lemma == 'داشت#دار':
-            self.extract_attr_have_verb_rule(sentence, class_elements)
-        if 'دارا' in sentence.text:
-            self.extract_attr_have_noun_rule(sentence, class_elements)
-
-    def extract_attr_have_verb_rule(self, sentence, class_elements):
-        sentence_objects = sentence.find_objects()
+        sentence_objects = sentence.find_objects(verb)
 
         for obj in sentence_objects:
             if obj.lemma in self.attr_terms:
@@ -157,11 +153,13 @@ class ClassDiagramExtractor:
                 for element in class_elements:
                     self.add_attribute_to_class(element, name, obj)
 
-    def extract_attr_have_noun_rule(self, sentence, class_elements):
+    def extract_attr_have_noun_rule(self, sentence):
+        subjects = sentence.find_subjects()
+        subject_names = [name for subject in subjects for name, name_nodes in sentence.find_seq_names(subject)]
+        class_elements = [element for element in self.diagram.classes if element.text in subject_names]
         have_noun_nodes = [node for node in sentence.nlp_nodes if
                            node.lemma is not None and node.lemma.startswith('دارا')]
         for node in have_noun_nodes:
-            sentence_obliques = sentence.find_obliques('arg', head=node)
             next_node = sentence.find_next_noun(node)
             nodes = [next_node] + sentence.find_conjuncts(next_node)
             for attr_node in nodes:
