@@ -22,8 +22,8 @@ class RelationBase:
         self.target = target
         self.sentence = sentence
         self.target_node = target_node
-        if target is not None:
-            self.target_node = self.target.node
+        # if target is not None:
+        #     self.target_node = self.target.node
 
     def __eq__(self, other):
         if self.source != other.source or self.relation_title != other.relation_title:

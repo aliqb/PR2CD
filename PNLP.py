@@ -378,7 +378,7 @@ class HazmExtractor:
             "مثل"
         ]
         text = self.replace_words(text, example_terms, 'مانند')
-        text = re.sub(r'(["\'«»])(.*?)(["\'«»])', '', text)
+        text = re.sub(r'(["\'«»\(\)])(.*?)(["\'«»\(\)])', '', text)
         return text
 
     def extract(self, text: str):

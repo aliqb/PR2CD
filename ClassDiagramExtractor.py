@@ -333,16 +333,6 @@ class ClassDiagramExtractor:
                                    infinitive not in self.modal_infinitives]
             subjects = sentence.find_recursive_subject(verb)
             targets = sentence.find_objects(verb)
-            # temp_verb = verb
-            # while len(objects) == 0:
-            #     if temp_verb.rel == 'conj':  # probably advcl and acl should be added
-            #         temp_verb = sentence.find_node_by_address(temp_verb.head)
-            #         if temp_verb.tag == 'VERB':
-            #             objects = sentence.find_objects(temp_verb)
-            #         else:
-            #             break
-            #     else:
-            #         break
             if len(targets) == 0:
                 targets = [obl for obl in sentence.find_obliques('arg') if obl.head == verb.address]
                 if len(targets) == 0:
@@ -497,7 +487,7 @@ class ClassDiagramExtractor:
                 self.extract_composition_from_esnadi(relation)
 
     def extract_composition_from_composition_verbs(self, relation):
-        if relation.target is None:
+        if relation.target is None or (relation.target_node and not relation.target_node.is_obj()):
             self.find_composition_from_passive_composition_verb(relation)
         else:
             self.find_composition_from_active_composition_verb(relation)
@@ -522,6 +512,8 @@ class ClassDiagramExtractor:
                 # self.add_attribute_to_class(relation.source, name, node)
 
     def find_composition_from_active_composition_verb(self, relation):
+        if 'ساختن' in relation.relation_title.text:
+            return
         parent = relation.target
         if parent is None:
             return
