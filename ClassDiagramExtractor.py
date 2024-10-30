@@ -95,22 +95,29 @@ class ClassDiagramExtractor:
         verb = [node for node in sentence.nlp_nodes if node.rel == 'cop'][0]
         if verb.text == 'است':
             return
-        roots = [root] + sentence.find_conjuncts(root)
-        self.add_nodes_to_classes(sentence, roots)
+        if root.tag == 'VERB':
+            infinitive = sentence.find_full_infinitive(root)[0]
+            if infinitive in self.modal_infinitives:
+                roots = sentence.find_ccomps(root) + sentence.find_xcomps(root)
+            else:
+                return
+        else:
+            roots = [root] + sentence.find_conjuncts(root)
+        self.add_nodes_to_classes(sentence, roots, False)
 
     def extract_hastan_class_names(self, sentence):
         root = sentence.find_root()
         if root.text == 'هست':
             return
         xcomps = sentence.find_xcomps(root)
-        self.add_nodes_to_classes(sentence, xcomps)
+        self.add_nodes_to_classes(sentence, xcomps, False)
 
-    def add_nodes_to_classes(self, sentence, nodes):
+    def add_nodes_to_classes(self, sentence, nodes, skip_adj=True):
         for node in nodes:
             tag = node.tag
             if not (tag.startswith('NOUN') or tag.startswith('PROPN')):
                 continue
-            names = sentence.find_seq_names(node)
+            names = sentence.find_seq_names(node, skip_adj)
             for name, name_nodes in names:
 
                 same_class = self.find_class_by_name(name)
@@ -244,6 +251,8 @@ class ClassDiagramExtractor:
                     names = [name for name, linked_nodes in sentence.find_seq_names(node)]
                     class_elements = [self.find_class_by_name(name) for name in names]
                     for element in class_elements:
+                        if element is None:
+                            continue
                         next_noun = sentence.find_next_noun(node)
                         attrs = [next_noun] + sentence.find_conjuncts(next_noun)
                         for attr in attrs:
@@ -536,7 +545,10 @@ class ClassDiagramExtractor:
                 # self.add_attribute_to_class(relation.source, name, node)
 
     def find_composition_from_active_composition_verb(self, relation):
-        if 'ساختن' in relation.relation_title.text:
+        # if 'ساختن' in relation.relation_title.text:
+        #     return
+        subjects = relation.sentence.find_subjects(relation.relation_title.node)
+        if len(subjects) <=1:
             return
         parent = relation.target
         if parent is None:
