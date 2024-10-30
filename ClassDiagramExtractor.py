@@ -49,7 +49,7 @@ class ClassDiagramExtractor:
 
         self.frequency_threshold_precentage = 5
 
-        self.info_contain_terms = self.attr_terms + self.categorizing_words + [
+        self.info_contain_terms = self.attr_terms + [
             self.contain_word] + self.composition_nouns[
                                  0:2] + self.composition_parent_words
         self.info_exact_terms = self.category_words
@@ -130,6 +130,7 @@ class ClassDiagramExtractor:
             self.extract_attr_noun_noun_rule(sentence)
             self.extract_attr_verb_particle_rule(sentence)
             self.attr_term_related_to_rule(sentence)
+            self.extract_info_subject_attr_rule(sentence)
 
     def extract_attr_have_rule(self, sentence):
         verbs = sentence.find_with_tag('VERB')
@@ -233,6 +234,24 @@ class ClassDiagramExtractor:
                 for name in names:
                     for element in class_elements:
                         self.add_attribute_to_class(element, name, obl)
+
+    def extract_info_subject_attr_rule(self, sentence):
+        subjects = sentence.find_subjects()
+        for subject in subjects:
+            if any(term in subject.text for term in self.attr_terms):
+                modifiers = sentence.find_noun_modifiers(subject)
+                for node in modifiers:
+                    names = [name for name, linked_nodes in sentence.find_seq_names(node)]
+                    class_elements = [self.find_class_by_name(name) for name in names]
+                    for element in class_elements:
+                        next_noun = sentence.find_next_noun(node)
+                        attrs = [next_noun] + sentence.find_conjuncts(next_noun)
+                        for attr in attrs:
+                            attr_names = [name for name, linked_nodes in sentence.find_seq_names(attr)]
+
+                            for attr_name in attr_names:
+                                self.add_attribute_to_class(element, attr_name, attr)
+
 
     def attr_term_related_to_rule(self, sentence):
         related_term_nodes = sentence.find_node_by_text('مربوط') + sentence.find_node_by_text('مرتبط')
@@ -384,6 +403,8 @@ class ClassDiagramExtractor:
                         raw_name = re.sub(rf'\b{re.escape(term)}\b', '', name).strip()
                 if raw_name:
                     source_class = self.find_class_by_name(raw_name)
+                    if not source_class:
+                        return
                     source_classes.append(source_class)
         if len(target_nodes) == 0:
             for subject_class in source_classes:
@@ -471,6 +492,9 @@ class ClassDiagramExtractor:
             self.diagram.add_aggregation(child, parent, relation)
         else:
             target_node = relation.target_node
+            if target_node.lemma in self.attr_terms:
+                self.add_attr_terms_modifiers(relation.sentence, target_node, [parent])
+                return
             names = [name for name, linked_nodes in relation.sentence.find_seq_names(target_node)]
             for name in names:
                 attr_name = re.sub(rf'\b{re.escape(parent.text)}\b', '', name).strip()
@@ -888,7 +912,7 @@ class ClassDiagramExtractor:
     def add_attribute_to_class(self, class_element, text, node):
         # if text in self.info_exact_terms:
         #     return
-        if any(term in text for term in self.info_contain_terms):
+        if any(term in text for term in self.info_contain_terms + self.categorizing_words):
             return
         if node.is_infinitive():
             return
