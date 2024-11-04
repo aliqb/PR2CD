@@ -108,7 +108,9 @@ if __name__ == '__main__':
         "Dental clinic",
         "Circe",
         "Online shopping",
-        "Police system"
+        "Police system",
+        "Hospital",
+        "Library"
     ]
     hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
 

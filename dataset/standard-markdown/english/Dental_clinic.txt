@@ -1,0 +1,41 @@
+classDiagram
+    class Clinic{
+        bill()
+        send_bill()
+    }
+    class Patient{
+        fill_form()
+        pay()
+    }
+    class Clinic_staff
+    class Insurance_company
+    class HMO
+    class Worker
+    class Tool
+    class Supplies
+    class Desk_worker
+    class Appointment
+    class Dental_hygiene
+    class Filling
+    class Oral_surgery
+    class Asistant
+    class Doctor
+    class Reimbursement_request
+    class Supplies_inventory_file
+    Clinic *-- Clinic_staff
+    Clinic o-- Supplies_inventory_file
+    Clinic --> Appointment:schedule
+    Clinic -->Patient:service
+    Patient o-- Appointment
+    Patient -->Reimbursement_request:create
+    Desk_worker -->Patient:call
+    HMO -->Reimbursement_request:pay
+    Insurance_company -->Reimbursement_request:pay
+    Asistant -->Patient:prepare
+    Asistant -->Supplies:collect
+    Doctor -->Patient:administere_anesthesia
+    Appointment <|-- Dental_hygiene
+    Appointment <|-- Oral_surgery
+    Appointment <|-- Filling
+    Worker --> Supplies_inventory_file:fill
+

@@ -33,3 +33,4 @@ classDiagram
     Package <|-- Boronz_package
     Member --> Package:buy
     Fintness_center -->Member:register
+    Member o--Package

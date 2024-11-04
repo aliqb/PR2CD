@@ -1,0 +1,37 @@
+classDiagram
+    class System
+    class Atm{
+        pay()
+        print_receipt()
+    }
+    class Cash_card
+    class Human_cashier{
+        enter_account_date()
+    }
+    class Cahier_station
+    class Invidual_bank
+    class Bank{
+        software
+        account
+    }
+    class Computer{
+        maintain_accounts()
+    }
+    class Central_computer
+    class Consortium_of_banks
+    class Transaction{
+        data
+    }
+    System o-- Human_cashier
+    System o-- Atm
+    Consortium_of_banks o--Bank
+    Consortium_of_banks -->System:use
+    Atm -->Central_computer:communicate
+    Atm -->Cash_card:accept
+    Central_computer-->Transaction:clear
+    Bank -->Computer:provide
+    Bank o--Computer
+    Computer -->Transaction:process
+    Invidual_bank -->Cahier_station:manage
+    Cahier_station -->Computer:communicate
+
