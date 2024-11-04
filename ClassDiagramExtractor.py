@@ -8,8 +8,8 @@ class ClassDiagramExtractor:
         self.requirement = requirement
         self.diagram = ClassDiagram()
         self.attr_terms = ['اطلاعات', 'فیلد', 'ویژگی', 'اطلاعاتی']
-        self.countable_dets = ['تعداد','چند','شمار','عدد']
-        self.uncountable_dets = ['مقدار','میزان']
+        self.countable_dets = ['تعداد', 'چند', 'شمار', 'عدد']
+        self.uncountable_dets = ['مقدار', 'میزان']
         self.attr_verb_particles = ['تعریف', 'تعیین', 'متمایز', 'مشخص']
         self.category_words = [
             'دسته',
@@ -230,6 +230,8 @@ class ClassDiagramExtractor:
 
     def extract_attr_verb_particle_rule(self, sentence):
         compounds = sentence.find_compounds()
+        root = sentence.find_root()
+        compounds +=sentence.find_xcomps(root)  + sentence.find_ccomps(root)
         attr_compounds = list(set([node.text for node in compounds]) & set(self.attr_verb_particles))
         if len(attr_compounds) > 0:
             subjects = sentence.find_subjects()
@@ -260,7 +262,6 @@ class ClassDiagramExtractor:
 
                             for attr_name in attr_names:
                                 self.add_attribute_to_class(element, attr_name, attr)
-
 
     def attr_term_related_to_rule(self, sentence):
         related_term_nodes = sentence.find_node_by_text('مربوط') + sentence.find_node_by_text('مرتبط')
@@ -397,24 +398,43 @@ class ClassDiagramExtractor:
         obl_addresses = contain_word_node.deps.get('obl:arg', None)
         obl_node = sentence.find_node_by_address(
             obl_addresses[0]) if obl_addresses is not None else sentence.find_next_noun(contain_word_node)
+        if not obl_node:
+            return
         subjects = sentence.find_subjects()
         nodes = [obl_node] + sentence.find_conjuncts(obl_node)
         self.add_relation_triples(subjects, [DesignElement('CONTAIN')], nodes, sentence)
 
     def add_relation_triples(self, source_nodes, infinitive_elements, target_nodes, sentence, skip_adj=True):
-        source_names = [name for source in source_nodes for name, name_nodes in sentence.find_seq_names(source)]
-        source_classes = [element for element in self.diagram.classes if element.text in source_names]
-        if len(source_classes) == 0:
-            for name in source_names:
-                raw_name = ''
-                for term in self.category_words:
-                    if term in name:
-                        raw_name = re.sub(rf'\b{re.escape(term)}\b', '', name).strip()
-                if raw_name:
-                    source_class = self.find_class_by_name(raw_name)
-                    if not source_class:
-                        return
-                    source_classes.append(source_class)
+        source_classes = []
+        for node in source_nodes:
+            names = [name for name, name_nodes in sentence.find_seq_names(node)]
+            for name in names:
+                class_element = self.find_class_by_name(name)
+                if not class_element:
+                    if any(term in name for term in self.category_words):
+                        pattern = r'\b(' + '|'.join(map(re.escape, self.category_words)) + r')\b'
+                        raw_name = re.sub(pattern, '', name)
+                        if raw_name == '':
+                            next_node = sentence.find_next_noun(node)
+                            raw_name, next_nodes = sentence.find_seq_names(next_node)[0]
+                        class_element = self.find_class_by_name(raw_name)
+                if not class_element:
+                    continue
+                source_classes.append(class_element)
+
+        # source_names = [name for source in source_nodes for name, name_nodes in sentence.find_seq_names(source)]
+        # source_classes = [element for element in self.diagram.classes if element.text in source_names]
+        # if len(source_classes) == 0:
+        #     for name in source_names:
+        #         raw_name = ''
+        #         for term in self.category_words:
+        #             if term in name:
+        #                 raw_name = re.sub(rf'\b{re.escape(term)}\b', '', name).strip()
+        #         if raw_name:
+        #             source_class = self.find_class_by_name(raw_name)
+        #             if not source_class:
+        #                 return
+        #             source_classes.append(source_class)
         if len(target_nodes) == 0:
             for subject_class in source_classes:
                 for infinitive_node in infinitive_elements:
@@ -509,6 +529,9 @@ class ClassDiagramExtractor:
                 attr_name = re.sub(rf'\b{re.escape(parent.text)}\b', '', name).strip()
                 self.add_attribute_to_class(parent, attr_name, target_node)
 
+    # def extract_aggregation_from_contain_verb(self, sentence):
+    #     pass
+
     # composition
     def extract_composition(self):
         for relation in self.diagram.base_relations:
@@ -548,7 +571,7 @@ class ClassDiagramExtractor:
         # if 'ساختن' in relation.relation_title.text:
         #     return
         subjects = relation.sentence.find_subjects(relation.relation_title.node)
-        if len(subjects) <=1:
+        if len(subjects) <= 1:
             return
         parent = relation.target
         if parent is None:
