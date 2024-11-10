@@ -511,26 +511,27 @@ class ClassDiagramExtractor:
     # aggregations
     def extract_aggregations(self):
         for relation in self.diagram.base_relations:
-            if relation.relation_title.text == 'CONTAIN':
-                self.extract_aggregations_from_contain_relation(relation)
+            if relation.relation_title.text == 'CONTAIN' or self.contain_word in relation.relation_title.text:
+                self.extract_aggregations_from_contain(relation)
 
-    def extract_aggregations_from_contain_relation(self, relation):
-        parent = relation.source
-        child = relation.target
-        if child is not None:
-            self.diagram.add_aggregation(child, parent, relation)
+
+    def extract_aggregations_from_contain(self, relation):
+        whole = relation.source
+        part = relation.target
+        if part is not None:
+            self.diagram.add_aggregation(part, whole, relation)
         else:
             target_node = relation.target_node
             if target_node.lemma in self.attr_terms:
-                self.add_attr_terms_modifiers(relation.sentence, target_node, [parent])
+                self.add_attr_terms_modifiers(relation.sentence, target_node, [whole])
                 return
             names = [name for name, linked_nodes in relation.sentence.find_seq_names(target_node)]
             for name in names:
-                attr_name = re.sub(rf'\b{re.escape(parent.text)}\b', '', name).strip()
-                self.add_attribute_to_class(parent, attr_name, target_node)
+                attr_name = re.sub(rf'\b{re.escape(whole.text)}\b', '', name).strip()
+                self.add_attribute_to_class(whole, attr_name, target_node)
 
-    # def extract_aggregation_from_contain_verb(self, sentence):
-    #     pass
+
+
 
     # composition
     def extract_composition(self):
