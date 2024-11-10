@@ -242,8 +242,8 @@ class ClassDiagram:
     def get_compositions(self):
         return [relation for relation in self.relations if relation.relation_type == 'COMPOSITION']
 
-    def add_association(self, source, target, base):
-        relation = Relation(source, 'ASSOCIATION', target, base, base.relation_title.text)
+    def add_association(self, source, target, base, title_text):
+        relation = Relation(source, 'ASSOCIATION', target, base, title_text)
         if not self.relation_exist(relation):
             self.relations.append(relation)
 

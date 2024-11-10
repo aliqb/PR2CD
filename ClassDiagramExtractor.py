@@ -231,7 +231,7 @@ class ClassDiagramExtractor:
     def extract_attr_verb_particle_rule(self, sentence):
         compounds = sentence.find_compounds()
         root = sentence.find_root()
-        compounds +=sentence.find_xcomps(root)  + sentence.find_ccomps(root)
+        compounds += sentence.find_xcomps(root) + sentence.find_ccomps(root)
         attr_compounds = list(set([node.text for node in compounds]) & set(self.attr_verb_particles))
         if len(attr_compounds) > 0:
             subjects = sentence.find_subjects()
@@ -611,7 +611,7 @@ class ClassDiagramExtractor:
             if self.diagram.relation_with_base_exist(relation) or relation.target is None or self.is_weak_class(
                     relation.target):
                 continue
-            self.diagram.add_association(relation.source, relation.target, relation)
+            self.diagram.add_association(relation.source, relation.target, relation, relation.relation_title.text)
 
     # operations
     def extract_operations(self):
@@ -633,7 +633,11 @@ class ClassDiagramExtractor:
                     if target_node.is_obj():
                         for item in result:
                             name, name_nodes = item
-                            source.add_operation(f"{title.text} {name}", target_node)
+
+                            names = [node.text for node in name_nodes]
+                            ending_target = self.add_ending_target_association(source, relation, names)
+                            if not ending_target:
+                                source.add_operation(f"{title} {name}", relation.target_node)
                     else:
                         case = sentence.find_case(target_node)
                         if case:
@@ -644,7 +648,24 @@ class ClassDiagramExtractor:
                     source.add_operation(title.text, title.node)
                 continue
             if self.is_weak_class(target):
-                source.add_operation(f"{title.text} {target.text}", title.node)
+                names = target.text.split(" ")
+                ending_target = self.add_ending_target_association(source, relation, names)
+                if not ending_target:
+                    source.add_operation(f"{title.text} {target.text}", title.node)
+                # self.add_operation_or_association(source, relation)
+
+
+    def add_ending_target_association(self, class_element, relation, names):
+        target_name = ''
+        for index in range(len(names) - 1, -1, -1):
+            end_name = names[index]
+            target_name = end_name if target_name == '' else f"{end_name} {target_name}"
+            target = self.find_class_by_name(target_name)
+            if target and not self.is_weak_class(target):
+                text = f"{relation.relation_title.text} {''.join(names[:index])}"
+                self.diagram.add_association(class_element, target, relation, text)
+                return target
+        return None
 
     # post
     def post_process(self):

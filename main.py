@@ -91,7 +91,7 @@ if __name__ == '__main__':
         "Game",
         "Rented-car gallery",
         "File manager",
-        "Video rental",
+        # "Video rental",
         "Football team",
         "Music band",
         "Musical store",
@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
     # stanza_extractor = StanzaExtractor()
 
-    for file in new_file_names[-1:]:
+    for file in new_file_names:
         extract_and_evaluate_from_file(file, hazm_extractor, True)
     # text = "سازها به سه گروه گیتار، درام و کیبورد دسته‌بندی می‌شوند. سازها به گیتار، درام و کیبورد دسته‌بندی می‌شوند. " \
     #        "سازها به سه گروه گیتار، درام و کیبورد تقسیم می‌شوند. سازها به گیتار، درام و کیبورد تقسیم می‌شوند. سازها " \
