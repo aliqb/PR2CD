@@ -374,7 +374,8 @@ class HazmExtractor:
             "همانند",
             "هم‌مانند",
             "از قبیل",
-            "مثل"
+            "مثل",
+            "از جمله"
         ]
         text = self.replace_words(text, example_terms, 'مانند')
         text = re.sub(r'(["\'«»\(\)])(.*?)(["\'«»\(\)])', '', text)
