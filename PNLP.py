@@ -57,6 +57,13 @@ class NLPNode:
         pasts = [verb.split('#')[0] for verb in verbs]
         return past_root in pasts
 
+    def is_esndai_verb(self):
+        if self.rel == 'cop':
+            return True
+        if self.rel == 'aux' and self.text in ['است']:
+            return True
+        return False
+
 
 class Sentence:
     def __init__(self, index, text, nlp_nodes: List[NLPNode], find_seq_method: Literal['dep', 'ezafe'] = 'dep',

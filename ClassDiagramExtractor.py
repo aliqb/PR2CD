@@ -92,7 +92,7 @@ class ClassDiagramExtractor:
 
     def extract_esnadi_class_names(self, sentence):
         root = sentence.find_root()
-        verb = [node for node in sentence.nlp_nodes if node.rel == 'cop'][0]
+        verb = [node for node in sentence.nlp_nodes if node.is_esndai_verb()][0]
         if verb.text == 'است':
             return
         if root.tag == 'VERB':
@@ -322,7 +322,7 @@ class ClassDiagramExtractor:
         for sentence in sentences:
             verbs = sentence.find_with_tag('VERB')
             for verb in verbs:
-                if verb.rel == 'cop':
+                if verb.is_esndai_verb():
                     self.find_relation_base_from_esnadi_verbs(sentence, verb)
 
                 elif 'هست' in verb.lemma:
@@ -540,7 +540,8 @@ class ClassDiagramExtractor:
             if relation.is_esnadi():
                 if any(term in relation.target_node.text for term in self.composition_verb_particles):
                     self.extract_composition_from_composition_verbs(relation)
-                self.extract_composition_from_esnadi(relation)
+                else:
+                    self.extract_composition_from_esnadi(relation)
 
     def extract_composition_from_composition_verbs(self, relation):
         if relation.target is None or (relation.target_node and not relation.target_node.is_obj()):
