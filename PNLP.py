@@ -99,13 +99,12 @@ class Sentence:
             head_node = prev_head
         return head_node
 
-    def are_together(self, node1, node2, ignore_determiners=False):
+    def are_together(self, node1, node2, ignore_determiners=False, ):
         if node1.address + 1 == node2.address:
             return True
-        if ignore_determiners:
-            middle_nodes = [self.find_node_by_address(index) for index in range(node1.address + 1, node2.address)]
-            return all(node.tag == 'DET' for node in middle_nodes)
-        return False
+        middle_nodes = [self.find_node_by_address(index) for index in range(node1.address + 1, node2.address)]
+
+        return all(node.tag.startswith('ADJ') or (node.tag == 'DET' and ignore_determiners) for node in middle_nodes)
 
     def is_esnadi(self):
         return any(node.rel == 'cop' for node in self.nlp_nodes)
