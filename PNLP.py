@@ -76,7 +76,7 @@ class Sentence:
 
     def find_root(self):
         for node in self.nlp_nodes:
-            if node.rel == 'ROOT':
+            if node.rel and node.rel.lower() == 'root':
                 return node
 
     def find_with_tag(self, tag):
@@ -154,7 +154,7 @@ class Sentence:
         return sentence_compound + conjs
 
     def find_noun_modifiers(self, node):
-        noun_modifiers_addresses = node.deps['nmod']
+        noun_modifiers_addresses = node.deps.get('nmode',None)
         noun_modifiers = []
         if noun_modifiers_addresses is not None:
             for address in noun_modifiers_addresses:
@@ -254,9 +254,10 @@ class Sentence:
         names = []
         dep_nodes = [node for node in self.find_seq_dependent_nodes(node) if node.tag != 'PRON']
         dep_nodes.sort(key=lambda n: n.address)
-        is_seq_root = node.tag.endswith('EZ') and (
+        is_seq_root = (
                 len(dep_nodes) and self.are_together(node, dep_nodes[0]))
-
+        if self.with_ezafe_tag:
+            is_seq_root = node.tag.endswith('EZ') and is_seq_root
         if is_seq_root and len(dep_nodes) > 0:
             dep_node = dep_nodes[0]
             old_name = name
@@ -266,7 +267,7 @@ class Sentence:
 
                 middle_ezafe = dep_node.tag.endswith('EZ')
                 must_break = not middle_ezafe if self.with_ezafe_tag else (
-                    self.are_together(dep_node, dep_node[index + 1]))
+                        index < len(dep_nodes)-1 and self.are_together(dep_node, dep_nodes[index + 1]))
                 if not skip_adj or dep_node.rel != 'amod' or not dep_node.is_pure_adj():
                     old_name = name
                     text = dep_node.text if (index < len(
@@ -418,10 +419,30 @@ class StanzaExtractor:
     def __init__(self):
         self.pipline = stanza.Pipeline(lang='fa', processors='tokenize,mwt,pos,lemma,depparse')
 
+    # def replace_words(self, text, words_to_replace, replacement_word):
+    #     pattern = r'\b(' + '|'.join(map(re.escape, words_to_replace)) + r')\b'
+    #     return re.sub(pattern, replacement_word, text)
+    #
+    # def text_preprocess(self, text):
+    #     normalizer = Normalizer()
+    #     text = normalizer.normalize(text)
+    #     example_terms = [
+    #         "نظیر",
+    #         "همانند",
+    #         "هم‌مانند",
+    #         "از قبیل",
+    #         "مثل",
+    #         "از جمله"
+    #     ]
+    #     text = self.replace_words(text, example_terms, 'مانند')
+    #     text = re.sub(r'(["\'«»\(\)])(.*?)(["\'«»\(\)])', '', text)
+    #     return text
+
     def extract(self, text):
         doc = self.pipline(text)
-        return [Sentence(stanza_sentence.text, self.get_sentence_nodes(stanza_sentence)) for stanza_sentence in
-                doc.sentences]
+        return [Sentence(index, stanza_sentence.text, self.get_sentence_nodes(stanza_sentence)) for
+                index, stanza_sentence in
+                enumerate(doc.sentences)]
 
     def get_sentence_nodes(self, sentence):
         nodes = []
