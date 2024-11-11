@@ -150,9 +150,22 @@ class ClassDiagramExtractor:
 
     def extract_attr_have_verb_rule(self, sentence, verb):
         subjects = sentence.find_recursive_subject(verb)
-        subject_names = [name for subject in subjects for name, name_nodes in sentence.find_seq_names(subject)]
-        class_elements = [element for element in self.diagram.classes if element.text in subject_names]
+        subject_result = [item for subject in subjects for item in sentence.find_seq_names(subject)]
+        class_elements = []
         sentence_objects = sentence.find_objects(verb)
+        for item in subject_result:
+            name, name_nodes = item
+            element = self.find_class_by_name(name)
+            if element:
+                class_elements.append(element)
+            else:
+                for term in self.attr_terms:
+                    if name.endswith(term):
+                        main_name = name[:-len(term)].strip()
+                        element = self.find_class_by_name(main_name)
+                        if element:
+                            class_elements.append(element)
+                            sentence_objects.append(name_nodes[-1])
 
         for obj in sentence_objects:
             if obj.lemma in self.attr_terms:
@@ -514,7 +527,6 @@ class ClassDiagramExtractor:
             if relation.relation_title.text == 'CONTAIN' or self.contain_word in relation.relation_title.text:
                 self.extract_aggregations_from_contain(relation)
 
-
     def extract_aggregations_from_contain(self, relation):
         whole = relation.source
         part = relation.target
@@ -529,9 +541,6 @@ class ClassDiagramExtractor:
             for name in names:
                 attr_name = re.sub(rf'\b{re.escape(whole.text)}\b', '', name).strip()
                 self.add_attribute_to_class(whole, attr_name, target_node)
-
-
-
 
     # composition
     def extract_composition(self):
@@ -655,7 +664,6 @@ class ClassDiagramExtractor:
                 if not ending_target:
                     source.add_operation(f"{title.text} {target.text}", title.node)
                 # self.add_operation_or_association(source, relation)
-
 
     def add_ending_target_association(self, class_element, relation, names):
         target_name = ''
