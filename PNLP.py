@@ -154,7 +154,7 @@ class Sentence:
         return sentence_compound + conjs
 
     def find_noun_modifiers(self, node):
-        noun_modifiers_addresses = node.deps.get('nmode',None)
+        noun_modifiers_addresses = node.deps.get('nmod',None)
         noun_modifiers = []
         if noun_modifiers_addresses is not None:
             for address in noun_modifiers_addresses:
