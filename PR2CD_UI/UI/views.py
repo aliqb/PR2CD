@@ -20,12 +20,11 @@ import re
 # Create your views here.
 
 def index(request):
-    req = ''
+    req_text = ''
     old_req = request.session.get('req')
     if old_req is not None:
-        req = old_req
-    print('reg:', request.session.get('req'))
-    return render(request, 'UI/index.html', {'req': req})
+        req_text = old_req['text']
+    return render(request, 'UI/index.html', {'req': req_text})
 
 
 def submit_req(request):
@@ -63,7 +62,7 @@ def submit_req(request):
             {'source': relation.source.text, 'relation_type': relation.relation_type, 'target': relation.target.text,
              'label': relation.label} for relation in extractor.diagram.relations]
     }
-    request.session['req'] = requirement.text
+    request.session['req'] = requirement.serialize()
     return HttpResponseRedirect(reverse('UI:diagram'))
 
 
@@ -105,6 +104,9 @@ def evaluation_view(request):
 
 def diagram(request):
     result = request.session.get('result')
+    requirement = request.session.get('req')
     result_json = json.dumps(result, ensure_ascii=False)
+    requirement_json = json.dumps(requirement, ensure_ascii=False)
     print(result_json)
-    return render(request, 'UI/diagram.html', {'result': result_json})
+    return render(request, 'UI/diagram.html',
+                  {'result': result_json, 'req': requirement_json, 'req_text': requirement['text']})

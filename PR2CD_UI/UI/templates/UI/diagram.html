@@ -1,27 +1,62 @@
 {% extends "base.html" %}
 {% block content %}
 <div>
-    <div class="diagram-container">
-        <div id="diagram-div">
-        </div>
+    <div class="main-container">
+        <div class="diagram-container">
+            <div id="diagram-div">
+            </div>
 
+        </div>
+        <div class="sentences-container">
+            <div class="sentences-main-mode">
+                <div class="d-flex sentences-btn-container">
+                    <button class="btn outline edit-req-btn">ویرایش</button>
+                </div>
+
+            </div>
+            <div class="sentences-edit-mode d-none">
+
+                <form action="{% url 'UI:submit' %}" method="post">
+                    {% csrf_token %}
+
+                    <div class="d-flex sentences-btn-container sentences-edit-node">
+                        <button href="{% url 'UI:index' %}" class="btn outline cancel-req-btn" type="button">انصراف
+                        </button>
+                        <button href="{% url 'UI:index' %}" class="btn">ذخیره</button>
+                    </div>
+                    <textarea name="req" class="sentence-textarea" rows="20">{{ req_text }}</textarea>
+                </form>
+
+            </div>
+        </div>
     </div>
+
+
     <div class="d-flex centering">
         <a href="{% url 'UI:index' %}" class="btn outline">بازگشت</a>
     </div>
-<!--    <button id="export-btn">test</button>-->
-<!--    <button id="svg-btn">test-svg</button>-->
+    <!--    <button id="export-btn">test</button>-->
+    <!--    <button id="svg-btn">test-svg</button>-->
 
 </div>
 <script>
     mermaid.initialize({startOnLoad: true});
     // document.getElementById("svg-btn").addEventListener('click', exportSvg)
     // document.getElementById("export-btn").addEventListener('click', exportPng)
+    const sentencesMainContainer = document.querySelector('.sentences-main-mode')
+    const sentencesEditContainer = document.querySelector('.sentences-edit-mode')
+    const editSentencesBtn = document.querySelector('.edit-req-btn')
+    const cancelSentencesBtn = document.querySelector('.cancel-req-btn')
+
+
     drawDiagram()
+    write_requirement()
+
+    editSentencesBtn.addEventListener('click', onEdit)
+    cancelSentencesBtn.addEventListener('click', onCancelEdit)
 
     async function drawDiagram() {
         const umlData = JSON.parse('{{ result|safe|escapejs }}');
-        console.log(umlData)
         element = document.querySelector('#diagram-div');
         let diagramDef = `classDiagram`;
         const reg = /[\s‌]/g
@@ -47,13 +82,55 @@
             return def
         }).join('\n')
         diagramDef += '\n' + relations
-        console.log(diagramDef)
         const {svg, bindFunctions} = await mermaid.render('graphDiv', diagramDef);
         element.innerHTML = svg;
         // This can also be written as `bindFunctions?.(element);` using the `?` shorthand.
         if (bindFunctions) {
             bindFunctions(element);
         }
+    }
+
+    function write_requirement() {
+        const requirement = JSON.parse('{{ req|safe|escapejs }}');
+        const p = document.createElement('p')
+        requirement.sentences.forEach(sentence => {
+            const sentenceElement = get_sentence_element(sentence)
+            // sentenceElement.innerText += '. '
+            p.appendChild(sentenceElement)
+        })
+        sentencesMainContainer.appendChild(p)
+    }
+
+    function get_sentence_element(sentence) {
+        const sentenceContainer = document.createElement('span')
+        sentenceContainer.classList.add('sentence')
+        sentenceContainer.classList.add(`s-${sentence.index}`)
+        // sentence_container.innerText = `${sentence.text}. `
+        sentence.nlp_nodes.forEach((node, index) => {
+            const nodeContainer = document.createElement('span')
+            nodeContainer.classList.add('node')
+            nodeContainer.classList.add(`n-${node.address}`)
+
+            nodeContainer.innerText = index == 0 || node.tag == 'PUNCT' ? node.text : ` ${node.text}`
+            if (index == sentence.nlp_nodes.length - 1) {
+                nodeContainer.innerText += '.'
+            }
+            if (node.tag === 'VERB') {
+                nodeContainer.innerText = nodeContainer.innerText.replace('_', '‌')
+            }
+            sentenceContainer.appendChild(nodeContainer)
+        })
+        return sentenceContainer
+    }
+
+    function onEdit() {
+        sentencesMainContainer.classList.add('d-none')
+        sentencesEditContainer.classList.remove('d-none')
+    }
+
+    function onCancelEdit() {
+        sentencesMainContainer.classList.remove('d-none')
+        sentencesEditContainer.classList.add('d-none')
     }
 
     function exportSvg() {

@@ -8,3 +8,8 @@ class Requirement:
         self.text = text
         self.sentences: List[Sentence] = extractor(self.text)
 
+    def serialize(self):
+        return {
+            'text': self.text,
+            'sentences': [sentence.serialize() for sentence in self.sentences]
+        }

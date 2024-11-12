@@ -19,6 +19,16 @@ class NLPNode:
     def __str__(self):
         return f"{self.address}, {self.text}, rel:{self.rel}, head:{self.head}, tag:{self.tag}"
 
+    def serialize(self):
+        return {
+            'address': self.address,
+            'text': self.text,
+            'tag': self.tag,
+            'rel': self.rel,
+            'lemma': self.lemma,
+            'head': self.head
+        }
+
     def find_in_word_list(self):
         lines = words_list()
         for line in lines:
@@ -73,6 +83,13 @@ class Sentence:
         self.text = text
         self.nlp_nodes = sorted(nlp_nodes, key=lambda x: x.address)
         self.find_seq_method = find_seq_method
+
+    def serialize(self):
+        return {
+            'index':self.index,
+            'text': self.text,
+            'nlp_nodes': [node.serialize() for node in self.nlp_nodes]
+        }
 
     def find_root(self):
         for node in self.nlp_nodes:
