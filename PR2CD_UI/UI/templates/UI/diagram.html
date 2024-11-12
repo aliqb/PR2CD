@@ -11,6 +11,9 @@
             <div class="sentences-main-mode">
                 <div class="d-flex sentences-btn-container">
                     <button class="btn outline edit-req-btn">ویرایش</button>
+                    {% if warning_nodes|length > 0 %}
+                        <p class="warning-hint">تغییر موارد هایلایت زرد شده می‌تواند در بهبود عملکرد مؤثر باشد.</p>
+                    {% endif %}
                 </div>
 
             </div>
@@ -47,10 +50,10 @@
     const sentencesEditContainer = document.querySelector('.sentences-edit-mode')
     const editSentencesBtn = document.querySelector('.edit-req-btn')
     const cancelSentencesBtn = document.querySelector('.cancel-req-btn')
-
-
+    const warning_nodes = JSON.parse('{{ warning_nodes|safe|escapejs }}')
     drawDiagram()
     write_requirement()
+
 
     editSentencesBtn.addEventListener('click', onEdit)
     cancelSentencesBtn.addEventListener('click', onCancelEdit)
@@ -93,6 +96,7 @@
     function write_requirement() {
         const requirement = JSON.parse('{{ req|safe|escapejs }}');
         const p = document.createElement('p')
+        p.classList.add('sentences-p')
         requirement.sentences.forEach(sentence => {
             const sentenceElement = get_sentence_element(sentence)
             // sentenceElement.innerText += '. '
@@ -118,10 +122,14 @@
             if (node.tag === 'VERB') {
                 nodeContainer.innerText = nodeContainer.innerText.replace('_', '‌')
             }
+            if (node_has_warning(sentence.index, node.address)){
+                nodeContainer.classList.add('node-warning')
+            }
             sentenceContainer.appendChild(nodeContainer)
         })
         return sentenceContainer
     }
+
 
     function onEdit() {
         sentencesMainContainer.classList.add('d-none')
@@ -131,6 +139,10 @@
     function onCancelEdit() {
         sentencesMainContainer.classList.remove('d-none')
         sentencesEditContainer.classList.add('d-none')
+    }
+
+    function node_has_warning(sentence_index, node_address){
+        return warning_nodes.some(pair=>pair[0] === sentence_index && pair[1] === node_address)
     }
 
     function exportSvg() {

@@ -107,6 +107,11 @@ def diagram(request):
     requirement = request.session.get('req')
     result_json = json.dumps(result, ensure_ascii=False)
     requirement_json = json.dumps(requirement, ensure_ascii=False)
-    print(result_json)
+    warning_nodes_addresses = []
+    for sentence in requirement['sentences']:
+        for node in sentence['nlp_nodes']:
+            if (node['tag'] == 'VERB' and 'شد' in node['lemma']) or node['tag'] == 'PRON':
+                warning_nodes_addresses.append([sentence['index'], node['address']])
     return render(request, 'UI/diagram.html',
-                  {'result': result_json, 'req': requirement_json, 'req_text': requirement['text']})
+                  {'result': result_json, 'req': requirement_json, 'req_text': requirement['text'],
+                   'warning_nodes': warning_nodes_addresses})
