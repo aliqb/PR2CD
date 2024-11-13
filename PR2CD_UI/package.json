@@ -10,7 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "gojs": "^3.0.11",
     "mermaid": "^11.2.1"
   }
 }

@@ -5,6 +5,7 @@
         <div class="diagram-container">
             <div id="diagram-div">
             </div>
+            <button id="svg-btn" class="btn">ذخیره</button>
 
         </div>
         <div class="sentences-container">
@@ -12,7 +13,7 @@
                 <div class="d-flex sentences-btn-container">
                     <button class="btn outline edit-req-btn">ویرایش</button>
                     {% if warning_nodes|length > 0 %}
-                        <p class="warning-hint">تغییر موارد هایلایت زرد شده می‌تواند در بهبود عملکرد مؤثر باشد.</p>
+                    <p class="warning-hint">تغییر موارد هایلایت زرد شده می‌تواند در بهبود عملکرد مؤثر باشد.</p>
                     {% endif %}
                 </div>
 
@@ -43,9 +44,8 @@
 
 </div>
 <script>
-    mermaid.initialize({startOnLoad: true});
-    // document.getElementById("svg-btn").addEventListener('click', exportSvg)
-    // document.getElementById("export-btn").addEventListener('click', exportPng)
+    mermaid.initialize({startOnLoad: true, securityLevel: 'loose'});
+    const svgButton = document.getElementById("svg-btn")
     const sentencesMainContainer = document.querySelector('.sentences-main-mode')
     const sentencesEditContainer = document.querySelector('.sentences-edit-mode')
     const editSentencesBtn = document.querySelector('.edit-req-btn')
@@ -57,6 +57,7 @@
 
     editSentencesBtn.addEventListener('click', onEdit)
     cancelSentencesBtn.addEventListener('click', onCancelEdit)
+    svgButton.addEventListener('click', exportSvg)
 
     async function drawDiagram() {
         const umlData = JSON.parse('{{ result|safe|escapejs }}');
@@ -85,12 +86,19 @@
             return def
         }).join('\n')
         diagramDef += '\n' + relations
+        diagramDef += '\n' + umlData.classes.map(item => {
+            return `click ${item.text.replaceAll(reg, '_')} call test()`
+        }).join('\n')
         const {svg, bindFunctions} = await mermaid.render('graphDiv', diagramDef);
         element.innerHTML = svg;
         // This can also be written as `bindFunctions?.(element);` using the `?` shorthand.
         if (bindFunctions) {
             bindFunctions(element);
         }
+    }
+
+    function test(item) {
+        console.log('test', item)
     }
 
     function write_requirement() {
@@ -122,7 +130,7 @@
             if (node.tag === 'VERB') {
                 nodeContainer.innerText = nodeContainer.innerText.replace('_', '‌')
             }
-            if (node_has_warning(sentence.index, node.address)){
+            if (node_has_warning(sentence.index, node.address)) {
                 nodeContainer.classList.add('node-warning')
             }
             sentenceContainer.appendChild(nodeContainer)
@@ -141,61 +149,44 @@
         sentencesEditContainer.classList.add('d-none')
     }
 
-    function node_has_warning(sentence_index, node_address){
-        return warning_nodes.some(pair=>pair[0] === sentence_index && pair[1] === node_address)
+    function node_has_warning(sentence_index, node_address) {
+        return warning_nodes.some(pair => pair[0] === sentence_index && pair[1] === node_address)
     }
 
     function exportSvg() {
-        const svgElement = document.querySelector('svg');  // Get the generated SVG element
+        // Select the rendered SVG element
+        const svgElement = document.querySelector("svg");
 
-        // Convert SVG to a downloadable file
-        const svgBlob = new Blob([svgElement.outerHTML], {type: 'image/svg+xml'});
-        const svgUrl = URL.createObjectURL(svgBlob);
+        // Clone the SVG element to modify without affecting the original
+        const svgClone = svgElement.cloneNode(true);
 
-        // Create a download link
-        const downloadLink = document.createElement('a');
-        downloadLink.href = svgUrl;
-        downloadLink.download = 'diagram.svg';
-        downloadLink.click();
+        // Create a style element with embedded styles
+        const styleElement = document.createElement("style");
+        styleElement.textContent = `
+        svg {
+          font-family: none !important;
+        }
+      `;
 
-        // Clean up the URL
-        URL.revokeObjectURL(svgUrl);
+        // Insert the style element at the beginning of the cloned SVG
+        svgClone.insertBefore(styleElement, svgClone.firstChild);
+
+        // Serialize the modified SVG
+        const svgData = new XMLSerializer().serializeToString(svgClone);
+
+        // Create a Blob and URL for the modified SVG data
+        const blob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
+        const url = URL.createObjectURL(blob);
+
+        // Create a link to download the SVG file
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "diagram.svg";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     }
 
-    function exportPng() {
-        const svgElement = document.querySelector('svg');
-        const svgData = new XMLSerializer().serializeToString(svgElement);
-
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-
-        // Create an image element to hold the SVG data
-        const img = new Image();
-        const svgBlob = new Blob([svgData], {type: 'image/svg+xml;charset=utf-8'});
-        const url = URL.createObjectURL(svgBlob);
-
-        img.onload = function () {
-            // Set canvas size to match SVG size
-            canvas.width = svgElement.clientWidth;
-            canvas.height = svgElement.clientHeight;
-
-            // Draw the SVG onto the canvas
-            ctx.drawImage(img, 0, 0);
-
-            // Create a PNG from the canvas
-            const pngUrl = canvas.toDataURL('image/png');
-
-            // Create a download link
-            const downloadLink = document.createElement('a');
-            downloadLink.href = pngUrl;
-            downloadLink.download = 'diagram.png';
-            downloadLink.click();
-
-            // Clean up
-            URL.revokeObjectURL(url);
-        };
-
-        img.src = url;
-    }
 </script>
 {% endblock %}

@@ -207,7 +207,7 @@ input {
     margin-bottom: 0.5rem;
 }
 
-.diagram-container * {
+#diagram-div * {
     font-family: none;
 
 }
