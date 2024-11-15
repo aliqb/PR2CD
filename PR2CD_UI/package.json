@@ -10,6 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "mermaid": "^11.2.1"
+    "mammoth": "^1.8.0",
+    "mermaid": "^11.2.1",
+    "pdfjs-dist": "^4.8.69"
   }
 }

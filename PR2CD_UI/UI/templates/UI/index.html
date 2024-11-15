@@ -8,7 +8,8 @@
             <label for="req" class="main-prompt">متن نیازمندی را وارد کنید</label>
             <div>
                 <label for="requirement-file" class="btn outline file-label">بارگذاری فایل</label>
-                <input id="requirement-file" type="file" class="d-none" accept="text/plain">
+                <input id="requirement-file" type="file" class="d-none"
+                       accept=".txt, .pdf, .doc, .docx, text/plain, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document">
             </div>
             <textarea name="req" id="req" class="req-input" rows="20">{{ req }}</textarea>
         </div>
@@ -20,16 +21,78 @@
 <script>
     const inputFile = document.querySelector("#requirement-file")
     const textArea = document.querySelector("#req")
-    function onInputFile(event){
-         const file = event.target.files[0]; // Get the first selected file
+
+    function onInputFile(event) {
+        const file = event.target.files[0]; // Get the first selected file
+        const reader = new FileReader();
         if (file) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                textArea.value = e.target.result; // Populate the textarea with the file content
+            if (file.type === "text/plain") {
+                readTextFile(file, reader)
+            } else if (file.type === "application/pdf") {
+                readPdf(file, reader)
+            } else if (
+                file.type === "application/msword" ||
+                file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            ) {
+                readDocx(file, reader)
+            }else{
+                textArea.value = 'فرمت فایل صحیح نیست.'
             }
-            reader.readAsText(file, "UTF-8"); // Read the file as text
         }
     }
-    inputFile.addEventListener('input',onInputFile)
+
+    function readTextFile(file, reader) {
+        reader.onload = function (e) {
+            textArea.value = e.target.result; // Populate the textarea with the file content
+        }
+        reader.readAsText(file, "UTF-8"); // Read the file as text
+    }
+
+    function readPdf(file, reader) {
+        reader.onload = function (e) {
+            const pdfData = new Uint8Array(e.target.result);
+            // Load the PDF using PDF.js
+            pdfjsLib.getDocument({data: pdfData}).promise.then(pdf => {
+                let textContent = '';
+                const maxPages = pdf.numPages;
+
+                // Extract text from each page
+                let pagePromises = [];
+                for (let pageNum = 1; pageNum <= maxPages; pageNum++) {
+                    pagePromises.push(
+                        pdf.getPage(pageNum).then(page => {
+                            return page.getTextContent().then(text => {
+                                text.items.forEach(item => {
+                                    textContent += item.str + " ";
+                                });
+                            });
+                        })
+                    );
+                }
+
+                // Once all pages are processed
+                Promise.all(pagePromises).then(() => {
+                    textArea.value = textContent;
+                });
+            });
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function readDocx(file, reader) {
+        reader.onload = function (e) {
+            // Use Mammoth.js to extract text from Word documents
+            mammoth.extractRawText({arrayBuffer: e.target.result})
+                .then(result => {
+                    textArea.value = result.value; // The extracted text
+                })
+                .catch(error => {
+                    textArea.value = "Error parsing Word document.";
+                });
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    inputFile.addEventListener('input', onInputFile)
 </script>
 {% endblock %}
