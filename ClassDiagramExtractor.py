@@ -936,6 +936,7 @@ class ClassDiagramExtractor:
                 for element in part_classes:
                     without_end_name = re.sub(rf'\b{re.escape(ending)}\b', '', element.text).strip()
                     if not self.find_class_by_name(without_end_name):
+                        whole_class.remove_attribute(without_end_name)
                         self.diagram.add_composition(element, whole_class, None)
 
     def remove_generalized_relations(self, relation):
