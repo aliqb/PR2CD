@@ -4,7 +4,7 @@ from hazm import POSTagger, Lemmatizer, DependencyParser, word_tokenize
 from Requirement import Requirement
 from ClassDiagramExtractor import ClassDiagramExtractor, ExtractorEvaluator
 from Diagram import ClassDiagram
-from PNLP import HazmExtractor, StanzaExtractor
+from Extractors import HazmExtractor, StanzaExtractor
 import json
 from hazm.utils import verbs_list
 

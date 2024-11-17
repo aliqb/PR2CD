@@ -8,7 +8,7 @@ from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 
-from PNLP import HazmExtractor
+from Extractors import HazmExtractor
 from Requirement import Requirement
 from ClassDiagramExtractor import ClassDiagramExtractor, ExtractorEvaluator
 from Diagram import ClassDiagram
