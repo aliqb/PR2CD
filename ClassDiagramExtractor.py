@@ -426,7 +426,7 @@ class ClassDiagramExtractor:
                 if not class_element:
                     if any(term in name for term in self.category_words):
                         pattern = r'\b(' + '|'.join(map(re.escape, self.category_words)) + r')\b'
-                        raw_name = re.sub(pattern, '', name)
+                        raw_name = re.sub(pattern, '', name).strip()
                         if raw_name == '':
                             next_node = sentence.find_next_noun(node)
                             raw_name, next_nodes = sentence.find_seq_names(next_node)[0]
