@@ -13,3 +13,9 @@ class Requirement:
             'text': self.text,
             'sentences': [sentence.serialize() for sentence in self.sentences]
         }
+
+    def get_sentences_count(self):
+        return len(self.sentences)
+
+    def get_tokens_count(self):
+        return sum(len(sentence.nlp_nodes) for sentence in self.sentences)

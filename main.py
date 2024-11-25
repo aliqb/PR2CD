@@ -77,6 +77,22 @@ def extract_and_evaluate_from_file(name, extractor, print_elements):
     print("//////////////////////////////////////////////////////")
 
 
+def print_requirement_data(name, extractor):
+    try:
+        with open(f'./dataset/refined-requirements-1/{name}.txt', 'r', encoding='utf-8') as file:
+            text = file.read()
+
+        # text = "بازیکن‌ها اطلاعاتی مانند نام، ژانر، جنسیت، سطح و سلاح مورد استفاده خود دارند."
+        test_req = Requirement(text, extractor.extract)
+        print(name)
+        print(f"sentences: {test_req.get_sentences_count()} tokens: {test_req.get_tokens_count()}")
+
+    except FileNotFoundError:
+        print("File not Found")
+    except json.JSONDecodeError:
+        print("Error decoding JSON")
+
+
 if __name__ == '__main__':
     lemmatizer = Lemmatizer()
     tagger = POSTagger(model='pos_tagger.model')
@@ -116,8 +132,9 @@ if __name__ == '__main__':
 
     # stanza_extractor = StanzaExtractor()
 
-    for file in file_names:
+    for file in file_names[-3:-2]:
         extract_and_evaluate_from_file(file, hazm_extractor, True)
+        # print_requirement_data(file, hazm_extractor)
     # text = "سازها به سه گروه گیتار، درام و کیبورد دسته‌بندی می‌شوند. سازها به گیتار، درام و کیبورد دسته‌بندی می‌شوند. " \
     #        "سازها به سه گروه گیتار، درام و کیبورد تقسیم می‌شوند. سازها به گیتار، درام و کیبورد تقسیم می‌شوند. سازها " \
     #        "در سه گروه گیتار، درام و کیبورد تفکیک می‌شوند. سازها در گیتار، درام و کیبورد تفکیک می‌شوند. سازها به سه " \
