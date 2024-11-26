@@ -622,7 +622,7 @@ class ClassDiagramExtractor:
     # ASSOCIATION
     def extract_associations(self):
         for relation in self.diagram.base_relations:
-            if self.diagram.relation_with_base_exist(relation) or relation.target is None :
+            if self.diagram.relation_with_base_exist(relation) or relation.target is None:
                 continue
             if self.is_weak_class(relation.target):
                 if relation.sub_relation_bases:
@@ -637,10 +637,16 @@ class ClassDiagramExtractor:
 
     # operations
     def extract_operations(self):
-        relations = [relation for relation in self.diagram.base_relations if
-                     relation.relation_title.text not in ['ESNADI', 'ESNADI SINGLE', 'LIST', 'CONTAIN']]
         terms = self.categorizing_words + self.complex_categorizing_words + self.composition_verb_particles + self.attr_verb_particles
-        for relation in relations:
+        for relation in self.diagram.base_relations:
+            if self.diagram.relation_with_base_exist(relation) or relation.relation_title.text in ['ESNADI',
+                                                                                                   'ESNADI SINGLE',
+                                                                                                   'LIST', 'CONTAIN']:
+                continue
+            if relation.sub_relation_bases and any(
+                    self.diagram.relation_with_base_exist(sub) for sub in relation.sub_relation_bases):
+                continue
+
             title = relation.relation_title
             if any(term in title.text for term in terms):
                 continue
@@ -674,9 +680,7 @@ class ClassDiagramExtractor:
                 ending_target = self.add_ending_target_association(source, relation, names)
                 if not ending_target:
                     operation_title = f"{title.text} {target.text}"
-                    if not self.diagram.relation_between_exist(source, target,False, operation_title):
-                        source.add_operation(operation_title, title.node)
-                # self.add_operation_or_association(source, relation)
+                    source.add_operation(operation_title, title.node)
 
     def add_ending_target_association(self, class_element, relation, names):
         target_name = ''
