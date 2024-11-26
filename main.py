@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
     # stanza_extractor = StanzaExtractor()
 
-    for file in file_names + new_file_names:
+    for file in file_names[1:2]:
         extract_and_evaluate_from_file(file, hazm_extractor, True)
         # print_requirement_data(file, hazm_extractor)
     # text = "سازها به سه گروه گیتار، درام و کیبورد دسته‌بندی می‌شوند. سازها به گیتار، درام و کیبورد دسته‌بندی می‌شوند. " \

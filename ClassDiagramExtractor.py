@@ -630,7 +630,7 @@ class ClassDiagramExtractor:
                         if sub_relation.target:
                             title = f"{relation.relation_title.text} {relation.target.text}"
                             if 'امکان' in title:
-                                return
+                                continue
                             self.diagram.add_association(relation.source, sub_relation.target, sub_relation, title)
             else:
                 self.diagram.add_association(relation.source, relation.target, relation, relation.relation_title.text)
