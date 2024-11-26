@@ -375,16 +375,16 @@ class ClassDiagramExtractor:
                                    infinitive not in self.modal_infinitives]
             subjects = sentence.find_recursive_subject(verb)
             targets = sentence.find_objects(verb)
+            obliques = [obl for obl in sentence.find_obliques('arg') if obl.head == verb.address]
+            if len(obliques) == 0:
+                infinitive_related_part = [node for node in sentence.find_compounds() + sentence.find_xcomps(verb)
+                                           if node.head == verb.address]
+                if len(infinitive_related_part) > 0:
+                    for part in infinitive_related_part:
+                        targets += [obl for obl in sentence.find_obliques('arg') if obl.head == part.address]
             if len(targets) == 0:
-                targets = [obl for obl in sentence.find_obliques('arg') if obl.head == verb.address]
-                if len(targets) == 0:
-                    infinitive_related_part = [node for node in sentence.find_compounds() + sentence.find_xcomps(verb)
-                                               if node.head == verb.address]
-                    if len(infinitive_related_part) > 0:
-                        for part in infinitive_related_part:
-                            targets += [obl for obl in sentence.find_obliques('arg') if obl.head == part.address]
-
-            self.add_relation_triples(subjects, infinitive_elements, targets, sentence)
+                targets = obliques
+            self.add_relation_triples(subjects, infinitive_elements, targets, sentence, obliques=obliques)
 
     def find_list_relation_base(self, sentence):
         if "«" in sentence.text or "»" in sentence.text:
@@ -417,7 +417,8 @@ class ClassDiagramExtractor:
         nodes = [obl_node] + sentence.find_conjuncts(obl_node)
         self.add_relation_triples(subjects, [DesignElement('CONTAIN')], nodes, sentence)
 
-    def add_relation_triples(self, source_nodes, infinitive_elements, target_nodes, sentence, skip_adj=True):
+    def add_relation_triples(self, source_nodes, infinitive_elements, target_nodes, sentence, skip_adj=True,
+                             obliques=[]):
         source_classes = []
         for node in source_nodes:
             names = [name for name, name_nodes in sentence.find_seq_names(node)]
@@ -435,19 +436,6 @@ class ClassDiagramExtractor:
                     continue
                 source_classes.append(class_element)
 
-        # source_names = [name for source in source_nodes for name, name_nodes in sentence.find_seq_names(source)]
-        # source_classes = [element for element in self.diagram.classes if element.text in source_names]
-        # if len(source_classes) == 0:
-        #     for name in source_names:
-        #         raw_name = ''
-        #         for term in self.category_words:
-        #             if term in name:
-        #                 raw_name = re.sub(rf'\b{re.escape(term)}\b', '', name).strip()
-        #         if raw_name:
-        #             source_class = self.find_class_by_name(raw_name)
-        #             if not source_class:
-        #                 return
-        #             source_classes.append(source_class)
         if len(target_nodes) == 0:
             for subject_class in source_classes:
                 for infinitive_node in infinitive_elements:
@@ -455,13 +443,28 @@ class ClassDiagramExtractor:
         else:
             for subject_class in source_classes:
                 for node in target_nodes:
+                    if node.is_determiner():
+                        node = sentence.find_next_noun(node)
                     names = [name for name, linked_nodes in sentence.find_seq_names(node, skip_adj)]
                     for name in names:
                         target_class = self.find_class_by_name(name)
 
                         for infinitive_node in infinitive_elements:
-                            self.diagram.add_base_relation(
-                                RelationBase(subject_class, infinitive_node, target_class, sentence, node))
+                            relation_base = RelationBase(subject_class, infinitive_node, target_class, sentence, node)
+                            if obliques:
+                                self.add_sub_relation_bases(relation_base, obliques, sentence, skip_adj)
+                            self.diagram.add_base_relation(relation_base)
+
+    def add_sub_relation_bases(self, main_relation, obliques, sentence, skip_adj):
+        for node in obliques:
+            if node.is_determiner():
+                node = sentence.find_next_noun(node)
+            names = [name for name, link_nodes in sentence.find_seq_names(node, skip_adj)]
+            for name in names:
+                target_class = self.find_class_by_name(name)
+                relation_base = RelationBase(main_relation.source, main_relation.relation_title, target_class, sentence,
+                                             node)
+                main_relation.add_sub_relation(relation_base)
 
     # generalizations
     def extract_generalizations(self):
@@ -619,10 +622,18 @@ class ClassDiagramExtractor:
     # ASSOCIATION
     def extract_associations(self):
         for relation in self.diagram.base_relations:
-            if self.diagram.relation_with_base_exist(relation) or relation.target is None or self.is_weak_class(
-                    relation.target):
+            if self.diagram.relation_with_base_exist(relation) or relation.target is None :
                 continue
-            self.diagram.add_association(relation.source, relation.target, relation, relation.relation_title.text)
+            if self.is_weak_class(relation.target):
+                if relation.sub_relation_bases:
+                    for sub_relation in relation.sub_relation_bases:
+                        if sub_relation.target:
+                            title = f"{relation.relation_title.text} {relation.target.text}"
+                            if 'امکان' in title:
+                                return
+                            self.diagram.add_association(relation.source, sub_relation.target, sub_relation, title)
+            else:
+                self.diagram.add_association(relation.source, relation.target, relation, relation.relation_title.text)
 
     # operations
     def extract_operations(self):
@@ -662,7 +673,9 @@ class ClassDiagramExtractor:
                 names = target.text.split(" ")
                 ending_target = self.add_ending_target_association(source, relation, names)
                 if not ending_target:
-                    source.add_operation(f"{title.text} {target.text}", title.node)
+                    operation_title = f"{title.text} {target.text}"
+                    if not self.diagram.relation_between_exist(source, target,False, operation_title):
+                        source.add_operation(operation_title, title.node)
                 # self.add_operation_or_association(source, relation)
 
     def add_ending_target_association(self, class_element, relation, names):
@@ -947,10 +960,10 @@ class ClassDiagramExtractor:
             source = child_relation.source
             target = child_relation.target
             if source.text == child.text:
-                if self.diagram.relation_between_exist(parent, target, False):
+                if self.diagram.relation_between_exist(parent, target, False, child_relation.label):
                     self.diagram.remove_relation(child_relation)
             else:
-                if self.diagram.relation_between_exist(source, parent, False):
+                if self.diagram.relation_between_exist(source, parent, False, child_relation.label):
                     self.diagram.remove_relation(child_relation)
 
     def count_classes(self):

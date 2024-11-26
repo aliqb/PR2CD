@@ -16,14 +16,18 @@ class DesignElement:
 
 
 class RelationBase:
-    def __init__(self, source, relation_title, target, sentence, target_node=None):
+    def __init__(self, source, relation_title, target, sentence, target_node=None, ):
         self.source = source
         self.relation_title = relation_title
         self.target = target
         self.sentence = sentence
         self.target_node = target_node
+        self.sub_relation_bases = []
         # if target is not None:
         #     self.target_node = self.target.node
+
+    def add_sub_relation(self, relation_base):
+        self.sub_relation_bases.append(relation_base)
 
     def __eq__(self, other):
         if self.source != other.source or self.relation_title != other.relation_title:
@@ -250,9 +254,11 @@ class ClassDiagram:
     def get_associations(self):
         return [relation for relation in self.relations if relation.relation_type == 'ASSOCIATION']
 
-    def relation_between_exist(self, source, target, just_advance):
+    def relation_between_exist(self, source, target, just_advance, label=None):
         relations = [relation for relation in self.relations if
                      relation.source.text == source.text and relation.target.text == target.text]
+        if label:
+            relations = [relation for relation in relations if relation.label == label]
         if just_advance:
             relations = [relation for relation in relations if relation.relation_type != 'ASSOCIATION']
         return len(relations) > 0

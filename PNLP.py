@@ -71,6 +71,8 @@ class NLPNode:
             return True
         return False
 
+    def is_determiner(self):
+        return self.tag.startswith('DET')
 
 class Sentence:
     def __init__(self, index, text, nlp_nodes: List[NLPNode], find_seq_method: Literal['dep', 'ezafe'] = 'dep',
