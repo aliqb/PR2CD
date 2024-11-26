@@ -210,6 +210,20 @@ class Sentence:
                 break
         return subjects
 
+    def find_recursive_objects(self, verb):
+        temp_verb = verb
+        objects = self.find_objects(verb)
+        while len(objects) == 0:
+            if temp_verb.rel in ['conj']:  # probably advcl and acl should be added
+                temp_verb = self.find_node_by_address(temp_verb.head)
+                if temp_verb.tag == 'VERB':
+                    objects = self.find_objects(temp_verb)
+                else:
+                    break
+            else:
+                break
+        return objects
+
     def find_xcomps(self, verb):
         xcomps = [node for node in self.nlp_nodes if
                   node.rel is not None and node.rel == 'xcomp' and node.head == verb.address]

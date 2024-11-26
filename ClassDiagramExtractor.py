@@ -374,7 +374,7 @@ class ClassDiagramExtractor:
             infinitive_elements = [DesignElement(infinitive, verb) for infinitive in infinitives if
                                    infinitive not in self.modal_infinitives]
             subjects = sentence.find_recursive_subject(verb)
-            targets = sentence.find_objects(verb)
+            targets = sentence.find_recursive_objects(verb)
             if len(targets) == 0:
                 targets = [obl for obl in sentence.find_obliques('arg') if obl.head == verb.address]
                 if len(targets) == 0:
