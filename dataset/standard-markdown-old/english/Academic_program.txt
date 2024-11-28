@@ -1,0 +1,38 @@
+classDiagram
+    class Course{
+        name
+        code
+        start_time
+        end_time
+        days
+        capacity
+
+    }
+    class Class{
+        id
+        capacity
+        floor
+        block
+    }
+    class Instructor{
+        first_name
+        last_name
+        title
+        field
+    }
+    class Student{
+        receive_transcripts()
+        receive_documents()
+        survey()
+    }
+    Course o-- Instructor
+    Course o-- Class
+    Instructor --> Course:add
+    Instructor --> Course:remove
+    Instructor --> Course:change_capacity
+    Instructor --> Course:change_days
+    Instructor --> Course:change_hours
+    Instructor --> Student:teach
+    Instructor --> Student:mentor
+    Student -->Course:enroll
+    Student -->Course:drop

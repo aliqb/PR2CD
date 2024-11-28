@@ -1,0 +1,22 @@
+classDiagram
+    class Timbered_house{
+        room_count
+        floor_count
+    }
+    class Bulding_material
+    class Log
+    class Mud_brick
+    class Nail
+    class Carpenter{
+        name
+        hourly_salary
+        saw
+        hammer
+        use_tools()
+    }
+    Bulding_material <|-- Log
+    Bulding_material <|-- Mud_brick
+    Bulding_material <|-- Nail
+    Timbered_house o-- Bulding_material
+    Carpenter -->Timbered_house:work
+    

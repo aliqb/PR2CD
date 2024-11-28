@@ -21,6 +21,10 @@ classDiagram
     class Shopping_card{
         total_price
     }
+    class Confirmation_email
+    class Shopping_card{
+        total_price
+    }
     Customer -->Product:add
     Customer --> Product:remove
     Customer -->Product:search
@@ -32,8 +36,7 @@ classDiagram
     Admin -->Product:manage
     Order o-- Customer
     Order o-- Product
-    Product -->Order:confirm
-    Shopping_card o-- Product
+    Customer -->Order:confirm
+    Shopping_card --o Product
     Shopping_card o-- Customer
     Confirmation_email --> Order:show
-

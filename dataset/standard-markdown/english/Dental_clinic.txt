@@ -4,6 +4,11 @@ classDiagram
         send_bill()
     }
     class Patient{
+        name,
+        address,
+        phone,
+        alergies,
+        mental_state
         fill_form()
         pay()
     }
@@ -38,4 +43,5 @@ classDiagram
     Appointment <|-- Oral_surgery
     Appointment <|-- Filling
     Worker --> Supplies_inventory_file:fill
+    Supplies_inventory_file o-- Supplies
 

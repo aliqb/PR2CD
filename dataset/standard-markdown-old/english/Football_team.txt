@@ -1,0 +1,48 @@
+classDiagram
+    class Footbal_team{
+        name
+        location
+    }
+    class Player{
+        name
+        age
+        back_number
+        play()
+    }
+    class Position
+    class Goal
+    class Strick
+    class Midfield
+    class Defence
+    class Forward{
+        score_goal()
+    }
+    class Halfback{
+        distribute_ball()
+    }
+    class Defender{
+        defende()
+    }
+    class Goal_keeper{
+        save_goal()
+    }
+    class System{
+        list_main_team()
+        list_bench()
+        announce_goal()
+        announce_save()
+    }
+    Footbal_team o-- Player
+    Footbal_team -->Player:transfer
+    Footbal_team -->Player:sell
+    Position <|-- Goal
+    Position <|-- Defence
+    Position <|-- Strick
+    Position <|-- Midfield
+    Player <|-- Forward
+    Player <|-- Halfback
+    Player <|-- Defender
+    Player <|-- Goal_keeper
+    Player --> Position:be
+
+

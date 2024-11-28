@@ -6,12 +6,8 @@ classDiagram
         name
         age 
         gender
-        instrument
     }
-    class System{
-        show_musician_name()
-        show_instrument_name()
-    }
+    class System
     class Instrument{
         name
     }
@@ -31,5 +27,7 @@ classDiagram
     Musician --> Music_band:join
     Musician --> Music_band:leave
     Musician -->Instrument:play
+    System --> Musician:show_name
+    System --> Instrument:show_name
 
 

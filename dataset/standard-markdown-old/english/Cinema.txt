@@ -1,0 +1,24 @@
+classDiagram
+    class User{
+        name
+        email_address
+        enter_info()
+        request_email()
+        pay()
+    }
+    class Film{
+        show
+    }
+    class Ticket{
+        cost
+    }
+    class System{
+        send_email()
+        calculate_cost()
+        show_confirmation_page()
+        create_invoice()
+        alert()
+    }
+    User -->Film:select
+    User -->Ticket:reserve
+    Film *-- Ticket

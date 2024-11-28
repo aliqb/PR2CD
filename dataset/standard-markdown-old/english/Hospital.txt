@@ -1,0 +1,36 @@
+classDiagram
+    class Patient{
+        pay()
+        make_appoinment()
+    }
+    class Doctor{
+        suggest_surgery()
+    }
+    class Report{
+        disease_conditions
+        suggestions
+    }
+    class Diagnosis
+    class Physical_diagnosis
+    class Psychological_diagnosis
+    class Psychiatric_diagnosis
+    class Nurse
+    class Surgen
+    class Surgen_team
+    class Surgery
+    class Drug
+    Patient -->Doctor:visit
+    Patient --> Drug:get
+    Doctor --> Report:make
+    Doctor --> Drug:prescribe
+    Doctor --> Surgery:suggest
+    Doctor -->Diagnosis:diagnose
+    Report o-- Drug
+    Report o-- Diagnosis
+    Surgen --> Surgery:perform
+    Surgen_team --> Surgery:perform
+    Diagnosis <|--Physical_diagnosis
+    Diagnosis <|--Psychological_diagnosis
+    Diagnosis <|--Psychiatric_diagnosis
+    Nurse -->Patient:take_care
+

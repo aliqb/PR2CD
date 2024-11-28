@@ -10,6 +10,11 @@ classDiagram
         disease_conditions
         suggestions
     }
+    class Care{
+        physiotherapy
+        osteotherapy
+        mental_support
+    }
     class Diagnosis
     class Physical_diagnosis
     class Psychological_diagnosis
@@ -19,8 +24,12 @@ classDiagram
     class Surgen_team
     class Surgery
     class Drug
+    class Drug_store
+    class Bed
     Patient -->Doctor:visit
-    Patient --> Drug:get
+    Patient --> Drug_store:get_drugs
+    Patient o-- Drug
+    Drug_store o--Drug
     Doctor --> Report:make
     Doctor --> Drug:prescribe
     Doctor --> Surgery:suggest
@@ -32,5 +41,7 @@ classDiagram
     Diagnosis <|--Physical_diagnosis
     Diagnosis <|--Psychological_diagnosis
     Diagnosis <|--Psychiatric_diagnosis
-    Nurse -->Patient:take_care
+    Nurse -->Care:provide
+    Care --> Patient:deliver
+    Bed --> Patient:assign
 

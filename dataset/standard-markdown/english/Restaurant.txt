@@ -1,11 +1,8 @@
 classDiagram
-    class System{
-        show_table_number()
-        show_waiter_name()
-        show_order_detail()
-    }
-    class Restaurant{
-        table
+    class System
+    class Restaurant
+    class Table{
+        number
     }
     class Personnel{
         name
@@ -14,24 +11,17 @@ classDiagram
         work()
     }
     class Section
-    class Kitchen{
-        cook
-    }
-    class Service{
-        waiter
-    }
-    class Cash{
-        cashier
-    }
-    class Cook{
-        cook()
-    }
+    class Kitchen
+    class Service
+    class Cash
+    class Cook
     class Waiter{
         service()
     }
     class Cashier{
         settlement()
     }
+    class Order
     Restaurant *--Section
     Restaurant *--Personnel
     Personnel <|-- Cook
@@ -43,3 +33,7 @@ classDiagram
     Personnel -->Section:stay
     Restaurant -->Personnel:employee
     Restaurant -->Personnel:discharge
+    System -->Waiter:show_name
+    System -->Table:show_number
+    System -->Order:show_detail
+    Cook --> Order:prepare

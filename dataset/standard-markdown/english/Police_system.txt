@@ -2,7 +2,6 @@ classDiagram
     class Citizen
     class Officer{
         collect_facts_and_documents()
-        make_report()
         investigate()
     }
     class Complaint
@@ -11,17 +10,24 @@ classDiagram
         crime_code
         resolution_date
         suspect
+        creation_date
+        assets
+        method
+
     }
     class Court{
         trial()
     }
+    class Polist_station
     Citizen --> Complaint:register
     Officer -->Complaint:follow_up
     Officer -->Case:create
     Officer -->Case:attach
     Officer -->Case:search
+    Officer -->Case:make_report
     Case o-- Case
     Case o-- Citizen
     Case o-- Complaint
     Case --> Court:send
     Officer -->Court:interact
+    Polist_station o--Officer

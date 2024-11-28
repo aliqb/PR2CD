@@ -1,0 +1,37 @@
+classDiagram
+    class Company
+    class Emplyee{
+        name
+        date_of_birth
+        insurance_number
+        work()
+    }
+    class Department
+    class Worker{
+        weakly_hours
+        hourly_salary
+        is_shift
+    }
+    class Seller{
+        fix_salary
+        amount_of_sale
+        comission_rate
+    }
+    class Manager{
+        fixed_salary
+    }
+    class Manufacturing
+    class Control
+    class Delivery
+    Company *--Department
+    Company o--Emplyee
+    Department<|--Manufacturing
+    Department<|--Control
+    Department<|--Delivery
+    Emplyee<|--Worker
+    Emplyee<|--Seller
+    Emplyee<|--Manager
+    Department o--Manager
+
+
+
