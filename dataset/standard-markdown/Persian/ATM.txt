@@ -14,7 +14,9 @@ classDiagram
         نرم‌افزار
     }
     class کامپیوتر
-    class حساب
+    class حساب{
+        داده
+    }
     class کامپیوتر_مرکزی
     class کنسرسیوم_بانک_ها
     class تراکنش{
