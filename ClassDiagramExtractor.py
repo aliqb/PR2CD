@@ -384,7 +384,9 @@ class ClassDiagramExtractor:
                         targets += [obl for obl in sentence.find_obliques('arg') if obl.head == part.address]
             if len(targets) == 0:
                 targets = obliques
-            self.add_relation_triples(subjects, infinitive_elements, targets, sentence, obliques=obliques)
+                self.add_relation_triples(subjects, infinitive_elements, targets, sentence)
+            else:
+                self.add_relation_triples(subjects, infinitive_elements, targets, sentence, sub_targets=obliques)
 
     def find_list_relation_base(self, sentence):
         if "«" in sentence.text or "»" in sentence.text:
@@ -418,7 +420,7 @@ class ClassDiagramExtractor:
         self.add_relation_triples(subjects, [DesignElement('CONTAIN')], nodes, sentence)
 
     def add_relation_triples(self, source_nodes, infinitive_elements, target_nodes, sentence, skip_adj=True,
-                             obliques=[]):
+                             sub_targets=[]):
         source_classes = []
         for node in source_nodes:
             names = [name for name, name_nodes in sentence.find_seq_names(node)]
@@ -451,12 +453,12 @@ class ClassDiagramExtractor:
 
                         for infinitive_node in infinitive_elements:
                             relation_base = RelationBase(subject_class, infinitive_node, target_class, sentence, node)
-                            if obliques:
-                                self.add_sub_relation_bases(relation_base, obliques, sentence, skip_adj)
+                            if sub_targets:
+                                self.add_sub_relation_bases(relation_base, sub_targets, sentence, skip_adj)
                             self.diagram.add_base_relation(relation_base)
 
-    def add_sub_relation_bases(self, main_relation, obliques, sentence, skip_adj):
-        for node in obliques:
+    def add_sub_relation_bases(self, main_relation, sub_targets, sentence, skip_adj):
+        for node in sub_targets:
             if node.is_determiner():
                 node = sentence.find_next_noun(node)
             names = [name for name, link_nodes in sentence.find_seq_names(node, skip_adj)]
