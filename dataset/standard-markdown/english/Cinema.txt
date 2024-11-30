@@ -2,13 +2,13 @@ classDiagram
     class User{
         name
         email_address
+        select_date()
         enter_info()
         request_email()
         pay()
     }
-    class Film{
-        show
-    }
+    class Film
+    class Show
     class Ticket{
         cost
     }
@@ -22,3 +22,8 @@ classDiagram
     User -->Film:select
     User -->Ticket:reserve
     Film *-- Ticket
+    Film *-- Show
+    System -->Show:list
+    System --> Film:show_info
+    System --> Ticket:assign
+    User -->System:register

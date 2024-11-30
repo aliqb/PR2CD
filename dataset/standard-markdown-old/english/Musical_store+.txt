@@ -1,0 +1,34 @@
+classDiagram
+    class Shop_asistant{
+        process_request()   
+    }
+    class Shop_manager{
+        record_price_change()
+    }
+    class Shop
+    class User{
+        first_name
+        last_name
+        address
+    }
+    class Main_office{
+        delay_alert()
+    }
+    class Tape{
+        rent_price
+        status
+    }
+    class Rent
+    Shop_asistant -->Tape:search
+    Shop_asistant -->Tape:check_status
+    Shop_asistant -->Rent:save
+    Shop_asistant -->Rent:update_list
+    Shop *-- Shop_asistant
+    Shop *-- Shop_manager
+    Shop -->Main_office:get_new_tapes
+    Shop_manager --> Rent:make_report
+    User --> Tape:request
+    User o-- Rent
+    Tape o-- Rent
+    
+    

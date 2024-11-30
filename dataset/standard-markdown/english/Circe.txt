@@ -7,9 +7,7 @@ classDiagram
         metrication()
     }
     class View_selector
-    class Cico{
-        request_team_data()
-    }
+    class Cico
     class Requirement{
         team
         writer
@@ -19,16 +17,23 @@ classDiagram
     class View
     class User
     class Gloassary
+    class Repository
     System <|-- Web_interface
     System <|-- View_module
     System <|-- View_selector
     System <|-- Cico
-    Web_interface --> Cico:sent_requiremnt_and_gloassary
-    Web_interface --> Requirement:sent_to_repository
-    Web_interface --> Gloassary:sent_to_repository
+    Web_interface --> Cico:gloassary
+    Web_interface --> Cico:sent_requiremnt
+    Web_interface <-- Requirement:get
+    Web_interface <-- Gloassary:get
+    Web_interface -->Repository:send_glossary
+    Web_interface -->Repository:send_requirement
     Cico-->Abstract_requirement:create
     Cico -->View_module:send_abstract_requiremnet
     View_module -->View:create
     User -->View_selector:request_view
     View_module -->View_selector:send_view
+    User --> Gloassary:enter
+    User --> Requirement:enter
+    Cico <--Repository:get_data
 

@@ -1,0 +1,35 @@
+classDiagram
+    class Library{
+        search 
+        update
+    }
+    Class Loan_item
+    class Book{
+        title
+        author
+    }
+    class Language_tape{
+        language_title
+        level_title
+    }
+    class Customer{
+        name
+        address
+        birth_date
+    }
+    class Membership_card{
+        member_code
+    }
+    class Secion{
+        classification_mark
+    }
+    Library --> Membership_card:issue
+    Library *--Secion
+    Secion -->Loan_item:hold
+    Customer -->Loan_item:borrow
+    Customer --> Membership_card:has
+    Customer -->Loan_item:borrow
+    Loan_item <|--Book
+    Loan_item <|--Language_tape
+
+

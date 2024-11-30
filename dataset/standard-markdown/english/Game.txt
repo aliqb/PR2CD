@@ -1,6 +1,5 @@
 classDiagram
     class Game{
-        list_players()
         alert()
     }
     class Player{
@@ -16,6 +15,7 @@ classDiagram
         kill_enemy()
     }
     class Archer{
+        arrow_count
         protect_castle()
     }
     class Sorcerer{
@@ -29,3 +29,9 @@ classDiagram
     Player <|--Sorcerer
     Player <|--Archer
     Player <|--Savagery
+    Game -->Player:show_list
+    Game -->Sorcerer:show_name
+    Game -->Sorcerer:show_magic
+    Game -->Warrior:show_name
+    Game -->Warrior:show_Weapon
+

@@ -12,10 +12,10 @@ classDiagram
     class Invidual_bank
     class Bank{
         software
-        account
     }
-    class Computer{
-        maintain_accounts()
+    class Computer
+    class Account{
+        data
     }
     class Central_computer
     class Consortium_of_banks
@@ -31,7 +31,11 @@ classDiagram
     Central_computer-->Transaction:clear
     Bank -->Computer:provide
     Bank o--Computer
+    Bank o-- Account
+    Computer -->Account:maintain
     Computer -->Transaction:process
     Invidual_bank -->Cahier_station:manage
     Cahier_station -->Computer:communicate
+    Human_cashier -->Transaction:enter_data
+    Human_cashier -->Account:enter_data
 

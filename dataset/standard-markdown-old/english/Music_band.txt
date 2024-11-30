@@ -1,0 +1,35 @@
+classDiagram
+    class Music_band{
+        name
+    }
+    class Musician{
+        name
+        age 
+        gender
+        instrument
+    }
+    class System{
+        show_musician_name()
+        show_instrument_name()
+    }
+    class Instrument{
+        name
+    }
+    class Guitarist
+    class Drummer
+    class Keyboardist
+    class Guitarist
+    class Drum
+    class Keyboard
+    Instrument <|-- Guitar
+    Instrument <|-- Keyboard
+    Instrument <|-- Drum
+    Musician <|-- Drummer
+    Musician <|-- Guitarist
+    Musician <|-- Keyboardist
+    Music_band o-- Musician
+    Musician --> Music_band:join
+    Musician --> Music_band:leave
+    Musician -->Instrument:play
+
+
