@@ -74,6 +74,7 @@ class NLPNode:
     def is_determiner(self):
         return self.tag.startswith('DET')
 
+
 class Sentence:
     def __init__(self, index, text, nlp_nodes: List[NLPNode], find_seq_method: Literal['dep', 'ezafe'] = 'dep',
                  with_ezafe_tag: bool = False):
@@ -85,7 +86,7 @@ class Sentence:
 
     def serialize(self):
         return {
-            'index':self.index,
+            'index': self.index,
             'text': self.text,
             'nlp_nodes': [node.serialize() for node in self.nlp_nodes]
         }
@@ -170,7 +171,7 @@ class Sentence:
         return sentence_compound + conjs
 
     def find_noun_modifiers(self, node):
-        noun_modifiers_addresses = node.deps.get('nmod',None)
+        noun_modifiers_addresses = node.deps.get('nmod', None)
         noun_modifiers = []
         if noun_modifiers_addresses is not None:
             for address in noun_modifiers_addresses:
@@ -216,10 +217,14 @@ class Sentence:
         temp_verb = verb
         objects = self.find_objects(verb)
         while len(objects) == 0:
-            if temp_verb.rel in ['conj']:  # probably advcl and acl should be added
+            if temp_verb.rel in ['conj']:
                 temp_verb = self.find_node_by_address(temp_verb.head)
                 if temp_verb.tag == 'VERB':
-                    objects = self.find_objects(temp_verb)
+                    between_nodes = [node for node in self.find_between_nodes(temp_verb.address, verb.address)]
+                    if all(node.tag in ['SCONJ', 'CCONJ', 'PUNCT',
+                                        'VERB'] or 'compound' in node.rel or node.rel == 'xcomp' for node in
+                           between_nodes):
+                        objects = self.find_objects(temp_verb)
                 else:
                     break
             else:
@@ -297,7 +302,7 @@ class Sentence:
 
                 middle_ezafe = dep_node.tag.endswith('EZ')
                 must_break = not middle_ezafe if self.with_ezafe_tag else (
-                        index < len(dep_nodes)-1 and self.are_together(dep_node, dep_nodes[index + 1]))
+                        index < len(dep_nodes) - 1 and self.are_together(dep_node, dep_nodes[index + 1]))
                 if not skip_adj or dep_node.rel != 'amod' or not dep_node.is_pure_adj():
                     old_name = name
                     text = dep_node.text if (index < len(
@@ -391,4 +396,5 @@ class Sentence:
         case = self.find_node_by_address(address)
         return case
 
-
+    def find_between_nodes(self, start_address, end_address):
+        return [node for node in self.nlp_nodes if start_address < node.address < end_address]
