@@ -174,7 +174,7 @@ class ClassDiagramExtractor:
             names = [name for name, linked_nodes in sentence.find_seq_names(obj)]
             for name in names:
                 for element in class_elements:
-                    self.add_attribute_to_class(element, name, obj)
+                    self.add_attribute_to_class(element, name, obj, sentence)
 
     def extract_attr_have_noun_rule(self, sentence):
         subjects = sentence.find_subjects()
@@ -199,7 +199,7 @@ class ClassDiagramExtractor:
                 for name in names:
                     for element in class_elements:
                         # if name == 'تعداد'
-                        self.add_attribute_to_class(element, name, attr_node)
+                        self.add_attribute_to_class(element, name, attr_node, sentence)
 
     def extract_attr_noun_noun_rule(self, sentence):
         nodes = sentence.nlp_nodes
@@ -233,13 +233,9 @@ class ClassDiagramExtractor:
                                         continue
                                     name = item[0]
                                     # modifier_name = re.sub(rf'\b{re.escape(node.lemma)}\b', '', name).strip()
-                                    self.add_attribute_to_class(class_element, name, head_node)
+                                    self.add_attribute_to_class(class_element, name, head_node, sentence)
                                 continue
-                        self.add_attribute_to_class(class_element, nearest_head.lemma, head_node)
-                        # new_head = head_node
-                        # while new_head.rel == 'conj':
-                        #     new_head = sentence.find_node_by_address(new_head.head)
-                        #     self.add_attribute_to_class(class_element, new_head.lemma, new_head)
+                        self.add_attribute_to_class(class_element, nearest_head.lemma, head_node, sentence)
 
     def extract_attr_verb_particle_rule(self, sentence):
         compounds = sentence.find_compounds()
@@ -255,7 +251,7 @@ class ClassDiagramExtractor:
                 names = [name for name, linked_nodes in sentence.find_seq_names(obl)]
                 for name in names:
                     for element in class_elements:
-                        self.add_attribute_to_class(element, name, obl)
+                        self.add_attribute_to_class(element, name, obl, sentence)
 
     def extract_info_subject_attr_rule(self, sentence):
         subjects = sentence.find_subjects()
@@ -274,7 +270,7 @@ class ClassDiagramExtractor:
                             attr_names = [name for name, linked_nodes in sentence.find_seq_names(attr)]
 
                             for attr_name in attr_names:
-                                self.add_attribute_to_class(element, attr_name, attr)
+                                self.add_attribute_to_class(element, attr_name, attr, sentence)
 
     def attr_term_related_to_rule(self, sentence):
         related_term_nodes = sentence.find_node_by_text('مربوط') + sentence.find_node_by_text('مرتبط')
@@ -293,7 +289,7 @@ class ClassDiagramExtractor:
                             attr_names = [name for name, linked_nodes in sentence.find_seq_names(modifier)]
 
                             for attr_name in attr_names:
-                                self.add_attribute_to_class(class_element, attr_name, modifier)
+                                self.add_attribute_to_class(class_element, attr_name, modifier, sentence)
 
     def add_attr_terms_modifiers(self, sentence, node, class_elements, prefix=None):
         noun_modifiers = sentence.find_noun_modifiers(node)
@@ -304,13 +300,13 @@ class ClassDiagramExtractor:
                     if name != element.text:
                         if prefix:
                             name = f"{prefix} {name}"
-                        self.add_attribute_to_class(element, name.strip(), noun)
+                        self.add_attribute_to_class(element, name.strip(), noun, sentence)
 
     def add_attr_hastan_xcomp(self, sentence, node, class_element):
         xcomps = sentence.find_xcomps()
         for xcomp in xcomps:
             if xcomp.text != node.text:
-                self.add_attribute_to_class(class_element, xcomp.text, xcomp)
+                self.add_attribute_to_class(class_element, xcomp.text, xcomp, sentence)
 
     def add_attr_esnadi_roots(self, sentence, class_element):
         root = sentence.find_root()
@@ -319,7 +315,7 @@ class ClassDiagramExtractor:
         conjuncts = sentence.find_conjuncts(root)
         conjuncts = [root] + conjuncts
         for conjunct in conjuncts:
-            self.add_attribute_to_class(class_element, conjunct.text, conjunct)
+            self.add_attribute_to_class(class_element, conjunct.text, conjunct, sentence)
 
     # relations
     def extract_relations(self):
@@ -545,7 +541,7 @@ class ClassDiagramExtractor:
             names = [name for name, linked_nodes in relation.sentence.find_seq_names(target_node)]
             for name in names:
                 attr_name = re.sub(rf'\b{re.escape(whole.text)}\b', '', name).strip()
-                self.add_attribute_to_class(whole, attr_name, target_node)
+                self.add_attribute_to_class(whole, attr_name, target_node, relation.sentence)
 
     # composition
     def extract_composition(self):
@@ -581,7 +577,6 @@ class ClassDiagramExtractor:
                     child = ClassElement(name, node, sentence=relation.sentence)
                     self.diagram.add_class(child)
                 self.diagram.add_composition(child, relation.source, relation)
-                # self.add_attribute_to_class(relation.source, name, node)
 
     def find_composition_from_active_composition_verb(self, relation):
         # if 'ساختن' in relation.relation_title.text:
@@ -772,7 +767,6 @@ class ClassDiagramExtractor:
                     self.diagram.remove_class(element)
 
     def shorter_class_exist_before(self, class_element):
-        class_sorted_sentence = list(sorted(self.diagram.classes, key=lambda x: x.sentence.index))
         words = class_element.text.split(' ')
         compound = ''
         for word in reversed(words):
@@ -997,7 +991,7 @@ class ClassDiagramExtractor:
             return False
         return True
 
-    def add_attribute_to_class(self, class_element, text, node):
+    def add_attribute_to_class(self, class_element, text, node, sentence):
         # if text in self.info_exact_terms:
         #     return
         if any(term in text for term in self.info_contain_terms + self.categorizing_words):
@@ -1009,6 +1003,8 @@ class ClassDiagramExtractor:
         if attr_name == '':
             return
         class_element.add_attribute(attr_name, node)
+        if attr_name == 'نام' and 'نام خانوادگی' in sentence.text:
+            class_element.add_attribute('نام خانوادگی', node)
 
 
 class ExtractorEvaluator:

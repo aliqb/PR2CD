@@ -91,8 +91,11 @@ class ClassElement(DesignElement):
             else:
                 self.add_operation(element.text, element.node)
 
+    def have_attribute(self, text):
+        return any(attr.text == text for attr in self.attributes)
+
     def add_attribute(self, text, node=None):
-        if not any(attr.text == text for attr in self.attributes):
+        if not self.have_attribute(text):
             self.attributes.append(DesignElement(text, node))
 
     def remove_attribute(self, name):
