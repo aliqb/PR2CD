@@ -3,7 +3,6 @@ classDiagram
         name
         email_address
         select_date()
-        enter_info()
         request_email()
         pay()
     }
@@ -27,3 +26,6 @@ classDiagram
     System --> Film:show_info
     System --> Ticket:assign
     User -->System:register
+    User --> System: enter_name
+    User --> System: enter_email
+    User -->System:enter_ticket_count

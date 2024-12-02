@@ -1,7 +1,6 @@
 classDiagram
     class Clinic{
         bill()
-        send_bill()
     }
     class Patient{
         name,
@@ -31,6 +30,8 @@ classDiagram
     Clinic o-- Supplies_inventory_file
     Clinic --> Appointment:schedule
     Clinic -->Patient:service
+    Clinic -->Patient:give_appoinment
+    Clinic -->Patient:send_bill
     Patient o-- Appointment
     Patient -->Reimbursement_request:create
     Desk_worker -->Patient:call

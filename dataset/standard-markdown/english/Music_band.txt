@@ -6,6 +6,7 @@ classDiagram
         name
         age 
         gender
+        music_band_name
     }
     class System
     class Instrument{

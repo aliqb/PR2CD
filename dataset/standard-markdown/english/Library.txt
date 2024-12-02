@@ -3,7 +3,9 @@ classDiagram
         search 
         update
     }
-    Class Loan_item
+    class Loan_item{
+        barcode
+    }
     class Book{
         title
         author

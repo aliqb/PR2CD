@@ -30,4 +30,6 @@ classDiagram
     Shop_assistant --> Rent_record:update
     Shop_assistant --> Rent_record:make_report
     System --> Rent_record:list
+    System --> Rent_record:sort
     Shop_assistant -->Car:search
+    Shop_assistant -->Customer:save_info

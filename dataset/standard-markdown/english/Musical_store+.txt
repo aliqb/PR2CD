@@ -32,6 +32,8 @@ classDiagram
     User --> Shop:request_tap
     User o-- Rent
     Tape o-- Rent
+    Shop_asistant --> Tape:search_price
+    Shop-->User:warn
 
     
     

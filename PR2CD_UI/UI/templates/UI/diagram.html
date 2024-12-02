@@ -86,9 +86,9 @@
             return def
         }).join('\n')
         diagramDef += '\n' + relations
-        diagramDef += '\n' + umlData.classes.map(item => {
-            return `click ${item.text.replaceAll(reg, '_')} call test()`
-        }).join('\n')
+        // diagramDef += '\n' + umlData.classes.map(item => {
+        //     return `click ${item.text.replaceAll(reg, '_')} call test()`
+        // }).join('\n')
         const {svg, bindFunctions} = await mermaid.render('graphDiv', diagramDef);
         element.innerHTML = svg;
         // This can also be written as `bindFunctions?.(element);` using the `?` shorthand.

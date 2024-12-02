@@ -6,6 +6,7 @@ classDiagram
         نام
         سن
         جنسیت
+        نام_گروه_موسیقی
     }
     class سیستم
     class ساز{
