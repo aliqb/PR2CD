@@ -112,6 +112,8 @@ class ClassElement(DesignElement):
         if self.node is None:
             return True
         if self.node.is_obj():
+            if 'acl' in self.node.deps:
+                return False
             return True
         return False
 

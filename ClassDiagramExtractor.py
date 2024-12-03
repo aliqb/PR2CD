@@ -76,6 +76,7 @@ class ClassDiagramExtractor:
             if sentence.is_hastan_masdar():
                 self.extract_hastan_class_names(sentence)
         self.remove_info_words()
+        self.remove_complex_verb_particles()
         self.replace_category_words()
         self.count_classes()
 
@@ -361,6 +362,8 @@ class ClassDiagramExtractor:
                     self.find_relation_base_from_normal_verb(sentence, verb)
             if ':' in sentence.text:
                 self.find_list_relation_base(sentence)
+            if 'ارتباط' in sentence.text:
+                self.find_relation_term_relations(sentence)
             if self.contain_word in sentence.text:
                 self.find_contain_relation_base(sentence)
 
@@ -435,6 +438,24 @@ class ClassDiagramExtractor:
         subjects = sentence.find_subjects()
         nodes = [obl_node] + sentence.find_conjuncts(obl_node)
         self.add_relation_triples(subjects, [DesignElement('CONTAIN')], nodes, sentence)
+
+    def find_relation_term_relations(self, sentence):
+        relation_term_nodes = sentence.find_node_by_text('ارتباط')
+        preposition_nodes = sentence.find_node_by_text('با')
+        if not relation_term_nodes or not preposition_nodes:
+            return
+        relation_term_node = relation_term_nodes[0]
+        preposition_node = preposition_nodes[0]
+        next_noun = sentence.find_next_noun(preposition_node)
+        if not next_noun:
+            return
+        relation_term_head = sentence.find_node_by_address(relation_term_node.head)
+        if relation_term_head.tag != 'VERB':
+            return
+        if next_noun.head == relation_term_node.address or next_noun.head == relation_term_head.address:
+            subject = sentence.find_subjects()
+            nodes = [next_noun] + sentence.find_conjuncts(next_noun)
+            self.add_relation_triples(subject, [DesignElement('ارتباط')], nodes, sentence)
 
     def add_relation_triples(self, source_nodes, infinitive_elements, target_nodes, sentence, skip_adj=True,
                              sub_targets=[]):
@@ -760,9 +781,10 @@ class ClassDiagramExtractor:
                     elif text.startswith(term):
                         self.diagram.remove_class(class_element)
 
-            # for term in info_exact_terms:
-            #     if class_element.text == term:
-            #         self.diagram.remove_class(class_element)
+    def remove_complex_verb_particles(self):
+        for class_element in self.diagram.classes:
+            if 'امکان' in class_element.text or 'ارتباط' in class_element.text:
+                self.diagram.remove_class(class_element)
 
     def replace_category_words(self):
         for class_element in self.diagram.classes:
