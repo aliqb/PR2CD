@@ -1,8 +1,5 @@
 classDiagram
     class Shop_assistant{
-        save_info()
-        save_car_rent()
-        save_customer_info()
     }
     class Gallery
     class Rent_record
@@ -33,3 +30,5 @@ classDiagram
     System --> Rent_record:sort
     Shop_assistant -->Car:search
     Shop_assistant -->Customer:save_info
+    Shop_assistant --> Car:save_info
+    Shop_assistant --> Rent_record:save

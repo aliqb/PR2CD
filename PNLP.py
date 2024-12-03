@@ -398,3 +398,16 @@ class Sentence:
 
     def find_between_nodes(self, start_address, end_address):
         return [node for node in self.nlp_nodes if start_address < node.address < end_address]
+
+    @staticmethod
+    def nodes_to_text(nodes):
+        word = ''
+        for index in range(len(nodes)):
+            node = nodes[index]
+            if index == 0:
+                word += node.lemma
+            elif index == len(nodes) - 1:
+                word += " " + node.lemma
+            else:
+                word += " " + node.text
+        return word

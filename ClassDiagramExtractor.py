@@ -1,6 +1,7 @@
 from Diagram import DesignElement, RelationBase, ClassElement, ClassDiagram
 from Requirement import Requirement
 import re
+from PNLP import Sentence
 
 
 class ClassDiagramExtractor:
@@ -122,12 +123,32 @@ class ClassDiagramExtractor:
 
                 same_class = self.find_class_by_name(name)
                 if same_class is None:
-                    # if self.word_compound_exist(name_nodes):
-                    #     continue
-                    self.diagram.add_class(ClassElement(name, node, sentence=sentence))
+                    split_index = self.get_shorter_compound_class(name_nodes)
+                    if split_index != -1:
+                        self.add_shorter_class(sentence, name, name_nodes, split_index)
+                    else:
+                        self.diagram.add_class(ClassElement(name, node, sentence=sentence))
                 else:
                     if not same_class.node.is_subject() and node.is_subject():
                         same_class.node = node
+
+    def add_shorter_class(self, sentence, name, name_nodes, split_index):
+        right_part = Sentence.nodes_to_text(name_nodes[:split_index])
+
+        same_class = self.find_class_by_name(right_part)
+        if same_class is None:
+            if self.always_together(right_part):
+                self.diagram.add_class(ClassElement(name, name_nodes[0], sentence=sentence))
+            else:
+                self.diagram.add_class(ClassElement(right_part, name_nodes[0], sentence=sentence))
+
+    def always_together(self, shorter_text):
+        names = []
+        for sentence in self.requirement.sentences:
+            for node in sentence.nlp_nodes:
+                names += [name for name, name_nodes in sentence.find_seq_names(node)]
+        count = len([name for name in names if name == shorter_text])
+        return count == 0
 
     # attributes
     def extract_attributes(self):
@@ -661,8 +682,8 @@ class ClassDiagramExtractor:
                         for item in result:
                             name, name_nodes = item
 
-                            names = [node.text for node in name_nodes]
-                            ending_target = self.add_ending_target_association(source, relation, names)
+                            # names = [node.text for node in name_nodes]
+                            ending_target = self.add_ending_target_association(source, relation, name_nodes)
                             if not ending_target:
                                 source.add_operation(f"{title} {name}", relation.target_node)
                     else:
@@ -675,20 +696,23 @@ class ClassDiagramExtractor:
                     source.add_operation(title.text, title.node)
                 continue
             if self.is_weak_class(target):
-                names = target.text.split(" ")
-                ending_target = self.add_ending_target_association(source, relation, names)
-                if not ending_target:
-                    operation_title = f"{title.text} {target.text}"
-                    source.add_operation(operation_title, title.node)
 
-    def add_ending_target_association(self, class_element, relation, names):
+                result = target.sentence.find_seq_names(target.node)
+                for item in result:
+                    name, name_nodes = item
+                    ending_target = self.add_ending_target_association(source, relation, name_nodes)
+                    if not ending_target:
+                        operation_title = f"{title.text} {target.text}"
+                        source.add_operation(operation_title, title.node)
+
+    def add_ending_target_association(self, class_element, relation, name_nodes):
         target_name = ''
-        for index in range(len(names) - 1, -1, -1):
-            end_name = names[index]
-            target_name = end_name if target_name == '' else f"{end_name} {target_name}"
+        for index in range(len(name_nodes) - 1, -1, -1):
+            end_node = name_nodes[index]
+            target_name = end_node.lemma if target_name == '' else f"{end_node.text} {target_name}"
             target = self.find_class_by_name(target_name)
             if target and not self.is_weak_class(target):
-                text = f"{relation.relation_title.text} {''.join(names[:index])}"
+                text = f"{relation.relation_title.text} {Sentence.nodes_to_text(name_nodes[:index])}"
                 self.diagram.add_association(class_element, target, relation, text)
                 return target
         return None
@@ -863,9 +887,10 @@ class ClassDiagramExtractor:
         filtered = [element for element in self.diagram.classes if element.text == text]
         return filtered[0] if len(filtered) > 0 else None
 
-    def word_compound_exist(self, nodes):
+    def get_shorter_compound_class(self, nodes):
         compound = ''
-        for node in reversed(nodes):
+        for index in range(len(nodes)):
+            node = nodes[-1 - index]
             if compound == '':
                 class_element = self.find_class_by_name(node.lemma)
                 compound = node.text
@@ -873,8 +898,8 @@ class ClassDiagramExtractor:
                 compound = f"{node.text}{' ' if compound != '' else ''}{compound}"
                 class_element = self.find_class_by_name(compound)
             if class_element is not None:
-                return True
-        return False
+                return len(nodes) - 1 - index
+        return -1
 
     def find_class_by_node_text(self, text):
         filtered = [element for element in self.diagram.classes if element.node.text == text]
