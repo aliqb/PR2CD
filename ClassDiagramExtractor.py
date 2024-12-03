@@ -485,10 +485,15 @@ class ClassDiagramExtractor:
                 for node in target_nodes:
                     if node.is_determiner():
                         node = sentence.find_next_noun(node)
-                    names = [name for name, linked_nodes in sentence.find_seq_names(node, skip_adj)]
-                    for name in names:
+                    result = [item for item in sentence.find_seq_names(node, skip_adj)]
+                    for name, name_nodes in result:
                         target_class = self.find_class_by_name(name)
-
+                        split_index = self.get_shorter_compound_class(name_nodes)
+                        if not target_class and split_index != -1:
+                            right_part = Sentence.nodes_to_text(name_nodes[:split_index])
+                            shorter_class = self.find_class_by_name(right_part)
+                            if shorter_class:
+                                target_class = shorter_class
                         for infinitive_node in infinitive_elements:
                             relation_base = RelationBase(subject_class, infinitive_node, target_class, sentence, node)
                             if sub_targets:
