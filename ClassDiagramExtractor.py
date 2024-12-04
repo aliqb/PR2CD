@@ -395,13 +395,13 @@ class ClassDiagramExtractor:
                                    infinitive not in self.modal_infinitives]
             subjects = sentence.find_recursive_subject(verb)
             targets = sentence.find_recursive_objects(verb)
-            obliques = [obl for obl in sentence.find_obliques('arg') if obl.head == verb.address]
+            obliques = [obl for obl in sentence.find_obliques('arg', verb)]
             if len(obliques) == 0:
                 infinitive_related_part = [node for node in sentence.find_compounds() + sentence.find_xcomps(verb)
                                            if node.head == verb.address]
                 if len(infinitive_related_part) > 0:
                     for part in infinitive_related_part:
-                        targets += [obl for obl in sentence.find_obliques('arg') if obl.head == part.address]
+                        targets += [obl for obl in sentence.find_obliques('arg', part)]
             if len(targets) == 0:
                 targets = obliques
                 self.add_relation_triples(subjects, infinitive_elements, targets, sentence)
@@ -551,7 +551,7 @@ class ClassDiagramExtractor:
             self.diagram.add_generalization(child, parent, relation)
 
     def extract_generalization_categorization(self, relation):
-        obls = [node for node in relation.sentence.find_obliques() if node.head == relation.relation_title.node.address]
+        obls = [node for node in relation.sentence.find_obliques(head=relation.relation_title.node)]
         xcomps = relation.sentence.find_xcomps(relation.relation_title.node)
         nodes = obls + xcomps
         main_nodes = []
@@ -749,6 +749,7 @@ class ClassDiagramExtractor:
         self.post_process_attributes()
         self.post_process_relations()
         self.post_process_operations()
+        self.remove_lonely_classes()
 
     def post_process_classes(self):
         # self.remove_info_words()
@@ -759,17 +760,18 @@ class ClassDiagramExtractor:
 
     def post_process_attributes(self):
         self.convert_same_start_attributes_to_class()
-        # self.remove_generalized_attribute()
         self.convert_whole_part_attributes()
+        self.remove_trivial_attributes()
 
     def post_process_operations(self):
         self.remove_passive_operations()
         self.merge_same_start_operations()
-        # self.remove_generalized_operations()
+        self.remove_trivial_operations()
 
     def post_process_relations(self):
         self.same_end_to_composition()
         self.remove_generalized_items()
+        self.merge_generalized_name_classes()
 
     def remove_info_words(self):
         for class_element in self.diagram.classes:
@@ -884,6 +886,12 @@ class ClassDiagramExtractor:
                     self.diagram.add_generalization(part_class, parent_class, None)
                 self.diagram.add_aggregation(parent_class, element, None)
 
+    def remove_trivial_attributes(self):
+        for element in self.diagram.classes:
+            for attribute in element.attributes:
+                if attribute.text in ['امکان', 'ارتباط', 'نیاز', 'سایر', 'غیره', 'انجام']:
+                    element.remove_attribute(attribute.text)
+
     def remove_passive_operations(self):
         for element in self.diagram.classes:
             for operation in element.operations:
@@ -899,6 +907,12 @@ class ClassDiagramExtractor:
                 for operation in operations:
                     if operation.text != shortest_operation.text and operation.text.startswith(shortest_operation.text):
                         element.remove_operation(operation.text)
+
+    def remove_trivial_operations(self):
+        for element in self.diagram.classes:
+            for operation in element.operations:
+                if operation.text in ['دادن امکان', 'امکان دادن', 'برقرار کردن ارتباط', 'ارتباط برقرار کردم']:
+                    element.remove_operation(operation.text)
 
     def remove_generalized_operations(self, relation):
         source = relation.source
@@ -993,6 +1007,14 @@ class ClassDiagramExtractor:
             self.remove_generalized_operations(generalization)
             self.remove_generalized_relations(generalization)
 
+    def merge_generalized_name_classes(self):
+        generalizations = self.diagram.get_generalizations()
+        for class_element in self.diagram.classes:
+            for generalization in generalizations:
+                name = f"{generalization.target.text} {generalization.source.text}"
+                if class_element.text == name:
+                    self.diagram.merge_classes([generalization.source, class_element], generalization.source.text)
+
     def same_end_to_composition(self):
         same_endings = self.find_class_with_same_ending(1)
         for ending, classes in same_endings.items():
@@ -1019,6 +1041,14 @@ class ClassDiagramExtractor:
             else:
                 if self.diagram.relation_between_exist(source, parent, False, child_relation.label):
                     self.diagram.remove_relation(child_relation)
+
+    def remove_lonely_classes(self):
+        class_with_relations = [relation.source.text for relation in self.diagram.relations]
+        class_with_relations += [relation.target.text for relation in self.diagram.relations]
+        for class_element in self.diagram.classes:
+            if class_element.text not in class_with_relations:
+                if class_element.node.is_obj():
+                    self.diagram.remove_class(class_element)
 
     def count_classes(self):
         names = []
