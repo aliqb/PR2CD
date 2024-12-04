@@ -195,9 +195,9 @@ class ClassDiagram:
                     relation.target = new_class
             if element.text != text:
                 attrs += element.attributes
-                if text in element.text:
-                    new_attr_text = re.sub(rf'\b{re.escape(text)}\b', '', element.text).strip()
-                    attrs.append(DesignElement(new_attr_text, element.node))
+                # if text in element.text:
+                # new_attr_text = re.sub(rf'\b{re.escape(text)}\b', '', element.text).strip()
+                # attrs.append(DesignElement(new_attr_text, element.node))
                 self.remove_class(element)
         for attr in attrs:
             new_class.add_attribute(attr.text, attr.node)
@@ -210,7 +210,10 @@ class ClassDiagram:
         return any(input_relation == relation for relation in self.base_relations)
 
     def relation_exist(self, input_relation):
-        return any(input_relation == relation for relation in self.relations)
+        relations = [relation for relation in self.relations if input_relation == relation]
+        if relations:
+            return relations[0]
+        return None
 
     def relation_with_base_exist(self, base_relation):
         return any(base_relation == relation.base for relation in self.relations)
@@ -229,32 +232,59 @@ class ClassDiagram:
 
     def add_generalization(self, child, parent, base):
         relation = Relation(child, 'GENERALIZATION', parent, base)
-        if not self.relation_exist(relation):
+        old_relation = self.relation_exist(relation)
+        if not old_relation:
             self.relations.append(relation)
+        else:
+            self.change_base(old_relation, relation)
 
     def get_generalizations(self):
         return [relation for relation in self.relations if relation.relation_type == 'GENERALIZATION']
 
     def add_aggregation(self, child, parent, base):
         relation = Relation(child, 'AGGREGATION', parent, base)
-        if not self.relation_exist(relation):
+        old_relation = self.relation_exist(relation)
+        if not old_relation:
             self.relations.append(relation)
+        else:
+            self.change_base(old_relation, relation)
 
     def get_aggregations(self):
         return [relation for relation in self.relations if relation.relation_type == 'AGGREGATION']
 
     def add_composition(self, child, parent, base):
         relation = Relation(child, 'COMPOSITION', parent, base)
-        if not self.relation_exist(relation):
+        old_relation = self.relation_exist(relation)
+        if not old_relation:
             self.relations.append(relation)
+        else:
+            self.change_base(old_relation, relation)
 
     def get_compositions(self):
         return [relation for relation in self.relations if relation.relation_type == 'COMPOSITION']
 
     def add_association(self, source, target, base, title_text):
         relation = Relation(source, 'ASSOCIATION', target, base, title_text)
-        if not self.relation_exist(relation):
+        old_relation = self.relation_exist(relation)
+        if not old_relation:
             self.relations.append(relation)
+        else:
+            self.change_base(old_relation, relation)
+
+    def change_base(self, old_relation, new_relation):
+        old_base = old_relation.base
+        base = new_relation.base
+        if old_base.target and base.target:
+            if (
+                    old_base.target.text != new_relation.target.text or old_base.target.text != new_relation.source.text) and \
+                    (
+                            base.target.text == new_relation.target.text or base.target.text == new_relation.source.text):
+                old_relation.base = base
+        elif not old_base.target and base.target:
+            old_relation.base = base
+        elif old_base.target and not base.target:
+            if base.target_node.text == new_relation.target.node.text or base.target_node.text == new_relation.source.node.text:
+                old_relation.base = base
 
     def get_associations(self):
         return [relation for relation in self.relations if relation.relation_type == 'ASSOCIATION']
