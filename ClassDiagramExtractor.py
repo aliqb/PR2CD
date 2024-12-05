@@ -882,14 +882,15 @@ class ClassDiagramExtractor:
                     if not part_class:
                         part_class = ClassElement(part_class_name, attribute.node)
                         self.diagram.add_class(part_class)
-                    element.remove_attribute(attribute)
+                    element.remove_attribute(attribute.text)
                     self.diagram.add_generalization(part_class, parent_class, None)
                 self.diagram.add_aggregation(parent_class, element, None)
 
     def remove_trivial_attributes(self):
         for element in self.diagram.classes:
             for attribute in element.attributes:
-                if attribute.text in ['امکان', 'ارتباط', 'نیاز', 'سایر', 'غیره', 'انجام']:
+                if attribute.text in ['امکان', 'ارتباط', 'نیاز', 'سایر', 'غیره', 'انجام', 'دسترسی', 'اساس', 'پایه',
+                                      'مبنا', 'تعداد', 'شمار','آغاز','پایان','ابتدا','انتها']:
                     element.remove_attribute(attribute.text)
 
     def remove_passive_operations(self):

@@ -32,3 +32,4 @@ classDiagram
     Shop_assistant -->Customer:save_info
     Shop_assistant --> Car:save_info
     Shop_assistant --> Rent_record:save
+    System -->Car:show_history
