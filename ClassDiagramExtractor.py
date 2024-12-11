@@ -680,18 +680,61 @@ class ClassDiagramExtractor:
                 self.diagram.add_association(relation.source, relation.target, relation,
                                              relation.relation_title.text)
 
+    def is_forbid_operation_word(self, title):
+        if any(term in title for term in ['امکان', 'ارتباط']):
+            return True
+        return False
+
+    def add_operation_titles(self, relation):
+        target_node = relation.target_node
+        sentence = relation.sentence
+        source = relation.source
+        result = sentence.find_seq_names(target_node)
+        base_title = relation.relation_title.text
+        just_add = False
+
+        if not target_node.is_obj():
+            case = sentence.find_case(target_node)
+            if case:
+                base_title = f"{base_title} {case.text}"
+        for item in result:
+            name, name_nodes = item
+            title = f"{base_title} {name}"
+            if just_add or not (self.diagram.relation_with_base_exist(relation) or (relation.sub_relation_bases and any(
+                    self.diagram.relation_with_base_exist(sub) for sub in relation.sub_relation_bases))):
+                ending_target = self.add_ending_target_association(source, relation, name_nodes)
+                if ending_target:
+                    just_add = True
+            sub_added = False
+            if relation.sub_relation_bases:
+                for sub_relation in relation.sub_relation_bases:
+                    sub_case = sub_relation.sentence.find_case(sub_relation.target_node)
+                    if sub_case and sub_relation.target_node.tag != 'PRON':
+                        sub_title = f"{title} {sub_case.text} {sub_relation.target.text if sub_relation.target else sub_relation.target_node.lemma}"
+                        if not self.is_forbid_operation_word(sub_title):
+                            source.add_operation(sub_title, target_node)
+                            sub_added = True
+            if not sub_added:
+                if not self.is_forbid_operation_word(title):
+                    source.add_operation(title, relation.target_node)
+
     # operations
     def extract_operations(self):
         terms = self.categorizing_words + self.complex_categorizing_words + self.composition_verb_particles + self.attr_verb_particles
         for relation in self.diagram.base_relations:
-            if self.diagram.relation_with_base_exist(relation) or relation.relation_title.text in ['ESNADI',
-                                                                                                   'ESNADI SINGLE',
-                                                                                                   'LIST',
-                                                                                                   'CONTAIN']:
+            if relation.relation_title.text in ['ESNADI',
+                                                'ESNADI SINGLE',
+                                                'LIST',
+                                                'CONTAIN']:
                 continue
-            if relation.sub_relation_bases and any(
-                    self.diagram.relation_with_base_exist(sub) for sub in relation.sub_relation_bases):
-                continue
+            # if self.diagram.relation_with_base_exist(relation) or relation.relation_title.text in ['ESNADI',
+            #                                                                                        'ESNADI SINGLE',
+            #                                                                                        'LIST',
+            #                                                                                        'CONTAIN']:
+            #     continue
+            # if relation.sub_relation_bases and any(
+            #         self.diagram.relation_with_base_exist(sub) for sub in relation.sub_relation_bases):
+            #     continue
 
             title = relation.relation_title
             if any(term in title.text for term in terms):
@@ -703,33 +746,22 @@ class ClassDiagramExtractor:
             sentence = relation.sentence
             if target is None:
                 if target_node:
-                    result = sentence.find_seq_names(target_node)
-                    if target_node.is_obj():
-                        for item in result:
-                            name, name_nodes = item
-
-                            # names = [node.text for node in name_nodes]
-                            ending_target = self.add_ending_target_association(source, relation, name_nodes)
-                            if not ending_target:
-                                source.add_operation(f"{title} {name}", relation.target_node)
-                    else:
-                        case = sentence.find_case(target_node)
-                        if case:
-                            for item in result:
-                                name, name_nodes = item
-                                source.add_operation(f"{title.text} {case.text} {name}", target_node)
+                    self.add_operation_titles(relation)
                 else:
                     source.add_operation(title.text, title.node)
                 continue
-            if self.is_weak_class(target):
-
-                result = target.sentence.find_seq_names(target.node)
-                for item in result:
-                    name, name_nodes = item
-                    ending_target = self.add_ending_target_association(source, relation, name_nodes)
-                    if not ending_target:
-                        operation_title = f"{title.text} {target.text}"
-                        source.add_operation(operation_title, title.node)
+            # if self.is_weak_class(target):
+            else:
+                self.add_operation_titles(relation)
+                # result = target.sentence.find_seq_names(target.node)
+                # for item in result:
+                #     name, name_nodes = item
+                #     if not self.diagram.relation_with_base_exist(relation):
+                #         ending_target = self.add_ending_target_association(source, relation, name_nodes)
+                #     # if not ending_target:
+                #     operation_title = f"{title.text} {target.text}"
+                #     if not any(term in operation_title for term in ['امکان','ارتباط', 'استفاده']):
+                #         source.add_operation(operation_title, title.node)
 
     def add_ending_target_association(self, class_element, relation, name_nodes):
         target_name = ''
@@ -890,7 +922,7 @@ class ClassDiagramExtractor:
         for element in self.diagram.classes:
             for attribute in element.attributes:
                 if attribute.text in ['امکان', 'ارتباط', 'نیاز', 'سایر', 'غیره', 'انجام', 'دسترسی', 'اساس', 'پایه',
-                                      'مبنا', 'تعداد', 'شمار','آغاز','پایان','ابتدا','انتها']:
+                                      'مبنا', 'تعداد', 'شمار', 'آغاز', 'پایان', 'ابتدا', 'انتها']:
                     element.remove_attribute(attribute.text)
 
     def remove_passive_operations(self):
