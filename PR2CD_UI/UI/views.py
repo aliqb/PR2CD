@@ -54,6 +54,7 @@ def submit_req(request):
             {'source': relation.source.text, 'relation_type': relation.relation_type, 'target': relation.target.text,
              'label': relation.label} for relation in extractor.diagram.relations]
     }
+    request.session['mermaid'] = extractor.diagram.to_mermaid()
     request.session['req'] = requirement.serialize()
     return HttpResponseRedirect(reverse('UI:diagram'))
 
@@ -105,4 +106,4 @@ def diagram(request):
                 warning_nodes_addresses.append([sentence['index'], node['address']])
     return render(request, 'UI/diagram.html',
                   {'result': result_json, 'req': requirement_json, 'req_text': requirement['text'],
-                   'warning_nodes': warning_nodes_addresses})
+                   'warning_nodes': warning_nodes_addresses,'mermaid':request.session.get('mermaid')})

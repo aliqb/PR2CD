@@ -56,6 +56,8 @@ def extract_and_evaluate_from_file(name, extractor, print_elements):
         test_extractor = ClassDiagramExtractor(test_req)
         test_extractor.extract_diagram()
         print(name)
+        print(test_extractor.diagram.to_mermaid())
+        print("\n")
         if print_elements:
             print_for_debug(test_extractor)
 
@@ -132,15 +134,10 @@ if __name__ == '__main__':
 
     # stanza_extractor = StanzaExtractor()
 
-    for file in file_names + new_file_names:
+    for file in file_names[0:1]:
         extract_and_evaluate_from_file(file, hazm_extractor, True)
         # print_requirement_data(file, hazm_extractor)
-    # text = "سازها به سه گروه گیتار، درام و کیبورد دسته‌بندی می‌شوند. سازها به گیتار، درام و کیبورد دسته‌بندی می‌شوند. " \
-    #        "سازها به سه گروه گیتار، درام و کیبورد تقسیم می‌شوند. سازها به گیتار، درام و کیبورد تقسیم می‌شوند. سازها " \
-    #        "در سه گروه گیتار، درام و کیبورد تفکیک می‌شوند. سازها در گیتار، درام و کیبورد تفکیک می‌شوند. سازها به سه " \
-    #        "گروه گیتار، درام و کیبورد گروه‌بندی می‌شوند. سازها به گیتار، درام و کیبورد گروه‌بندی می‌شوند. سازها به سه " \
-    #        "گروه گیتار، درام و کیبورد طبقه‌بندی می‌شوند. سازها به گیتار، درام و کیبورد طبقه‌بندی می‌شوند. سازها به سه " \
-    #        "نوع گیتار، درام و کیبورد دسته‌بندی می‌شوند. سازها به انواع گیتار، درام و کیبورد دسته‌بندی می‌شوند. "
+
     # text = "کاربر ماشین می‌خرد. جرخ از قسمت‌های ماشین است. چرخ برند و سایز دارد."
     # test_req = Requirement(text, hazm_extractor.extract)
     # test_extractor = ClassDiagramExtractor(test_req)

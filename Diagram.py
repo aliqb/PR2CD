@@ -300,3 +300,36 @@ class ClassDiagram:
 
     def remove_relation(self, input_relation):
         self.relations = [relation for relation in self.relations if relation != input_relation]
+
+    def to_mermaid(self):
+        diagram_def = "classDiagram"
+        reg = re.compile(r'[\s‌]')
+
+        relation_arrows = {
+            'GENERALIZATION': '--|>',
+            'AGGREGATION': '--o',
+            'COMPOSITION': '--*',
+            'ASSOCIATION': '-->'
+        }
+
+        # Process classes
+        for item in self.classes:
+            attrs = '\n'.join([re.sub(reg, '_', attr.text) for attr in item.attributes])
+            operations = '\n'.join([f"{re.sub(reg, '_', operation.text)}()" for operation in item.operations])
+            class_definition = f"class {re.sub(reg, '_', item.text)}{{\n    {attrs}\n   {operations}\n}}"
+            diagram_def += '\n' + class_definition
+
+        # Process relations
+        for relation in self.relations:
+            source = re.sub(reg, '_', relation.source.text)
+            target = re.sub(reg, '_', relation.target.text)
+            relation_type = relation.relation_type
+            arrow = relation_arrows.get(relation_type, '-->')  # Default to '-->' if not found
+            relation_def = f"{source} {arrow} {target}"
+
+            if relation.label:
+                relation_def += f" : {re.sub(reg, '_', relation.label)}"
+
+            diagram_def += '\n' + relation_def
+
+        return diagram_def

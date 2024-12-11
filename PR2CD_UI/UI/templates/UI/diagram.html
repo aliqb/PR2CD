@@ -60,35 +60,11 @@
     svgButton.addEventListener('click', exportSvg)
 
     async function drawDiagram() {
+        console.log('{{ mermaid|safe|escapejs }}')
         const umlData = JSON.parse('{{ result|safe|escapejs }}');
         element = document.querySelector('#diagram-div');
-        let diagramDef = `classDiagram`;
-        const reg = /[\s‌]/g
-        const relationArrows = {
-            GENERALIZATION: '--|>',
-            AGGREGATION: '--o',
-            COMPOSITION: '--*',
-            ASSOCIATION: '-->'
-        }
-        diagramDef += '\n' + umlData.classes.map(item => {
-            const attrs = item.attributes.map(attr => attr.replaceAll(reg, '_')).join('\n')
-            const operations = item.operations.map(attr => `${attr.replaceAll(reg, '_')}()`).join('\n')
-            return `class ${item.text.replaceAll(reg, '_')}{
-                ${attrs}
-                ${operations}
-                }`
-        }).join('\n')
-        const relations = umlData.relations.map(relation => {
-            let def = `${relation.source.replaceAll(reg, '_')} ${relationArrows[relation.relation_type]} ${relation.target.replaceAll(reg, '_')}`
-            if (relation.label) {
-                def += ` : ${relation.label.replaceAll(reg, '_')}`
-            }
-            return def
-        }).join('\n')
-        diagramDef += '\n' + relations
-        // diagramDef += '\n' + umlData.classes.map(item => {
-        //     return `click ${item.text.replaceAll(reg, '_')} call test()`
-        // }).join('\n')
+        let diagramDef = '{{ mermaid|safe|escapejs }}';
+        console.log(diagramDef)
         const {svg, bindFunctions} = await mermaid.render('graphDiv', diagramDef);
         element.innerHTML = svg;
         // This can also be written as `bindFunctions?.(element);` using the `?` shorthand.
