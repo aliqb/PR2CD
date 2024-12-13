@@ -7,7 +7,8 @@ from Diagram import ClassDiagram
 from Extractors import HazmExtractor, StanzaExtractor
 import json
 from hazm.utils import verbs_list
-
+import subprocess
+import os
 
 def printGraph(dg):
     for node in dg.nodes.values():
@@ -18,6 +19,20 @@ def printGraph(dg):
         # print(rel)
         # print(f'dep:{dep[0]}, {dep[1]}')
         # print('-----------------------------------')
+
+
+def save_diagram_svg(diagram, name):
+    # Save the mermaid markdown to a temporary file
+    with open('temp.mmd', 'w', encoding='utf-8') as f:
+        f.write(diagram.to_mermaid())
+
+    # Run mermaid-cli to generate the SVG
+    subprocess.run(['mmdc', '-i', 'temp.mmd', '-o', f'./dataset/output/{name}.svg'],shell=True)
+
+    # Remove the temporary markdown file
+    # subprocess.run(['rm', 'temp.mmd'],shell=True)
+    os.remove('temp.mmd')
+    print(f"SVG file saved as {name}.svg")
 
 
 def print_for_debug(extractor):
@@ -46,7 +61,7 @@ def print_for_debug(extractor):
         print('----------------')
 
 
-def extract_and_evaluate_from_file(name, extractor, print_elements):
+def extract_and_evaluate_from_file(name, extractor, print_elements, save_diagram):
     try:
         with open(f'./dataset/refined-requirements-1/{name}.txt', 'r', encoding='utf-8') as file:
             text = file.read()
@@ -56,13 +71,14 @@ def extract_and_evaluate_from_file(name, extractor, print_elements):
         test_extractor = ClassDiagramExtractor(test_req)
         test_extractor.extract_diagram()
         print(name)
-        print(test_extractor.diagram.to_mermaid())
         print("\n")
         if print_elements:
             print_for_debug(test_extractor)
+        if save_diagram:
+            save_diagram_svg(test_extractor.diagram,name)
 
-    except FileNotFoundError:
-        print("File not Found")
+    # except FileNotFoundError:
+    #     print("File not Found")
     except json.JSONDecodeError:
         print("Error decoding JSON")
     try:
@@ -134,8 +150,8 @@ if __name__ == '__main__':
 
     # stanza_extractor = StanzaExtractor()
 
-    for file in file_names[0:1]:
-        extract_and_evaluate_from_file(file, hazm_extractor, True)
+    for file in file_names + new_file_names:
+        extract_and_evaluate_from_file(file, hazm_extractor, False, True)
         # print_requirement_data(file, hazm_extractor)
 
     # text = "کاربر ماشین می‌خرد. جرخ از قسمت‌های ماشین است. چرخ برند و سایز دارد."
