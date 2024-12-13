@@ -557,7 +557,7 @@ class ClassDiagramExtractor:
         main_nodes = []
         for node in nodes:
             if node.lemma in self.category_words + self.categorizing_words:
-                main_nodes += relation.sentence.find_noun_modifiers(node)
+                main_nodes += relation.sentence.find_noun_modifiers(node) + relation.sentence.find_adj_modifiers(node)
             else:
                 main_nodes.append(node)
         for node in main_nodes:
@@ -1039,6 +1039,9 @@ class ClassDiagramExtractor:
             self.remove_generalized_attribute(generalization)
             self.remove_generalized_operations(generalization)
             self.remove_generalized_relations(generalization)
+
+    # def from_child_to_parent(self):
+
 
     def merge_generalized_name_classes(self):
         generalizations = self.diagram.get_generalizations()

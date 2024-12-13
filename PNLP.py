@@ -180,6 +180,16 @@ class Sentence:
                 noun_modifiers += self.find_conjuncts(node)
         return noun_modifiers
 
+    def find_adj_modifiers(self, node):
+        noun_modifiers_addresses = node.deps.get('amod', None)
+        noun_modifiers = []
+        if noun_modifiers_addresses is not None:
+            for address in noun_modifiers_addresses:
+                node = self.find_node_by_address(address)
+                noun_modifiers.append(node)
+                noun_modifiers += self.find_conjuncts(node)
+        return noun_modifiers
+
     def find_subjects(self, verb=None):
         root = self.find_root()
         if verb is not None:
