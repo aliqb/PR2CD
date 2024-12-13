@@ -2,3 +2,10 @@
 universal_dependency_parser
 spacy_dependency_parser
 */node_modules
+/dataset/refined-requirements-1/~$cument.docx
+/dataset/refined-requirements-1/script.py.bak
+/dataset/refined-requirements-1/script.py
+/dataset/refined-requirements-1/document.docx
+*/db.sqlite3
+/dataset/refined-requirements-1/test.docx
+/dataset/refined-requirements-1/test.pdf

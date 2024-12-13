@@ -1,0 +1,31 @@
+classDiagram
+    class Game{
+        list_players()
+        alert()
+    }
+    class Player{
+        name
+        type 
+        gender
+        level
+        weapon
+        task
+    }
+    class Warrior{
+        collect_weapon()
+        kill_enemy()
+    }
+    class Archer{
+        protect_castle()
+    }
+    class Sorcerer{
+        strengthen()
+        cure_wondeds()
+    }
+    class Savagery
+    Player --> Game:enter
+    Player -->Game:exit
+    Player <|--Warrior
+    Player <|--Sorcerer
+    Player <|--Archer
+    Player <|--Savagery

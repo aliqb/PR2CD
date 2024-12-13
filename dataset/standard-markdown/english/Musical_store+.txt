@@ -23,12 +23,17 @@ classDiagram
     Shop_asistant -->Tape:check_status
     Shop_asistant -->Rent:save
     Shop_asistant -->Rent:update_list
+    Shop_asistant -->User:Ask_info
     Shop *-- Shop_asistant
     Shop *-- Shop_manager
     Shop -->Main_office:get_new_tapes
     Shop_manager --> Rent:make_report
-    User --> Tape:request
+    Shop_manager --> Tape:record
+    User --> Shop:request_tap
     User o-- Rent
     Tape o-- Rent
+    Shop_asistant --> Tape:search_price
+    Shop-->User:warn
+
     
     

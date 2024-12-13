@@ -10,8 +10,9 @@ classDiagram
     class Worker{
         weakly_hours
         hourly_salary
-        is_shift
     }
+    class Shift_worker
+    class Non_shift_worker
     class Seller{
         fix_salary
         amount_of_sale
@@ -28,9 +29,12 @@ classDiagram
     Department<|--Manufacturing
     Department<|--Control
     Department<|--Delivery
+    Emplyee o--Department
     Emplyee<|--Worker
     Emplyee<|--Seller
     Emplyee<|--Manager
+    Worker<|--Shift_worker
+    Worker<|--Non_shift_worker
     Department o--Manager
 
 

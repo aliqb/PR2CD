@@ -1,7 +1,4 @@
 from typing import List, Literal
-from hazm import Normalizer, SentenceTokenizer, WordTokenizer, Lemmatizer, POSTagger, DependencyParser
-import stanza
-import re
 from hazm.utils import words_list, verbs_list
 
 
@@ -18,6 +15,16 @@ class NLPNode:
 
     def __str__(self):
         return f"{self.address}, {self.text}, rel:{self.rel}, head:{self.head}, tag:{self.tag}"
+
+    def serialize(self):
+        return {
+            'address': self.address,
+            'text': self.text,
+            'tag': self.tag,
+            'rel': self.rel,
+            'lemma': self.lemma,
+            'head': self.head
+        }
 
     def find_in_word_list(self):
         lines = words_list()
@@ -57,6 +64,16 @@ class NLPNode:
         pasts = [verb.split('#')[0] for verb in verbs]
         return past_root in pasts
 
+    def is_esndai_verb(self):
+        if self.rel == 'cop':
+            return True
+        if self.rel == 'aux' and self.text in ['است']:
+            return True
+        return False
+
+    def is_determiner(self):
+        return self.tag.startswith('DET')
+
 
 class Sentence:
     def __init__(self, index, text, nlp_nodes: List[NLPNode], find_seq_method: Literal['dep', 'ezafe'] = 'dep',
@@ -67,9 +84,16 @@ class Sentence:
         self.nlp_nodes = sorted(nlp_nodes, key=lambda x: x.address)
         self.find_seq_method = find_seq_method
 
+    def serialize(self):
+        return {
+            'index': self.index,
+            'text': self.text,
+            'nlp_nodes': [node.serialize() for node in self.nlp_nodes]
+        }
+
     def find_root(self):
         for node in self.nlp_nodes:
-            if node.rel == 'ROOT':
+            if node.rel and node.rel.lower() == 'root':
                 return node
 
     def find_with_tag(self, tag):
@@ -147,7 +171,17 @@ class Sentence:
         return sentence_compound + conjs
 
     def find_noun_modifiers(self, node):
-        noun_modifiers_addresses = node.deps['nmod']
+        noun_modifiers_addresses = node.deps.get('nmod', None)
+        noun_modifiers = []
+        if noun_modifiers_addresses is not None:
+            for address in noun_modifiers_addresses:
+                node = self.find_node_by_address(address)
+                noun_modifiers.append(node)
+                noun_modifiers += self.find_conjuncts(node)
+        return noun_modifiers
+
+    def find_adj_modifiers(self, node):
+        noun_modifiers_addresses = node.deps.get('amod', None)
         noun_modifiers = []
         if noun_modifiers_addresses is not None:
             for address in noun_modifiers_addresses:
@@ -188,6 +222,24 @@ class Sentence:
             else:
                 break
         return subjects
+
+    def find_recursive_objects(self, verb):
+        temp_verb = verb
+        objects = self.find_objects(verb)
+        while len(objects) == 0:
+            if temp_verb.rel in ['conj']:
+                temp_verb = self.find_node_by_address(temp_verb.head)
+                if temp_verb.tag == 'VERB':
+                    between_nodes = [node for node in self.find_between_nodes(temp_verb.address, verb.address)]
+                    if all(node.tag in ['SCONJ', 'CCONJ', 'PUNCT',
+                                        'VERB'] or 'compound' in node.rel or node.rel == 'xcomp' for node in
+                           between_nodes):
+                        objects = self.find_objects(temp_verb)
+                else:
+                    break
+            else:
+                break
+        return objects
 
     def find_xcomps(self, verb):
         xcomps = [node for node in self.nlp_nodes if
@@ -247,9 +299,10 @@ class Sentence:
         names = []
         dep_nodes = [node for node in self.find_seq_dependent_nodes(node) if node.tag != 'PRON']
         dep_nodes.sort(key=lambda n: n.address)
-        is_seq_root = node.tag.endswith('EZ') and (
+        is_seq_root = (
                 len(dep_nodes) and self.are_together(node, dep_nodes[0]))
-
+        if self.with_ezafe_tag:
+            is_seq_root = node.tag.endswith('EZ') and is_seq_root
         if is_seq_root and len(dep_nodes) > 0:
             dep_node = dep_nodes[0]
             old_name = name
@@ -259,7 +312,7 @@ class Sentence:
 
                 middle_ezafe = dep_node.tag.endswith('EZ')
                 must_break = not middle_ezafe if self.with_ezafe_tag else (
-                    self.are_together(dep_node, dep_node[index + 1]))
+                        index < len(dep_nodes) - 1 and self.are_together(dep_node, dep_nodes[index + 1]))
                 if not skip_adj or dep_node.rel != 'amod' or not dep_node.is_pure_adj():
                     old_name = name
                     text = dep_node.text if (index < len(
@@ -353,83 +406,18 @@ class Sentence:
         case = self.find_node_by_address(address)
         return case
 
+    def find_between_nodes(self, start_address, end_address):
+        return [node for node in self.nlp_nodes if start_address < node.address < end_address]
 
-class HazmExtractor:
-    def __init__(self, parser, lemmatizer, with_ezafe_tag: bool = False,
-                 find_seq_method: Literal['dep', 'ezafe'] = 'dep'):
-        self.find_seq_method = find_seq_method
-        self.with_ezafe_tag = with_ezafe_tag
-        self.lemmatizer = lemmatizer
-        self.parser = parser
-
-    def replace_words(self, text, words_to_replace, replacement_word):
-        pattern = r'\b(' + '|'.join(map(re.escape, words_to_replace)) + r')\b'
-        return re.sub(pattern, replacement_word, text)
-
-    def text_preprocess(self, text):
-        normalizer = Normalizer()
-        text = normalizer.normalize(text)
-        example_terms = [
-            "نظیر",
-            "همانند",
-            "هم‌مانند",
-            "از قبیل",
-            "مثل"
-        ]
-        text = self.replace_words(text, example_terms, 'مانند')
-        text = re.sub(r'(["\'«»\(\)])(.*?)(["\'«»\(\)])', '', text)
-        return text
-
-    def extract(self, text: str):
-        sentence_tokenizer = SentenceTokenizer()
-        word_tokenizer = WordTokenizer()
-        final_text = self.text_preprocess(text)
-        raw_sentences = [sentence[:-1] for sentence in sentence_tokenizer.tokenize(final_text)]
-        sentences = []
-        for index in range(len(raw_sentences)):
-            sentence = raw_sentences[index]
-            hazm_nodes = (self.parser.parse(word_tokenizer.tokenize(sentence))).nodes
-            nodes = []
-            for node in hazm_nodes.values():
-                tag = node['tag']
-                lemma = node['lemma']
-                if tag == 'VERB':
-                    spaced_replaced = re.sub(r"‌", " ", lemma)
-                    node['lemma'] = self.lemmatizer.lemmatize(spaced_replaced, 'VERB')
-                nodes.append(
-                    NLPNode(address=node['address'], text=node['word'], tag=tag, rel=node['rel'], head=node['head'],
-                            deps=node['deps'], lemma=node['lemma']))
-            sentences.append(
-                Sentence(index, sentence, nodes, with_ezafe_tag=self.with_ezafe_tag,
-                         find_seq_method=self.find_seq_method))
-
-        return sentences
-
-
-class StanzaExtractor:
-    def __init__(self):
-        self.pipline = stanza.Pipeline(lang='fa', processors='tokenize,mwt,pos,lemma,depparse')
-
-    def extract(self, text):
-        doc = self.pipline(text)
-        return [Sentence(stanza_sentence.text, self.get_sentence_nodes(stanza_sentence)) for stanza_sentence in
-                doc.sentences]
-
-    def get_sentence_nodes(self, sentence):
-        nodes = []
-        for word in sentence.words:
-            nodes.append(
-                NLPNode(address=word.id, text=word.text, tag=word.pos, rel=word.deprel, head=word.head,
-                        deps=self.find_word_deps(sentence, word), lemma=word.lemma))
-        return nodes
-
-    def find_word_deps(self, sentence, word):
-        deps = {}
-        for head, rel, dep in sentence.dependencies:
-            if head.id == word.id:
-                if rel in deps:
-                    deps[rel].append(dep.id)
-                else:
-                    deps[rel] = [dep.id]
-
-        return deps
+    @staticmethod
+    def nodes_to_text(nodes):
+        word = ''
+        for index in range(len(nodes)):
+            node = nodes[index]
+            if index == 0:
+                word += node.lemma
+            elif index == len(nodes) - 1:
+                word += " " + node.lemma
+            else:
+                word += " " + node.text
+        return word

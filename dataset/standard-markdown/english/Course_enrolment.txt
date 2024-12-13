@@ -1,6 +1,5 @@
 classDiagram
     class Student{
-        get_inovice()
         change_schedule()
     }
     class Course{
@@ -9,11 +8,11 @@ classDiagram
     }
     class Course_catalogue
     class Professor
-    class Registration_system
+    class Registration_system{
+        process_capacity()
+    }
     class Billing_system
     Student -->Course:select
-    Student -->Course:add
-    Student -->Course:remove
     Student --> Registration_system:access
     Student --> Course_catalogue:request
     Course o-- Professor
@@ -22,3 +21,5 @@ classDiagram
     Professor -->Registration_system:access
     Registration_system -->Billing_system:send_info
     Billing_system -->Student:give_credit
+    Registration_system o-- Course
+    Student --> Billing_system:get_invoice

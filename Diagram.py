@@ -16,14 +16,18 @@ class DesignElement:
 
 
 class RelationBase:
-    def __init__(self, source, relation_title, target, sentence, target_node=None):
+    def __init__(self, source, relation_title, target, sentence, target_node=None, ):
         self.source = source
         self.relation_title = relation_title
         self.target = target
         self.sentence = sentence
         self.target_node = target_node
+        self.sub_relation_bases = []
         # if target is not None:
         #     self.target_node = self.target.node
+
+    def add_sub_relation(self, relation_base):
+        self.sub_relation_bases.append(relation_base)
 
     def __eq__(self, other):
         if self.source != other.source or self.relation_title != other.relation_title:
@@ -87,8 +91,11 @@ class ClassElement(DesignElement):
             else:
                 self.add_operation(element.text, element.node)
 
+    def have_attribute(self, text):
+        return any(attr.text == text for attr in self.attributes)
+
     def add_attribute(self, text, node=None):
-        if not any(attr.text == text for attr in self.attributes):
+        if not self.have_attribute(text):
             self.attributes.append(DesignElement(text, node))
 
     def remove_attribute(self, name):
@@ -105,6 +112,8 @@ class ClassElement(DesignElement):
         if self.node is None:
             return True
         if self.node.is_obj():
+            if 'acl' in self.node.deps:
+                return False
             return True
         return False
 
@@ -186,9 +195,9 @@ class ClassDiagram:
                     relation.target = new_class
             if element.text != text:
                 attrs += element.attributes
-                if text in element.text:
-                    new_attr_text = re.sub(rf'\b{re.escape(text)}\b', '', element.text).strip()
-                    attrs.append(DesignElement(new_attr_text, element.node))
+                # if text in element.text:
+                # new_attr_text = re.sub(rf'\b{re.escape(text)}\b', '', element.text).strip()
+                # attrs.append(DesignElement(new_attr_text, element.node))
                 self.remove_class(element)
         for attr in attrs:
             new_class.add_attribute(attr.text, attr.node)
@@ -201,7 +210,10 @@ class ClassDiagram:
         return any(input_relation == relation for relation in self.base_relations)
 
     def relation_exist(self, input_relation):
-        return any(input_relation == relation for relation in self.relations)
+        relations = [relation for relation in self.relations if input_relation == relation]
+        if relations:
+            return relations[0]
+        return None
 
     def relation_with_base_exist(self, base_relation):
         return any(base_relation == relation.base for relation in self.relations)
@@ -220,42 +232,104 @@ class ClassDiagram:
 
     def add_generalization(self, child, parent, base):
         relation = Relation(child, 'GENERALIZATION', parent, base)
-        if not self.relation_exist(relation):
+        old_relation = self.relation_exist(relation)
+        if not old_relation:
             self.relations.append(relation)
+        else:
+            self.change_base(old_relation, relation)
 
     def get_generalizations(self):
         return [relation for relation in self.relations if relation.relation_type == 'GENERALIZATION']
 
     def add_aggregation(self, child, parent, base):
         relation = Relation(child, 'AGGREGATION', parent, base)
-        if not self.relation_exist(relation):
+        old_relation = self.relation_exist(relation)
+        if not old_relation:
             self.relations.append(relation)
+        else:
+            self.change_base(old_relation, relation)
 
     def get_aggregations(self):
         return [relation for relation in self.relations if relation.relation_type == 'AGGREGATION']
 
     def add_composition(self, child, parent, base):
         relation = Relation(child, 'COMPOSITION', parent, base)
-        if not self.relation_exist(relation):
+        old_relation = self.relation_exist(relation)
+        if not old_relation:
             self.relations.append(relation)
+        else:
+            self.change_base(old_relation, relation)
 
     def get_compositions(self):
         return [relation for relation in self.relations if relation.relation_type == 'COMPOSITION']
 
     def add_association(self, source, target, base, title_text):
         relation = Relation(source, 'ASSOCIATION', target, base, title_text)
-        if not self.relation_exist(relation):
+        old_relation = self.relation_exist(relation)
+        if not old_relation:
             self.relations.append(relation)
+        else:
+            self.change_base(old_relation, relation)
+
+    def change_base(self, old_relation, new_relation):
+        old_base = old_relation.base
+        base = new_relation.base
+        if old_base.target and base.target:
+            if (
+                    old_base.target.text != new_relation.target.text or old_base.target.text != new_relation.source.text) and \
+                    (
+                            base.target.text == new_relation.target.text or base.target.text == new_relation.source.text):
+                old_relation.base = base
+        elif not old_base.target and base.target:
+            old_relation.base = base
+        elif old_base.target and not base.target:
+            if base.target_node.text == new_relation.target.node.text or base.target_node.text == new_relation.source.node.text:
+                old_relation.base = base
 
     def get_associations(self):
         return [relation for relation in self.relations if relation.relation_type == 'ASSOCIATION']
 
-    def relation_between_exist(self, source, target, just_advance):
+    def relation_between_exist(self, source, target, just_advance, label=None):
         relations = [relation for relation in self.relations if
                      relation.source.text == source.text and relation.target.text == target.text]
+        if label:
+            relations = [relation for relation in relations if relation.label == label]
         if just_advance:
             relations = [relation for relation in relations if relation.relation_type != 'ASSOCIATION']
         return len(relations) > 0
 
     def remove_relation(self, input_relation):
         self.relations = [relation for relation in self.relations if relation != input_relation]
+
+    def to_mermaid(self):
+        diagram_def = "classDiagram"
+        reg = re.compile(r'[\s‌]')
+
+        relation_arrows = {
+            'GENERALIZATION': '--|>',
+            'AGGREGATION': '--o',
+            'COMPOSITION': '--*',
+            'ASSOCIATION': '-->'
+        }
+
+        # Process classes
+        for item in self.classes:
+            attrs = '\n'.join([re.sub(reg, '_', attr.text) for attr in item.attributes])
+            operations = '\n'.join([f"{re.sub(reg, '_', operation.text)}()" for operation in item.operations])
+            class_definition = f"class {re.sub(reg, '_', item.text)}{{\n    {attrs}\n   {operations}\n}}"
+            diagram_def += '\n' + class_definition
+
+        # Process relations
+        for relation in self.relations:
+            source = re.sub(reg, '_', relation.source.text)
+            target = re.sub(reg, '_', relation.target.text)
+            relation_type = relation.relation_type
+            arrow = relation_arrows.get(relation_type, '-->')  # Default to '-->' if not found
+            relation_def = f"{source} {arrow} {target}"
+
+            if relation.label:
+                relation_def += f" : {re.sub(reg, '_', relation.label)}"
+
+            diagram_def += '\n' + relation_def
+
+        return diagram_def

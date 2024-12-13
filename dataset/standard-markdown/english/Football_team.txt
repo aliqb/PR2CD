@@ -29,8 +29,6 @@ classDiagram
     class System{
         list_main_team()
         list_bench()
-        announce_goal()
-        announce_save()
     }
     Footbal_team o-- Player
     Footbal_team -->Player:transfer
@@ -44,5 +42,10 @@ classDiagram
     Player <|-- Defender
     Player <|-- Goal_keeper
     Player --> Position:be
+    System --> Forward:announce_name
+    System --> Forward:announce_back_number
+    System --> Goal_keeper:announce_name
+    System --> Goal_keeper:announce_back_number
+
 
 

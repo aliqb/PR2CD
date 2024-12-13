@@ -4,10 +4,11 @@ from hazm import POSTagger, Lemmatizer, DependencyParser, word_tokenize
 from Requirement import Requirement
 from ClassDiagramExtractor import ClassDiagramExtractor, ExtractorEvaluator
 from Diagram import ClassDiagram
-from PNLP import HazmExtractor, StanzaExtractor
+from Extractors import HazmExtractor, StanzaExtractor
 import json
 from hazm.utils import verbs_list
-
+import subprocess
+import os
 
 def printGraph(dg):
     for node in dg.nodes.values():
@@ -18,6 +19,20 @@ def printGraph(dg):
         # print(rel)
         # print(f'dep:{dep[0]}, {dep[1]}')
         # print('-----------------------------------')
+
+
+def save_diagram_svg(diagram, name):
+    # Save the mermaid markdown to a temporary file
+    with open('temp.mmd', 'w', encoding='utf-8') as f:
+        f.write(diagram.to_mermaid())
+
+    # Run mermaid-cli to generate the SVG
+    subprocess.run(['mmdc', '-i', 'temp.mmd', '-o', f'./dataset/output/{name}.svg'],shell=True)
+
+    # Remove the temporary markdown file
+    # subprocess.run(['rm', 'temp.mmd'],shell=True)
+    os.remove('temp.mmd')
+    print(f"SVG file saved as {name}.svg")
 
 
 def print_for_debug(extractor):
@@ -46,7 +61,7 @@ def print_for_debug(extractor):
         print('----------------')
 
 
-def extract_and_evaluate_from_file(name, extractor, print_elements):
+def extract_and_evaluate_from_file(name, extractor, print_elements, save_diagram):
     try:
         with open(f'./dataset/refined-requirements-1/{name}.txt', 'r', encoding='utf-8') as file:
             text = file.read()
@@ -56,11 +71,14 @@ def extract_and_evaluate_from_file(name, extractor, print_elements):
         test_extractor = ClassDiagramExtractor(test_req)
         test_extractor.extract_diagram()
         print(name)
+        print("\n")
         if print_elements:
             print_for_debug(test_extractor)
+        if save_diagram:
+            save_diagram_svg(test_extractor.diagram,name)
 
-    except FileNotFoundError:
-        print("File not Found")
+    # except FileNotFoundError:
+    #     print("File not Found")
     except json.JSONDecodeError:
         print("Error decoding JSON")
     try:
@@ -75,6 +93,22 @@ def extract_and_evaluate_from_file(name, extractor, print_elements):
     except json.JSONDecodeError:
         print("Error decoding JSON")
     print("//////////////////////////////////////////////////////")
+
+
+def print_requirement_data(name, extractor):
+    try:
+        with open(f'./dataset/refined-requirements-1/{name}.txt', 'r', encoding='utf-8') as file:
+            text = file.read()
+
+        # text = "بازیکن‌ها اطلاعاتی مانند نام، ژانر، جنسیت، سطح و سلاح مورد استفاده خود دارند."
+        test_req = Requirement(text, extractor.extract)
+        print(name)
+        print(f"sentences: {test_req.get_sentences_count()} tokens: {test_req.get_tokens_count()}")
+
+    except FileNotFoundError:
+        print("File not Found")
+    except json.JSONDecodeError:
+        print("Error decoding JSON")
 
 
 if __name__ == '__main__':
@@ -116,14 +150,10 @@ if __name__ == '__main__':
 
     # stanza_extractor = StanzaExtractor()
 
-    for file in file_names:
-        extract_and_evaluate_from_file(file, hazm_extractor, True)
-    # text = "سازها به سه گروه گیتار، درام و کیبورد دسته‌بندی می‌شوند. سازها به گیتار، درام و کیبورد دسته‌بندی می‌شوند. " \
-    #        "سازها به سه گروه گیتار، درام و کیبورد تقسیم می‌شوند. سازها به گیتار، درام و کیبورد تقسیم می‌شوند. سازها " \
-    #        "در سه گروه گیتار، درام و کیبورد تفکیک می‌شوند. سازها در گیتار، درام و کیبورد تفکیک می‌شوند. سازها به سه " \
-    #        "گروه گیتار، درام و کیبورد گروه‌بندی می‌شوند. سازها به گیتار، درام و کیبورد گروه‌بندی می‌شوند. سازها به سه " \
-    #        "گروه گیتار، درام و کیبورد طبقه‌بندی می‌شوند. سازها به گیتار، درام و کیبورد طبقه‌بندی می‌شوند. سازها به سه " \
-    #        "نوع گیتار، درام و کیبورد دسته‌بندی می‌شوند. سازها به انواع گیتار، درام و کیبورد دسته‌بندی می‌شوند. "
+    for file in file_names + new_file_names:
+        extract_and_evaluate_from_file(file, hazm_extractor, True, False)
+        # print_requirement_data(file, hazm_extractor)
+
     # text = "کاربر ماشین می‌خرد. جرخ از قسمت‌های ماشین است. چرخ برند و سایز دارد."
     # test_req = Requirement(text, hazm_extractor.extract)
     # test_extractor = ClassDiagramExtractor(test_req)

@@ -1,0 +1,45 @@
+classDiagram
+    class System{
+        show_table_number()
+        show_waiter_name()
+        show_order_detail()
+    }
+    class Restaurant{
+        table
+    }
+    class Personnel{
+        name
+        age
+        gender
+        work()
+    }
+    class Section
+    class Kitchen{
+        cook
+    }
+    class Service{
+        waiter
+    }
+    class Cash{
+        cashier
+    }
+    class Cook{
+        cook()
+    }
+    class Waiter{
+        service()
+    }
+    class Cashier{
+        settlement()
+    }
+    Restaurant *--Section
+    Restaurant *--Personnel
+    Personnel <|-- Cook
+    Personnel <|-- Waiter
+    Personnel <|-- Cashier
+    Section <|-- Kitchen
+    Section <|-- Service
+    Section <|-- Cash
+    Personnel -->Section:stay
+    Restaurant -->Personnel:employee
+    Restaurant -->Personnel:discharge

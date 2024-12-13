@@ -1,0 +1,39 @@
+classDiagram
+    class Customer{
+        pay()
+    }
+    class Product
+    class Category
+    class Admin
+    class Account{
+        name
+        email_address
+        address
+        phone_number
+    }
+    class Order{
+        price
+        amounts
+        delivery_address
+        delivery_date
+    }
+    class Confirmation_email
+    class Shopping_card{
+        total_price
+    }
+    Customer -->Product:add
+    Customer --> Product:remove
+    Customer -->Product:search
+    Customer -->Account:create
+    Customer -->Confirmation_email:receive
+    Category o-- Product
+    Category o-- Category
+    Admin -->Category:manage
+    Admin -->Product:manage
+    Order o-- Customer
+    Order o-- Product
+    Product -->Order:confirm
+    Shopping_card o-- Product
+    Shopping_card o-- Customer
+    Confirmation_email --> Order:show
+

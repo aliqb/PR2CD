@@ -6,7 +6,6 @@
     <meta charset="UTF-8">
     <title>PR2CD</title>
     <link rel="stylesheet" href="{% static 'styles/index.css' %}">
-    <script src="{% static 'gojs/release/go.js' %}"></script>  <!-- Including GoJS from node_modules -->
     <script src="{% static 'mermaid/dist/mermaid.min.js' %}"></script>
 
 
@@ -18,4 +17,9 @@
     {% endblock %}
 </div>
 </body>
+<script type="module" src="{% static 'pdfjs-dist/build/pdf.mjs' %}"></script>
+<script type="module" src="{% static 'pdfjs-dist/build/pdf.worker.mjs' %}"></script>
+<script  src="{% static 'mammoth/mammoth.browser.min.js' %}"></script>
+
+
 </html>

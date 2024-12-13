@@ -3,7 +3,9 @@ classDiagram
         search 
         update
     }
-    Class Loan_item
+    class Loan_item{
+        barcode
+    }
     class Book{
         title
         author
@@ -28,7 +30,8 @@ classDiagram
     Secion -->Loan_item:hold
     Customer -->Loan_item:borrow
     Customer --> Membership_card:has
-    Customer -->Loan_item:borrow
+    Customer -->Loan_item:extend
+    Customer -->Loan_item:reserve
     Loan_item <|--Book
     Loan_item <|--Language_tape
 

@@ -1,5 +1,5 @@
 classDiagram
-    class File
+    class Folder
     class Document{
         name
         size
@@ -17,8 +17,8 @@ classDiagram
     Editor <|-- Image_editor
     Editor <|-- Text_editor
     Editor <|-- Video_editor
-    File o-- Document
+    Folder o-- Document
     Document -->Editor:use
-    User -->Editor:select
-    Document --> File:add
-    Document -->File:remove
+    User -->Editor:assign
+    Document --> Folder:add
+    Document -->Folder:remove
