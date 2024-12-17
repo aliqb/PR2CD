@@ -11,7 +11,7 @@ class ClassDiagramExtractor:
         self.attr_terms = ['اطلاعات', 'فیلد', 'ویژگی', 'اطلاعاتی']
         self.countable_dets = ['تعداد', 'چند', 'شمار', 'عدد']
         self.uncountable_dets = ['مقدار', 'میزان']
-        self.attr_verb_particles = ['تعریف', 'تعیین', 'متمایز', 'مشخص']
+        self.attr_verb_particles = ['تعریف', 'تعیین', 'متمایز', 'مشخص','شناسایی']
         self.category_words = [
             'دسته',
             'گروه',
