@@ -1,10 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
+{% load static %}
 <div>
     <div class="main-container">
         <div class="diagram-container">
             <div id="diagram-div">
             </div>
+            <img class="watermark" src="{% static 'images/kntu-logo-title.png' %}"/>
+
             <button id="svg-btn" class="btn">ذخیره</button>
 
         </div>
@@ -60,11 +63,9 @@
     svgButton.addEventListener('click', exportSvg)
 
     async function drawDiagram() {
-        console.log('{{ mermaid|safe|escapejs }}')
         const umlData = JSON.parse('{{ result|safe|escapejs }}');
         element = document.querySelector('#diagram-div');
         let diagramDef = '{{ mermaid|safe|escapejs }}';
-        console.log(diagramDef)
         const {svg, bindFunctions} = await mermaid.render('graphDiv', diagramDef);
         element.innerHTML = svg;
         // This can also be written as `bindFunctions?.(element);` using the `?` shorthand.
@@ -136,32 +137,68 @@
         // Clone the SVG element to modify without affecting the original
         const svgClone = svgElement.cloneNode(true);
 
+        // Temporarily append the cloned SVG to the document to allow it to calculate its dimensions
+        const tempContainer = document.createElement('div');
+        tempContainer.style.position = 'absolute';
+        tempContainer.style.visibility = 'hidden';
+        document.body.appendChild(tempContainer);
+        tempContainer.appendChild(svgClone);
+
         // Create a style element with embedded styles
         const styleElement = document.createElement("style");
         styleElement.textContent = `
         svg {
-          font-family: none !important;
+            font-family: none !important;
         }
-      `;
-
-        // Insert the style element at the beginning of the cloned SVG
+    `;
         svgClone.insertBefore(styleElement, svgClone.firstChild);
 
-        // Serialize the modified SVG
-        const svgData = new XMLSerializer().serializeToString(svgClone);
+        // Get the logo image as base64 data URL
+        const logoUrl = "{% static 'images/kntu-logo-title.png' %}"; // Adjust this path if needed
+        const logoImg = new Image();
+        logoImg.src = logoUrl;
 
-        // Create a Blob and URL for the modified SVG data
-        const blob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
-        const url = URL.createObjectURL(blob);
+        logoImg.onload = () => {
+            // Convert the image to base64
+            const canvas = document.createElement("canvas");
+            const ctx = canvas.getContext("2d");
+            canvas.width = logoImg.width;
+            canvas.height = logoImg.height;
+            ctx.drawImage(logoImg, 0, 0);
 
-        // Create a link to download the SVG file
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "diagram.svg";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+            const base64Logo = canvas.toDataURL("image/png");
+
+            // Get the SVG height to position the image at the bottom
+            const svgHeight = svgClone.getBBox().height;
+            // Create an image element to add to the SVG
+            const imgElement = document.createElementNS("http://www.w3.org/2000/svg", "image");
+
+            imgElement.setAttribute("x", "10"); // Position at the left
+            imgElement.setAttribute("y", svgClone.getBBox().height); // Position at the bottom
+            imgElement.setAttribute("width", "50"); // Adjust the width as needed
+            // imgElement.setAttribute("height", "100"); // Adjust the height as needed
+            imgElement.setAttribute("href", base64Logo);
+
+            // Add the image element to the cloned SVG
+            svgClone.appendChild(imgElement);
+
+            // Serialize the modified SVG
+            const svgData = new XMLSerializer().serializeToString(svgClone);
+
+            // Create a Blob and URL for the modified SVG data
+            const blob = new Blob([svgData], {type: "image/svg+xml;charset=utf-8"});
+            const url = URL.createObjectURL(blob);
+
+            // Create a link to download the SVG file
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "diagram_with_logo.svg";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            document.body.removeChild(tempContainer)
+        };
     }
 
 </script>
