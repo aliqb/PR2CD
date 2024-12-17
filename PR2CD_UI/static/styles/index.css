@@ -16,6 +16,15 @@ body {
 
 a {
     text-decoration: none;
+    color: inherit;
+}
+
+.color-link {
+    color: blue;
+}
+
+.english {
+    font-family: Tahoma;
 }
 
 ul {
@@ -44,18 +53,18 @@ input {
     z-index: 2;
 }
 
-.logo-container{
+.logo-container {
     height: 70px;
     margin-left: 0.5rem;
     display: block;
 }
 
-.logo-container img{
+.logo-container img {
     width: 100%;
     height: 100%;
 }
 
-.titles-container{
+.titles-container {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -64,7 +73,7 @@ input {
     color: inherit;
 }
 
-.title{
+.title {
     font-family: Tahoma !important;
 }
 
@@ -98,13 +107,17 @@ input {
 
 }
 
-.github-container{
+.header-link.active {
+    background-color: #ccc;
+}
+
+.github-container {
     margin-right: auto;
     width: 50px;
     height: 50px;
 }
 
-.github-container img{
+.github-container img {
     width: 100%;
     height: 100%;
 }
@@ -343,12 +356,23 @@ input {
     background-color: #e5e56c;
 }
 
-.watermark{
+.watermark {
     width: 50px;
     position: absolute;
     left: 15px;
     bottom: 0px;
 }
+
+.about-container {
+    width: 100%;
+    margin-top: 5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
 
 @media screen and ( min-width: 1200px) {
     .diagram-container {

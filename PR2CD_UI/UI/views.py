@@ -107,3 +107,7 @@ def diagram(request):
     return render(request, 'UI/diagram.html',
                   {'result': result_json, 'req': requirement_json, 'req_text': requirement['text'],
                    'warning_nodes': warning_nodes_addresses,'mermaid':request.session.get('mermaid')})
+
+
+def about(request):
+    return render(request, 'UI/about.html')

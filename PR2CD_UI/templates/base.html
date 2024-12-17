@@ -14,18 +14,22 @@
 <div class="content">
     <header class="header">
         <a href="/" class="logo-container">
-            <img src="{% static 'images/kntu-logo-title.png' %}" />
+            <img src="{% static 'images/kntu-logo-title.png' %}"/>
         </a>
         <a href="/" class="titles-container">
             <h1 class="title">PR2CD</h1>
             <h2 class="subtitle">نبدیل کننده متن فارسی به نمودار کلاس</h2>
         </a>
         <ul class="header-links">
-            <li class="header-item"><a class="header-link">درباره</a></li>
-            <li class="header-item"><a class="header-link">تماس با ما</a></li>
+            <li class="header-item"><a href="about"
+                                       class="header-link {% if request.path == '/about' %}active{% endif %}">درباره</a>
+            </li>
+            <li class="header-item"><a href="conteact"
+                                       class="header-link {% if request.path == '/contact' %}active{% endif %}">تماس با
+                ما</a></li>
         </ul>
         <a class="github-container" href="https://github.com/aliqb/PR2CD" target="_blank">
-            <img src="{% static 'images/github-logo.png' %}" />
+            <img src="{% static 'images/github-logo.png' %}"/>
         </a>
     </header>
     {% block content %}
@@ -35,7 +39,7 @@
 </body>
 <script type="module" src="{% static 'pdfjs-dist/build/pdf.mjs' %}"></script>
 <script type="module" src="{% static 'pdfjs-dist/build/pdf.worker.mjs' %}"></script>
-<script  src="{% static 'mammoth/mammoth.browser.min.js' %}"></script>
+<script src="{% static 'mammoth/mammoth.browser.min.js' %}"></script>
 
 
 </html>
