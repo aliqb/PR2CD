@@ -12,6 +12,22 @@
 </head>
 <body>
 <div class="content">
+    <header class="header">
+        <a href="/" class="logo-container">
+            <img src="{% static 'images/kntu-logo-title.png' %}" />
+        </a>
+        <a href="/" class="titles-container">
+            <h1 class="title">PR2CD</h1>
+            <h2 class="subtitle">نبدیل کننده متن فارسی به نمودار کلاس</h2>
+        </a>
+        <ul class="header-links">
+            <li class="header-item"><a class="header-link">درباره</a></li>
+            <li class="header-item"><a class="header-link">تماس با ما</a></li>
+        </ul>
+        <a class="github-container" href="https://github.com/aliqb/PR2CD" target="_blank">
+            <img src="{% static 'images/github-logo.png' %}" />
+        </a>
+    </header>
     {% block content %}
 
     {% endblock %}

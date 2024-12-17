@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="full-window d-flex">
+<div class=" d-flex">
     <form action="{% url 'UI:submit' %}" method="post" class="m-auto d-flex flex-col centering">
         {% csrf_token %}
         {% if error %}<p class="error">{{ error }}</p>{% endif %}
