@@ -19,13 +19,7 @@ import re
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 model_path = os.path.join(BASE_DIR, 'pos_tagger.model')
 # Path to the model file
-spacy_parser_path = os.path.join(BASE_DIR, 'spacy_dependency_parser')
-lemmatizer = Lemmatizer()
-tagger = POSTagger(model=model_path)
-spacy_parser = SpacyDependencyParser(tagger=tagger, lemmatizer=lemmatizer,
-                                     model_file=spacy_parser_path,
-                                     working_dir=spacy_parser_path)
-hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
+
 
 
 def index(request):
@@ -42,7 +36,13 @@ def submit_req(request):
         return render(request, 'UI/index.html', {
             "error": "متنی وارد نکرده‌اید."
         })
-
+    spacy_parser_path = os.path.join(BASE_DIR, 'spacy_dependency_parser')
+    lemmatizer = Lemmatizer()
+    tagger = POSTagger(model=model_path)
+    spacy_parser = SpacyDependencyParser(tagger=tagger, lemmatizer=lemmatizer,
+                                         model_file=spacy_parser_path,
+                                         working_dir=spacy_parser_path)
+    hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
     requirement = Requirement(req_text, hazm_extractor.extract)
     extractor = ClassDiagramExtractor(requirement)
     extractor.extract_diagram()
