@@ -4,5 +4,4 @@ stanza
 spacy
 spacy-transformers
 django
-psycopg2
-gunicorn
+waitress
