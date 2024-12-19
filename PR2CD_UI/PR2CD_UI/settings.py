@@ -23,11 +23,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-^2klmo#xth)p3(u$^zico@0$-%30&u&u+r2^n(vwp0!28kvh&$'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['localhost',' alaeiyan.ir','192.168.100.13','127.0.0.1']
 
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost',
+    'http://localhost:8080',
+    'http://127.0.0.1:8080',
+    'http://192.168.100.13',
+    'http://127.0.0.1'
+]
 
+CSRF_COOKIE_SECURE = False  # Use True only if using HTTPS
 # Application definition
 
 INSTALLED_APPS = [
