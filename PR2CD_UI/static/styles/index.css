@@ -356,6 +356,11 @@ input {
     background-color: #e5e56c;
 }
 
+.no-class-text{
+    font-family: IRANYekan !important;
+    margin-top: 2rem ;
+}
+
 .watermark {
     width: 50px;
     position: absolute;
