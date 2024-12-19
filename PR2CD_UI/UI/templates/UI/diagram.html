@@ -64,7 +64,13 @@
 
     async function drawDiagram() {
         const umlData = JSON.parse('{{ result|safe|escapejs }}');
-        element = document.querySelector('#diagram-div');
+        const element = document.querySelector('#diagram-div');
+        if (!umlData.classes.length) {
+            element.innerHTML = '<p class="no-class-text">متأسفانه کلاسی شناسایی نشد.</p>';
+            svgButton.disabled = true;
+            return
+        }
+        svgButton.disabled = false
         let diagramDef = '{{ mermaid|safe|escapejs }}';
         const {svg, bindFunctions} = await mermaid.render('graphDiv', diagramDef);
         element.innerHTML = svg;

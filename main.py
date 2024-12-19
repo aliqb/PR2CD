@@ -150,7 +150,7 @@ if __name__ == '__main__':
 
     # stanza_extractor = StanzaExtractor()
 
-    for file in file_names + new_file_names:
+    for file in ['test']:
         extract_and_evaluate_from_file(file, hazm_extractor, True, False)
         # print_requirement_data(file, hazm_extractor)
 
