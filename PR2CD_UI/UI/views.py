@@ -59,41 +59,6 @@ def submit_req(request):
     return HttpResponseRedirect(reverse('UI:diagram'))
 
 
-def result_view(request):
-    result = request.session.get('result')
-    # print(result)
-    return render(request, 'UI/result.html', {'result': result})
-
-
-def evaluation_view(request):
-    result = request.session.get('result')
-    if request.method == 'POST':
-        # Get lists of all submitted standard_classes and standard_attributes
-        form_standard_classes = request.POST.getlist('standard_classes')
-        form_standard_attributes = request.POST.getlist('standard_attributes')
-
-        # Example: Processing the data
-        for class_name, attributes in zip(form_standard_classes, form_standard_attributes):
-            print(f"Class: {class_name}, Attributes: {attributes}")
-
-        result_diagram = ClassDiagram([item for item in result['classes']])
-        standard_classes = [{'text': class_name.strip(),
-                             'attributes': [key.strip() for key in re.split(r'[\-–]', attributes) if key != '']} for
-                            class_name, attributes in zip(form_standard_classes, form_standard_attributes) if
-                            class_name != '']
-        # standard_classes = [key.strip() for key in re.split(r'[\-–]', standard_classes_string)]
-
-        # print(standard_classes)
-        standard_diagram = ClassDiagram(standard_classes)
-        evaluator = ExtractorEvaluator(result_diagram, standard_diagram)
-        class_result = evaluator.evaluate_classes()
-        attribute_result = evaluator.evaluate_attributes()
-        # print(class_result)
-        return render(request, 'UI/evaluation.html', {'classes': class_result, 'attributes': attribute_result})
-    else:
-        return HttpResponseRedirect(reverse('UI:result'))
-
-
 def diagram(request):
     result = request.session.get('result')
     requirement = request.session.get('req')
