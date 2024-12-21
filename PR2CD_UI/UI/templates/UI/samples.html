@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+{% load static %}
+<div>
+    <div class="samples-container">
+        <div class="sample-text">
+            <h2>نیازمندی {{title}}</h2>
+            <p>
+                {{ text }}
+            </p>
+<!--            because its only 2 sample-->
+            <div class="slider">
+                <a  id="slide1" class="slide-number {% if id == 0 %}active{% endif %}" href="{% url 'UI:samples' %}?id=0">1</a>
+                <a id="slide2" class="slide-number {% if id == 1 %}active{% endif %}" href="{% url 'UI:samples' %}?id=1">2</a>
+
+            </div>
+        </div>
+        <div class="diagram-container">
+            <div id="diagram-div">
+                <img src="{% static 'images/samples/' %}{{src}}">
+            </div>
+            <img class="watermark" src="{% static 'images/kntu-logo-title.png' %}"/>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

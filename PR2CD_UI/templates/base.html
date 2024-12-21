@@ -21,12 +21,19 @@
             <h2 class="subtitle">نبدیل کننده متن فارسی به نمودار کلاس</h2>
         </a>
         <ul class="header-links">
-            <li class="header-item"><a href="about"
-                                       class="header-link {% if request.path == '/about' %}active{% endif %}">درباره</a>
+            <li class="header-item">
+                <a href="about"
+                   class="header-link {% if request.path == '/about' %}active{% endif %}">درباره</a>
             </li>
-            <li class="header-item"><a href="contact"
-                                       class="header-link {% if request.path == '/contact' %}active{% endif %}">تماس با
-                ما</a></li>
+            <li class="header-item">
+                <a href="contact"
+                   class="header-link {% if request.path == '/contact' %}active{% endif %}">تماس با
+                    ما</a>
+            </li>
+            <li class="header-item">
+                <a href="samples"
+                   class="header-link {% if request.path == '/samples' %}active{% endif %}">نمونه داده و خروجی</a>
+            </li>
         </ul>
         <a class="github-container" href="https://github.com/aliqb/PR2CD" target="_blank">
             <img src="{% static 'images/github-logo.png' %}"/>

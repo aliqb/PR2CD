@@ -15,7 +15,6 @@ body {
 }
 
 
-
 .content {
     width: 100vw;
     height: 100vh;
@@ -23,7 +22,6 @@ body {
     display: flex;
     flex-direction: column;
 }
-
 
 
 a {
@@ -46,7 +44,6 @@ ul {
 input {
     padding: 5px 10px;
 }
-
 
 
 .header {
@@ -223,7 +220,8 @@ input {
     margin-bottom: 8px;
     display: inline-block;
 }
-.form-container{
+
+.form-container {
     height: 100%;
     align-items: center;
 }
@@ -272,7 +270,7 @@ input {
     flex-direction: column;
 }
 
-.return-container{
+.return-container {
     display: flex;
     margin-top: auto;
     justify-content: end;
@@ -330,18 +328,53 @@ input {
     padding: 1rem 5rem;
 }
 
-.thesis{
+.thesis {
     margin-top: 1rem;
 
 }
 
-.abstract{
+.abstract {
     text-align: justify;
 }
 
-.thesis-link{
+.thesis-link {
     margin-top: 1rem;
     color: blue;
+}
+
+.samples-container {
+    width: 100vw;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0.8rem 0.5rem;
+}
+
+.sample-text {
+    flex-basis: 100%;
+    padding: 2rem;
+    border-bottom: 1px solid #8f8b8b;
+    display: flex;
+    flex-direction: column;
+}
+
+.slider{
+    display: flex;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-top: 1rem;
+}
+
+.slide-number{
+    background-color: #9d9c9c;
+    border-radius: 100%;
+    width: 30px;
+    height: 30px;
+    text-align: center;
+    color: white;
+}
+
+.slide-number.active{
+    background-color: #9a79de;
 }
 
 .footer {
@@ -364,13 +397,20 @@ input {
         border-right: 1px solid #8f8b8b;
     }
 
-    .about-container{
+    .sample-text {
+        flex-basis: 40%;
+        padding: 0 2rem;
+        border-bottom: none;
+        border-left: 1px solid #8f8b8b;
+    }
+
+    .about-container {
         width: 60%;
     }
 }
 
 @media screen and ( min-width: 900px) {
-    .about-container{
+    .about-container {
         width: 80%;
     }
 
