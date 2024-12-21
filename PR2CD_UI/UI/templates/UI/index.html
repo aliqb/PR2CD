@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block content %}
-<div class=" d-flex">
+<div class=" d-flex form-container">
     <form action="{% url 'UI:submit' %}" method="post" class="m-auto d-flex flex-col centering">
         {% csrf_token %}
         {% if error %}<p class="error">{{ error }}</p>{% endif %}
@@ -11,7 +11,7 @@
                 <input id="requirement-file" type="file" class="d-none"
                        accept=".txt, .pdf, .doc, .docx, text/plain, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document">
             </div>
-            <textarea name="req" id="req" class="req-input" rows="20">{{ req }}</textarea>
+            <textarea name="req" id="req" class="req-input" rows="15">{{ req }}</textarea>
         </div>
         <div>
             <input type="submit" value="ارسال" class="btn">

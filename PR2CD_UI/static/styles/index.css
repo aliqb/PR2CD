@@ -14,6 +14,18 @@ body {
     font-family: IRANYekan;
 }
 
+
+
+.content {
+    width: 100vw;
+    height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+
+
 a {
     text-decoration: none;
     color: inherit;
@@ -35,11 +47,7 @@ input {
     padding: 5px 10px;
 }
 
-.content {
-    width: 100vw;
-    height: 100vh;
-    overflow-x: hidden;
-}
+
 
 .header {
     background-color: #9d9c9c;
@@ -215,7 +223,10 @@ input {
     margin-bottom: 8px;
     display: inline-block;
 }
-
+.form-container{
+    height: 100%;
+    align-items: center;
+}
 
 .req-input {
     margin-bottom: 1rem;
@@ -326,6 +337,15 @@ input {
     flex-basis: 100%;
     padding: 2rem;
     border-top: 1px solid #8f8b8b;
+    display: flex;
+    flex-direction: column;
+}
+
+.return-container{
+    display: flex;
+    margin-top: auto;
+    justify-content: end;
+    padding-top: 0.8rem;
 }
 
 .warning-hint {
@@ -356,9 +376,9 @@ input {
     background-color: #e5e56c;
 }
 
-.no-class-text{
+.no-class-text {
     font-family: IRANYekan !important;
-    margin-top: 2rem ;
+    margin-top: 2rem;
 }
 
 .watermark {
@@ -378,15 +398,17 @@ input {
     text-align: center;
 }
 
+.footer {
+    background-color: #9d9c9c;
+    text-align: center;
+    margin-top: auto;
+    padding: 0.8rem;
+}
 
 @media screen and ( min-width: 1200px) {
     .diagram-container {
         flex-basis: 60%;
         padding: 0 1rem;
-    }
-
-    .main-container {
-        margin-bottom: 3rem;
     }
 
     .sentences-container {
