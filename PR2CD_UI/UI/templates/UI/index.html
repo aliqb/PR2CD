@@ -6,13 +6,14 @@
 
         <div class="d-flex flex-col">
             <label for="{{ form.req.id_for_label }}" class="main-prompt">متن نیازمندی را وارد کنید</label>
-            {% if form.req.errors %}
+
 
             <div>
                 <label for="requirement-file" class="btn outline file-label">بارگذاری فایل</label>
                 <input id="requirement-file" type="file" class="d-none"
                        accept=".txt, .pdf, .doc, .docx, text/plain, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document">
             </div>
+             {% if form.req.errors %}
             <div class="error">{{ form.req.errors|join:", " }}</div>
             {% endif %}
             {{ form.req }}
