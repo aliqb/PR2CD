@@ -14,7 +14,7 @@ from ClassDiagramExtractor import ClassDiagramExtractor, ExtractorEvaluator
 from Diagram import ClassDiagram
 from hazm.dependency_parser import SpacyDependencyParser
 from hazm import POSTagger, Lemmatizer, DependencyParser, word_tokenize
-import re
+from .forms import RequirementForm
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 model_path = os.path.join(BASE_DIR, 'pos_tagger.model')
@@ -29,34 +29,66 @@ hazm_extractor = HazmExtractor(spacy_parser, lemmatizer, with_ezafe_tag=True)
 
 
 def index(request):
-    req_text = ''
-    old_req = request.session.get('req')
-    if old_req is not None:
-        req_text = old_req['text']
-    return render(request, 'UI/index.html', {'req': req_text})
+    if request.method == 'POST':
+        form = RequirementForm(request.POST)
+        if form.is_valid():
+            req_text = form.cleaned_data['req']
+            if req_text is None or req_text == "":
+                return render(request, 'UI/index.html', {
+                    "error": "متنی وارد نکرده‌اید."
+                })
+
+            requirement = Requirement(req_text, hazm_extractor.extract)
+            extractor = ClassDiagramExtractor(requirement)
+            extractor.extract_diagram()
+            request.session['result'] = {
+                'classes': [{'text': element.text, 'attributes': [attr.text for attr in element.attributes],
+                             'operations': [operation.text for operation in element.operations]} for element in
+                            extractor.diagram.classes],
+                'relations': [
+                    {'source': relation.source.text, 'relation_type': relation.relation_type,
+                     'target': relation.target.text,
+                     'label': relation.label} for relation in extractor.diagram.relations]
+            }
+            request.session['mermaid'] = extractor.diagram.to_mermaid()
+            request.session['req'] = requirement.serialize()
+            return HttpResponseRedirect(reverse('UI:diagram'))
+        else:
+            req_text = form.data['req']
+    else:
+        req_text = ''
+        old_req = request.session.get('req')
+        if old_req is not None:
+            req_text = old_req['text']
+        form = RequirementForm(initial={'req': req_text})
+    return render(request, 'UI/index.html', {'req': req_text, 'form': form})
 
 
 def submit_req(request):
-    req_text = request.POST['req']
-    if req_text is None or req_text == "":
-        return render(request, 'UI/index.html', {
-            "error": "متنی وارد نکرده‌اید."
-        })
+    if request.method == 'POST':
+        form = RequirementForm(request.POST)
+        if form.is_valid():
+            req_text = form.cleaned_data['req']
+            if req_text is None or req_text == "":
+                return render(request, 'UI/index.html', {
+                    "error": "متنی وارد نکرده‌اید."
+                })
 
-    requirement = Requirement(req_text, hazm_extractor.extract)
-    extractor = ClassDiagramExtractor(requirement)
-    extractor.extract_diagram()
-    request.session['result'] = {
-        'classes': [{'text': element.text, 'attributes': [attr.text for attr in element.attributes],
-                     'operations': [operation.text for operation in element.operations]} for element in
-                    extractor.diagram.classes],
-        'relations': [
-            {'source': relation.source.text, 'relation_type': relation.relation_type, 'target': relation.target.text,
-             'label': relation.label} for relation in extractor.diagram.relations]
-    }
-    request.session['mermaid'] = extractor.diagram.to_mermaid()
-    request.session['req'] = requirement.serialize()
-    return HttpResponseRedirect(reverse('UI:diagram'))
+            requirement = Requirement(req_text, hazm_extractor.extract)
+            extractor = ClassDiagramExtractor(requirement)
+            extractor.extract_diagram()
+            request.session['result'] = {
+                'classes': [{'text': element.text, 'attributes': [attr.text for attr in element.attributes],
+                             'operations': [operation.text for operation in element.operations]} for element in
+                            extractor.diagram.classes],
+                'relations': [
+                    {'source': relation.source.text, 'relation_type': relation.relation_type,
+                     'target': relation.target.text,
+                     'label': relation.label} for relation in extractor.diagram.relations]
+            }
+            request.session['mermaid'] = extractor.diagram.to_mermaid()
+            request.session['req'] = requirement.serialize()
+            return HttpResponseRedirect(reverse('UI:diagram'))
 
 
 def diagram(request):
@@ -89,7 +121,7 @@ def samples(request):
 
     samples = [
         {
-            'id':0,
+            'id': 0,
             'title': 'فروشگاه آنلاین',
             'text': (
                 "سیستم خرید آنلاین به مشتری‌ها این امکان را می‌دهد که محصول‌ها را بر اساس دسته‌بندی جستجو کرده و "

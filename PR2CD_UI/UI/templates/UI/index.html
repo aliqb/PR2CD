@@ -1,19 +1,29 @@
 {% extends "base.html" %}
 {% block content %}
 <div class=" d-flex form-container">
-    <form action="{% url 'UI:submit' %}" method="post" class="m-auto d-flex flex-col centering">
+    <form action="{% url 'UI:index' %}" method="post" class="m-auto d-flex flex-col centering" novalidate>
         {% csrf_token %}
-        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
         <div class="d-flex flex-col">
-            <label for="req" class="main-prompt">متن نیازمندی را وارد کنید</label>
+            <label for="{{ form.req.id_for_label }}" class="main-prompt">متن نیازمندی را وارد کنید</label>
+            {% if form.req.errors %}
+
             <div>
                 <label for="requirement-file" class="btn outline file-label">بارگذاری فایل</label>
                 <input id="requirement-file" type="file" class="d-none"
                        accept=".txt, .pdf, .doc, .docx, text/plain, application/pdf, application/msword, application/vnd.openxmlformats-officedocument.wordprocessingml.document">
             </div>
-            <textarea name="req" id="req" class="req-input" rows="15">{{ req }}</textarea>
+            <div class="error">{{ form.req.errors|join:", " }}</div>
+            {% endif %}
+            {{ form.req }}
+            <div class="recaptcha-container">
+                {{ form.captcha }}
+                {% if form.captcha.errors %}
+                <div class="error">خطا در تأیید ریکپتچا، لطفا مجدد تلاش کنید.</div>
+                {% endif %}
+            </div>
         </div>
-        <div>
+        <div class="send-container">
             <input type="submit" value="ارسال" class="btn">
         </div>
     </form>
@@ -35,7 +45,7 @@
                 file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
             ) {
                 readDocx(file, reader)
-            }else{
+            } else {
                 textArea.value = 'فرمت فایل صحیح نیست.'
             }
         }
