@@ -5,3 +5,4 @@ spacy
 spacy-transformers
 django
 waitress
+django-recaptcha

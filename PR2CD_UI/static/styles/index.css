@@ -14,6 +14,16 @@ body {
     font-family: IRANYekan;
 }
 
+
+.content {
+    width: 100vw;
+    height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+
 a {
     text-decoration: none;
     color: inherit;
@@ -35,11 +45,6 @@ input {
     padding: 5px 10px;
 }
 
-.content {
-    width: 100vw;
-    height: 100vh;
-    overflow-x: hidden;
-}
 
 .header {
     background-color: #9d9c9c;
@@ -216,86 +221,33 @@ input {
     display: inline-block;
 }
 
+.form-container {
+    height: 100%;
+    align-items: center;
+}
 
 .req-input {
-    margin-bottom: 1rem;
-    width: 800px;
+    margin-bottom: 0.5rem;
+    width: 700px;
     padding: 1rem;
+}
+
+.send-container{
+    margin-bottom: 1rem;
+}
+
+.recaptcha-container{
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1rem ;
+    flex-direction: column;
+    align-items: center;
 }
 
 .error {
     color: red;
 }
 
-.result-container {
-    margin-bottom: 1rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-    justify-content: center;
-    width: 100%;
-}
-
-.result-section-container {
-    border: 2px solid #888787;
-    border-radius: 4px;
-    padding: 0.5rem 2rem;
-    width: 20%;
-
-}
-
-.result-title {
-    font-weight: bold;
-    font-size: 1.2rem;
-    margin-bottom: 0.5rem;
-}
-
-.result-list {
-    padding-right: 0.5rem;
-}
-
-.evaluation-container {
-    margin: 2rem;
-}
-
-.evaluation-prompt {
-    font-size: 1.2rem;
-    margin-bottom: 0.5rem;
-    text-align: center;
-}
-
-.evaluation-class-item {
-    display: flex;
-    justify-content: space-between;
-}
-
-.evaluation-form-control {
-    margin-bottom: 1rem;
-    margin-left: 1.5rem;
-}
-
-.evaluation-label {
-    margin-left: 0.3rem;
-}
-
-.evaluation-input {
-    /*width: 800px;*/
-}
-
-.attribute-input {
-    width: 400px;
-}
-
-.plus-btn {
-    width: 40px;
-    height: 40px;
-    padding: 0;
-    font-size: 1.5rem;
-}
-
-.evaluation-file-group {
-    margin-bottom: 0.5rem;
-}
 
 #diagram-div * {
     font-family: none;
@@ -326,6 +278,15 @@ input {
     flex-basis: 100%;
     padding: 2rem;
     border-top: 1px solid #8f8b8b;
+    display: flex;
+    flex-direction: column;
+}
+
+.return-container {
+    display: flex;
+    margin-top: auto;
+    justify-content: end;
+    padding-top: 0.8rem;
 }
 
 .warning-hint {
@@ -356,9 +317,9 @@ input {
     background-color: #e5e56c;
 }
 
-.no-class-text{
+.no-class-text {
     font-family: IRANYekan !important;
-    margin-top: 2rem ;
+    margin-top: 2rem;
 }
 
 .watermark {
@@ -370,23 +331,75 @@ input {
 
 .about-container {
     width: 100%;
-    margin-top: 5rem;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
+    margin: auto;
+    padding: 1rem 5rem;
 }
 
+.thesis {
+    margin-top: 1rem;
+
+}
+
+.abstract {
+    text-align: justify;
+}
+
+.thesis-link {
+    margin-top: 1rem;
+    color: blue;
+}
+
+.samples-container {
+    width: 100vw;
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0.8rem 0.5rem;
+}
+
+.sample-text {
+    flex-basis: 100%;
+    padding: 2rem;
+    border-bottom: 1px solid #8f8b8b;
+    display: flex;
+    flex-direction: column;
+}
+
+.slider{
+    display: flex;
+    justify-content: center;
+    gap: 0.4rem;
+    margin-top: 1rem;
+}
+
+.slide-number{
+    background-color: #9d9c9c;
+    border-radius: 100%;
+    width: 30px;
+    height: 30px;
+    text-align: center;
+    color: white;
+}
+
+.slide-number.active{
+    background-color: #9a79de;
+}
+
+.footer {
+    background-color: #9d9c9c;
+    text-align: center;
+    margin-top: auto;
+    padding: 0.8rem;
+}
 
 @media screen and ( min-width: 1200px) {
     .diagram-container {
         flex-basis: 60%;
         padding: 0 1rem;
-    }
-
-    .main-container {
-        margin-bottom: 3rem;
     }
 
     .sentences-container {
@@ -395,4 +408,23 @@ input {
         border-top: none;
         border-right: 1px solid #8f8b8b;
     }
+
+    .sample-text {
+        flex-basis: 40%;
+        padding: 0 2rem;
+        border-bottom: none;
+        border-left: 1px solid #8f8b8b;
+    }
+
+    .about-container {
+        width: 60%;
+    }
+}
+
+@media screen and ( min-width: 900px) {
+    .about-container {
+        width: 80%;
+    }
+
+
 }
