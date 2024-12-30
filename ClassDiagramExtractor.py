@@ -61,7 +61,7 @@ class ClassDiagramExtractor:
         self.extract_relation_bases()
         self.extract_relations()
         self.extract_operations()
-        self.post_process()
+        # self.post_process()
 
     # classes
     def extract_class_names(self):
